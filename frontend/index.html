@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en" class="h-full bg-slate-50">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Balance Sheet Buddy - Bank Statement to Tally XML Converter</title>
+    <!-- Tailwind CSS Play CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              navy: {
+                50: '#f4f6fa',
+                100: '#e9edf5',
+                200: '#ccd8eb',
+                300: '#9fb5db',
+                400: '#6d8dc7',
+                500: '#486cb0',
+                600: '#375494',
+                700: '#2e457a',
+                800: '#293a66',
+                900: '#253356',
+                950: '#192036',
+              }
+            }
+          }
+        }
+      }
+    </script>
+  </head>
+  <body class="h-full text-slate-800">
+    <div id="root" class="min-h-full flex flex-col"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
