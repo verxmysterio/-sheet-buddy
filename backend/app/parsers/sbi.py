@@ -132,15 +132,19 @@ class SBIParser(BankParser):
                         x_coord = el['x']
                         
                         # Categorize elements based on x-coordinates
-                        if x_coord >= 500:
+                        is_valid_amount = x.strip() and x.strip() != '-'
+                        
+                        if x_coord >= 490:
                             current_tx['balance_val'] = x
-                        elif 360 <= x_coord < 420:
-                            current_tx['amount_val'] = x
-                            current_tx['is_debit'] = True
-                        elif 420 <= x_coord < 500:
-                            current_tx['amount_val'] = x
-                            current_tx['is_credit'] = True
-                        elif 300 <= x_coord < 360:
+                        elif 350 <= x_coord < 415:
+                            if is_valid_amount:
+                                current_tx['amount_val'] = x
+                                current_tx['is_debit'] = True
+                        elif 415 <= x_coord < 490:
+                            if is_valid_amount:
+                                current_tx['amount_val'] = x
+                                current_tx['is_credit'] = True
+                        elif 300 <= x_coord < 350:
                             current_tx['branch_code'] = x
                         elif 210 <= x_coord < 300:
                             current_tx['ref_lines'].append(x)
