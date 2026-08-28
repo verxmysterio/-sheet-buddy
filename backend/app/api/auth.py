@@ -95,6 +95,25 @@ def login_json(user_in: UserCreate, db: Session = Depends(get_db)):
     
     # Block login if not verified
     if not user.is_verified:
+        otp_code = generate_otp()
+        expires_at = datetime.utcnow() + timedelta(minutes=15)
+        otp_entry = UserOTP(
+            email=user.email,
+            otp_code=otp_code,
+            purpose="VERIFICATION",
+            expires_at=expires_at
+        )
+        db.add(otp_entry)
+        db.commit()
+        try:
+            send_otp_email(user.email, otp_code, "VERIFICATION")
+        except Exception as e:
+            db.delete(otp_entry)
+            db.commit()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Account is not verified. Failed to auto-send a new verification code: {str(e)}."
+            )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="NOT_VERIFIED"
@@ -114,6 +133,25 @@ def login_form(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = D
     
     # Block login if not verified
     if not user.is_verified:
+        otp_code = generate_otp()
+        expires_at = datetime.utcnow() + timedelta(minutes=15)
+        otp_entry = UserOTP(
+            email=user.email,
+            otp_code=otp_code,
+            purpose="VERIFICATION",
+            expires_at=expires_at
+        )
+        db.add(otp_entry)
+        db.commit()
+        try:
+            send_otp_email(user.email, otp_code, "VERIFICATION")
+        except Exception as e:
+            db.delete(otp_entry)
+            db.commit()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Account is not verified. Failed to auto-send a new verification code: {str(e)}."
+            )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="NOT_VERIFIED"
