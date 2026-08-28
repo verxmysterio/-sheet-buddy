@@ -2,8 +2,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 from ..core.config import settings
 
-# For SQLite, we need to allow multithreaded access
-connect_args = {"check_same_thread": False} if settings.DATABASE_URL.startswith("sqlite") else {}
+# For SQLite, we need to allow multithreaded access; for PostgreSQL, set a connect timeout
+if settings.DATABASE_URL.startswith("sqlite"):
+    connect_args = {"check_same_thread": False}
+else:
+    connect_args = {"connect_timeout": 10}
 
 engine = create_engine(
     settings.DATABASE_URL,
