@@ -21,6 +21,9 @@ class Settings(BaseModel):
     SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
     SMTP_FROM: str = os.getenv("SMTP_FROM", "")
 
+    # Resend API Settings (for Render Free Tier where SMTP ports are blocked)
+    RESEND_API_KEY: str = os.getenv("RESEND_API_KEY", "")
+
 settings = Settings()
 
 # Ensure directories exist

@@ -1,5 +1,7 @@
+import json
 import random
 import smtplib
+import urllib.request
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from .config import settings
@@ -9,7 +11,7 @@ def generate_otp() -> str:
     return f"{random.randint(100000, 999999)}"
 
 def send_otp_email(to_email: str, otp_code: str, purpose: str) -> bool:
-    """Send an OTP email to the recipient or print it to the terminal if SMTP is unconfigured."""
+    """Send an OTP email via Resend API, standard SMTP, or fallback to mock printing."""
     if purpose == "VERIFICATION":
         subject = "Balance Sheet Buddy - Verify Your Account"
         body = f"""
@@ -32,13 +34,48 @@ def send_otp_email(to_email: str, otp_code: str, purpose: str) -> bool:
 <p>This code will expire in 15 minutes.</p>
 """
 
-    # Check if SMTP settings are fully configured
+    # Option A: Send via Resend HTTP API (Port 443, never blocked by Render Free Tier)
+    if settings.RESEND_API_KEY:
+        try:
+            # Set from address to onboarding@resend.dev unless user has verified custom domain
+            from_email = settings.SMTP_FROM
+            if not from_email or "@gmail.com" in from_email.lower() or "@yahoo.com" in from_email.lower():
+                from_email = "onboarding@resend.dev"
+                
+            url = "https://api.resend.com/emails"
+            headers = {
+                "Authorization": f"Bearer {settings.RESEND_API_KEY}",
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "from": from_email,
+                "to": [to_email],
+                "subject": subject,
+                "html": body
+            }
+            
+            req = urllib.request.Request(
+                url,
+                data=json.dumps(payload).encode("utf-8"),
+                headers=headers,
+                method="POST"
+            )
+            with urllib.request.urlopen(req, timeout=10) as response:
+                res_body = response.read().decode("utf-8")
+                print(f"Resend API send success: {res_body}")
+                return True
+        except Exception as e:
+            error_msg = f"Resend API Failure: {str(e)}"
+            print(f"Resend Error: Failed to send OTP to {to_email}: {str(e)}")
+            raise RuntimeError(error_msg)
+
+    # Option B: Send via standard SMTP
     is_smtp_configured = bool(settings.SMTP_HOST and settings.SMTP_USER and settings.SMTP_PASSWORD)
     
     if not is_smtp_configured:
-        # Falls back to printing OTP in console block
+        # Falls back to printing OTP in console block (Mock Mode)
         print("\n" + "="*60)
-        print("MOCK SMTP DISPATCH FALLBACK (No SMTP Credentials Configured)")
+        print("MOCK SMTP DISPATCH FALLBACK (No Credentials Configured)")
         print(f"To Email: {to_email}")
         print(f"Subject:  {subject}")
         print(" "*10 + "┌" + "─"*22 + "┐")
@@ -47,7 +84,6 @@ def send_otp_email(to_email: str, otp_code: str, purpose: str) -> bool:
         print("="*60 + "\n")
         return True
 
-    # Send real email using configured credentials
     try:
         msg = MIMEMultipart("alternative")
         msg["Subject"] = subject
