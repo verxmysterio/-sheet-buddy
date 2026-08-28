@@ -1222,7 +1222,7 @@ export default function App() {
               }}
               className={`flex items-center justify-center px-4 py-2 text-xs font-black border-2 border-black transition-all ${activeTab === 'settings' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-slate-50'}`}
             >
-              PROFILE & SECURITY
+              PROFILE SECURITY
             </button>
             {user.is_admin && (
               <button
@@ -1905,7 +1905,7 @@ export default function App() {
               <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 space-y-4">
                 <h4 className="text-md font-black text-black uppercase border-b-2 border-black pb-2">Create New Client Account</h4>
                 
-                <form onSubmit={handleAdminCreateUser} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                <form onSubmit={handleAdminCreateUser} className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
                   <div>
                     <label className="block text-xs font-black text-black uppercase mb-1">Email Address</label>
                     <input
@@ -1930,20 +1930,21 @@ export default function App() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-xs font-black text-black uppercase mb-1">Initial Credits</label>
-                      <input
-                        type="number"
-                        required
-                        min={0}
-                        value={adminNewUserCredits}
-                        onChange={(e) => setAdminNewUserCredits(e.target.value)}
-                        className="w-full px-3 py-2 border-2 border-black text-xs font-bold bg-white focus:outline-none"
-                      />
-                    </div>
-                    <div className="flex flex-col justify-center items-center h-[38px] border-2 border-black bg-slate-50">
-                      <label className="text-[9px] font-black text-black uppercase">Is Admin?</label>
+                  <div>
+                    <label className="block text-xs font-black text-black uppercase mb-1">Initial Credits</label>
+                    <input
+                      type="number"
+                      required
+                      min={0}
+                      value={adminNewUserCredits}
+                      onChange={(e) => setAdminNewUserCredits(e.target.value)}
+                      className="w-full px-3 py-2 border-2 border-black text-xs font-bold bg-white focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-black text-black uppercase mb-1 text-center">Is Admin?</label>
+                    <div className="flex justify-center items-center h-[38px] border-2 border-black bg-slate-50">
                       <input
                         type="checkbox"
                         checked={adminNewUserIsAdmin}
@@ -2565,10 +2566,10 @@ export default function App() {
             </div>
           )}
 
-          {/* --- TAB 7: PROFILE & SECURITY PAGE --- */}
+          {/* --- TAB 7: PROFILE SECURITY PAGE --- */}
           {activeTab === 'settings' && (
             <div className="space-y-6 max-w-md mx-auto bg-white p-8 border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)]">
-              <h3 className="text-xl font-black text-black uppercase mb-2 border-b-2 border-black pb-2">Profile & Security</h3>
+              <h3 className="text-xl font-black text-black uppercase mb-2 border-b-2 border-black pb-2">Profile Security</h3>
               
               <div className="space-y-4">
                 <div className="border-2 border-black p-4 bg-slate-50">
