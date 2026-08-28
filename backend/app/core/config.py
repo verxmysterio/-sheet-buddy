@@ -14,6 +14,13 @@ class Settings(BaseModel):
     TEMP_UPLOAD_DIR: str = os.getenv("TEMP_UPLOAD_DIR", os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "scratch", "temp_uploads"))
     XML_CACHE_DIR: str = os.getenv("XML_CACHE_DIR", os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "scratch", "xml_cache"))
 
+    # SMTP Settings (free email sending configuration)
+    SMTP_HOST: str = os.getenv("SMTP_HOST", "")
+    SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))
+    SMTP_USER: str = os.getenv("SMTP_USER", "")
+    SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
+    SMTP_FROM: str = os.getenv("SMTP_FROM", "")
+
 settings = Settings()
 
 # Ensure directories exist

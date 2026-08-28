@@ -25,6 +25,17 @@ except Exception:
     except Exception as e:
         print("Schema update log:", e)
 
+# SQLite migration check: auto-add is_verified column if missing
+try:
+    db.execute(text("SELECT is_verified FROM users LIMIT 1"))
+except Exception:
+    db.rollback()
+    try:
+        db.execute(text("ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT 0 NOT NULL"))
+        db.commit()
+    except Exception as e:
+        print("Schema update is_verified log:", e)
+
 # SQLite migration check: auto-add status column to wallet_transactions if missing
 try:
     db.execute(text("SELECT status FROM wallet_transactions LIMIT 1"))
@@ -43,10 +54,15 @@ try:
             email="admin@sheetbuddy.com",
             hashed_password=hash_password("adminpassword"),
             page_credits=99999,
-            is_admin=True
+            is_admin=True,
+            is_verified=True
         )
         db.add(admin_user)
         db.commit()
+    else:
+        if not admin_user.is_verified:
+            admin_user.is_verified = True
+            db.commit()
         
     # Seed default bank configs
     from .models.models import BankConfig

@@ -11,6 +11,7 @@ class UserResponse(BaseModel):
     email: str
     page_credits: int
     is_admin: bool
+    is_verified: bool
     created_at: datetime
 
     class Config:
@@ -96,3 +97,22 @@ class PromoCodeResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class VerifyOTPRequest(BaseModel):
+    email: str
+    otp_code: str
+
+class ResendOTPRequest(BaseModel):
+    email: str
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+class ResetPasswordRequest(BaseModel):
+    email: str
+    otp_code: str
+    new_password: str
+
+class ChangePasswordRequest(BaseModel):
+    old_password: str
+    new_password: str

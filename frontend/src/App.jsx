@@ -20,9 +20,25 @@ export default function App() {
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
+  
+  // --- New OTP & Recovery States ---
+  const [authMode, setAuthMode] = useState('login'); // 'login' | 'register' | 'verify' | 'forgot' | 'reset'
+  const [otp, setOtp] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [verificationEmail, setVerificationEmail] = useState('');
+  const [statusMessage, setStatusMessage] = useState('');
+
+  // --- Profile / Change Password States ---
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [profileNewPassword, setProfileNewPassword] = useState('');
+  const [profileConfirmNewPassword, setProfileConfirmNewPassword] = useState('');
+  const [profileSuccessMsg, setProfileSuccessMsg] = useState('');
+  const [profileErrorMsg, setProfileErrorMsg] = useState('');
+  const [profileLoading, setProfileLoading] = useState(false);
 
   // --- App View State ---
-  const [activeTab, setActiveTab] = useState('convert'); // 'convert' | 'history' | 'wallet' | 'easter'
+  const [activeTab, setActiveTab] = useState('convert'); // 'convert' | 'history' | 'wallet' | 'easter' | 'settings'
 
   // --- Upload / Convert State ---
   const [bankName, setBankName] = useState('');
@@ -183,9 +199,11 @@ export default function App() {
   const handleAuthSubmit = async (e) => {
     e.preventDefault();
     setAuthError('');
+    setStatusMessage('');
     setAuthLoading(true);
 
-    const endpoint = isRegistering ? '/api/auth/register' : '/api/auth/login';
+    const isReg = authMode === 'register';
+    const endpoint = isReg ? '/api/auth/register' : '/api/auth/login';
     try {
       const res = await fetch(endpoint, {
         method: 'POST',
@@ -195,21 +213,18 @@ export default function App() {
 
       const data = await res.json();
       if (!res.ok) {
-        setAuthError(data.detail || 'An error occurred during authentication.');
+        if (data.detail === "NOT_VERIFIED") {
+          setVerificationEmail(email);
+          setAuthMode('verify');
+          setStatusMessage("Your account is not verified yet. An OTP verification code has been sent to your email. Enter it below to complete verification.");
+        } else {
+          setAuthError(data.detail || 'An error occurred during authentication.');
+        }
       } else {
-        if (isRegistering) {
-          const loginRes = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-          });
-          const loginData = await loginRes.json();
-          if (loginRes.ok) {
-            setToken(loginData.access_token);
-          } else {
-            setIsRegistering(false);
-            setAuthError("Account created! Please log in.");
-          }
+        if (isReg) {
+          setVerificationEmail(email);
+          setAuthMode('verify');
+          setStatusMessage("Account registered successfully! An OTP verification code has been sent to your email. Enter it below to verify your account.");
         } else {
           setToken(data.access_token);
         }
@@ -218,6 +233,154 @@ export default function App() {
       setAuthError('Connection failed. Please check if the server is running.');
     } finally {
       setAuthLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async (e) => {
+    e.preventDefault();
+    setAuthError('');
+    setStatusMessage('');
+    setAuthLoading(true);
+    try {
+      const res = await fetch('/api/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: verificationEmail, otp_code: otp })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setAuthError(data.detail || 'Invalid or expired OTP.');
+      } else {
+        setToken(data.access_token);
+        setAuthMode('login');
+        setOtp('');
+        setStatusMessage('Account verified successfully!');
+      }
+    } catch (err) {
+      setAuthError('Connection failed.');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleResendOTP = async () => {
+    setAuthError('');
+    setStatusMessage('');
+    try {
+      const res = await fetch('/api/auth/resend-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: verificationEmail })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setAuthError(data.detail || 'Failed to resend OTP.');
+      } else {
+        setStatusMessage('A new verification code has been sent to your email.');
+      }
+    } catch (err) {
+      setAuthError('Connection failed.');
+    }
+  };
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    setAuthError('');
+    setStatusMessage('');
+    setAuthLoading(true);
+    try {
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: verificationEmail })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setAuthError(data.detail || 'Failed to request password recovery.');
+      } else {
+        setAuthMode('reset');
+        setStatusMessage('If the account exists, a recovery code has been sent to your email.');
+      }
+    } catch (err) {
+      setAuthError('Connection failed.');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setAuthError('');
+    setStatusMessage('');
+    if (newPassword !== confirmNewPassword) {
+      setAuthError("Passwords do not match.");
+      return;
+    }
+    setAuthLoading(true);
+    try {
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: verificationEmail,
+          otp_code: otp,
+          new_password: newPassword
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setAuthError(data.detail || 'Invalid or expired OTP.');
+      } else {
+        setAuthMode('login');
+        setIsRegistering(false);
+        setEmail(verificationEmail);
+        setPassword('');
+        setOtp('');
+        setNewPassword('');
+        setConfirmNewPassword('');
+        setStatusMessage('Password reset successfully. You can now log in.');
+      }
+    } catch (err) {
+      setAuthError('Connection failed.');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleProfileChangePassword = async (e) => {
+    e.preventDefault();
+    setProfileSuccessMsg('');
+    setProfileErrorMsg('');
+    if (profileNewPassword !== profileConfirmNewPassword) {
+      setProfileErrorMsg("New passwords do not match.");
+      return;
+    }
+    setProfileLoading(true);
+    try {
+      const res = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          old_password: currentPassword,
+          new_password: profileNewPassword
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setProfileErrorMsg(data.detail || "Failed to change password.");
+      } else {
+        setProfileSuccessMsg("Password changed successfully!");
+        setCurrentPassword('');
+        setProfileNewPassword('');
+        setProfileConfirmNewPassword('');
+      }
+    } catch (e) {
+      setProfileErrorMsg("Connection failed.");
+    } finally {
+      setProfileLoading(false);
     }
   };
 
@@ -882,58 +1045,299 @@ export default function App() {
         </div>
 
         <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-          <div className="bg-white py-8 px-4 border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] sm:rounded-none sm:px-10">
-            <form className="space-y-6" onSubmit={handleAuthSubmit}>
-              <div>
-                <label className="block text-sm font-black text-black uppercase">Email Address</label>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="mt-1 block w-full px-3 py-2 border-2 border-black focus:outline-none focus:bg-yellow-50 text-sm font-bold"
-                />
+          <div className="bg-white py-8 px-4 border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] sm:rounded-none sm:px-10 space-y-6">
+            
+            {statusMessage && (
+              <div className="bg-[#25D366] text-white p-3 border-2 border-black font-bold text-sm">
+                INFO: {statusMessage}
               </div>
+            )}
 
-              <div>
-                <label className="block text-sm font-black text-black uppercase">Password</label>
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="mt-1 block w-full px-3 py-2 border-2 border-black focus:outline-none focus:bg-yellow-50 text-sm font-bold"
-                />
+            {authError && (
+              <div className="bg-[#ff5757] text-white p-3 border-2 border-black font-bold text-sm">
+                ERROR: {authError}
               </div>
+            )}
 
-              {authError && (
-                <div className="bg-[#ff5757] text-white p-3 border-2 border-black font-bold text-sm">
-                  ERROR: {authError}
+            {authMode === 'login' && (
+              <form className="space-y-6" onSubmit={handleAuthSubmit}>
+                <div>
+                  <label className="block text-sm font-black text-black uppercase">Email Address</label>
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="mt-1 block w-full px-3 py-2 border-2 border-black focus:outline-none focus:bg-yellow-50 text-sm font-bold"
+                  />
                 </div>
-              )}
 
-              <div>
-                <button
-                  type="submit"
-                  disabled={authLoading}
-                  className="w-full flex justify-center py-2.5 px-4 border-2 border-black font-black text-black bg-[#ffd615] hover:bg-yellow-400 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] shadow-[4px_4px_0px_rgba(0,0,0,1)] transition-all uppercase disabled:opacity-50"
-                >
-                  {authLoading ? 'Please wait...' : isRegistering ? 'Create Account' : 'Log In'}
-                </button>
-              </div>
-            </form>
+                <div>
+                  <label className="block text-sm font-black text-black uppercase">Password</label>
+                  <input
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="mt-1 block w-full px-3 py-2 border-2 border-black focus:outline-none focus:bg-yellow-50 text-sm font-bold"
+                  />
+                </div>
 
-            <div className="mt-6 flex items-center justify-center">
-              <button
-                onClick={() => {
-                  setIsRegistering(!isRegistering);
-                  setAuthError('');
-                }}
-                className="text-sm font-black text-black underline hover:no-underline"
-              >
-                {isRegistering ? 'Already have an account? Log In' : "Don't have an account? Sign Up"}
-              </button>
-            </div>
+                <div className="flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setVerificationEmail(email);
+                      setAuthMode('forgot');
+                      setAuthError('');
+                      setStatusMessage('');
+                    }}
+                    className="text-xs font-bold text-black underline hover:no-underline"
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
+
+                <div>
+                  <button
+                    type="submit"
+                    disabled={authLoading}
+                    className="w-full flex justify-center py-2.5 px-4 border-2 border-black font-black text-black bg-[#ffd615] hover:bg-yellow-400 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] shadow-[4px_4px_0px_rgba(0,0,0,1)] transition-all uppercase disabled:opacity-50"
+                  >
+                    {authLoading ? 'Logging in...' : 'Log In'}
+                  </button>
+                </div>
+
+                <div className="pt-2 text-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthMode('register');
+                      setAuthError('');
+                      setStatusMessage('');
+                    }}
+                    className="text-sm font-black text-black underline hover:no-underline"
+                  >
+                    Don't have an account? Sign Up
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {authMode === 'register' && (
+              <form className="space-y-6" onSubmit={handleAuthSubmit}>
+                <div>
+                  <label className="block text-sm font-black text-black uppercase">Email Address</label>
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="mt-1 block w-full px-3 py-2 border-2 border-black focus:outline-none focus:bg-yellow-50 text-sm font-bold"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-black text-black uppercase">Password</label>
+                  <input
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="mt-1 block w-full px-3 py-2 border-2 border-black focus:outline-none focus:bg-yellow-50 text-sm font-bold"
+                  />
+                </div>
+
+                <div>
+                  <button
+                    type="submit"
+                    disabled={authLoading}
+                    className="w-full flex justify-center py-2.5 px-4 border-2 border-black font-black text-black bg-[#ffd615] hover:bg-yellow-400 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] shadow-[4px_4px_0px_rgba(0,0,0,1)] transition-all uppercase disabled:opacity-50"
+                  >
+                    {authLoading ? 'Creating account...' : 'Create Account'}
+                  </button>
+                </div>
+
+                <div className="pt-2 text-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthMode('login');
+                      setAuthError('');
+                      setStatusMessage('');
+                    }}
+                    className="text-sm font-black text-black underline hover:no-underline"
+                  >
+                    Already have an account? Log In
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {authMode === 'verify' && (
+              <form className="space-y-6" onSubmit={handleVerifyOTP}>
+                <div>
+                  <label className="block text-sm font-black text-slate-600 uppercase">Verifying Email</label>
+                  <span className="block text-sm font-black text-black border-2 border-black bg-slate-50 px-3 py-2 mt-1">
+                    {verificationEmail}
+                  </span>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-black text-black uppercase">6-Digit Verification Code</label>
+                  <input
+                    type="text"
+                    required
+                    maxLength={10}
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    placeholder="Enter code"
+                    className="mt-1 block w-full px-3 py-2 border-2 border-black focus:outline-none focus:bg-yellow-50 text-sm font-bold text-center tracking-widest text-lg"
+                  />
+                </div>
+
+                <div className="flex space-x-3">
+                  <button
+                    type="submit"
+                    disabled={authLoading}
+                    className="flex-1 py-2.5 px-4 border-2 border-black font-black text-black bg-[#ffd615] hover:bg-yellow-400 active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] shadow-[3px_3px_0px_rgba(0,0,0,1)] transition-all uppercase disabled:opacity-50 text-xs"
+                  >
+                    Verify Code
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleResendOTP}
+                    className="flex-1 py-2.5 px-4 border-2 border-black font-black text-black bg-white hover:bg-slate-50 active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] shadow-[3px_3px_0px_rgba(0,0,0,1)] transition-all uppercase text-xs"
+                  >
+                    Resend OTP
+                  </button>
+                </div>
+
+                <div className="pt-2 text-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthMode('login');
+                      setAuthError('');
+                      setStatusMessage('');
+                    }}
+                    className="text-xs font-bold text-black underline hover:no-underline"
+                  >
+                    Back to Log In
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {authMode === 'forgot' && (
+              <form className="space-y-6" onSubmit={handleForgotPassword}>
+                <div>
+                  <label className="block text-sm font-black text-black uppercase">Enter Your Email Address</label>
+                  <input
+                    type="email"
+                    required
+                    value={verificationEmail}
+                    onChange={(e) => setVerificationEmail(e.target.value)}
+                    className="mt-1 block w-full px-3 py-2 border-2 border-black focus:outline-none focus:bg-yellow-50 text-sm font-bold"
+                  />
+                </div>
+
+                <div>
+                  <button
+                    type="submit"
+                    disabled={authLoading}
+                    className="w-full flex justify-center py-2.5 px-4 border-2 border-black font-black text-black bg-[#ffd615] hover:bg-yellow-400 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] shadow-[4px_4px_0px_rgba(0,0,0,1)] transition-all uppercase disabled:opacity-50"
+                  >
+                    {authLoading ? 'Sending...' : 'Send Recovery Code'}
+                  </button>
+                </div>
+
+                <div className="pt-2 text-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthMode('login');
+                      setAuthError('');
+                      setStatusMessage('');
+                    }}
+                    className="text-xs font-bold text-black underline hover:no-underline"
+                  >
+                    Back to Log In
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {authMode === 'reset' && (
+              <form className="space-y-6" onSubmit={handleResetPassword}>
+                <div>
+                  <label className="block text-sm font-black text-slate-600 uppercase">Recovering Email</label>
+                  <span className="block text-sm font-black text-black border-2 border-black bg-slate-50 px-3 py-2 mt-1">
+                    {verificationEmail}
+                  </span>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-black text-black uppercase">6-Digit Recovery Code</label>
+                  <input
+                    type="text"
+                    required
+                    maxLength={10}
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    placeholder="Enter code"
+                    className="mt-1 block w-full px-3 py-2 border-2 border-black focus:outline-none focus:bg-yellow-50 text-sm font-bold text-center tracking-widest text-lg"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-black text-black uppercase">New Password</label>
+                  <input
+                    type="password"
+                    required
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="mt-1 block w-full px-3 py-2 border-2 border-black focus:outline-none focus:bg-yellow-50 text-sm font-bold"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-black text-black uppercase">Confirm New Password</label>
+                  <input
+                    type="password"
+                    required
+                    value={confirmNewPassword}
+                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                    className="mt-1 block w-full px-3 py-2 border-2 border-black focus:outline-none focus:bg-yellow-50 text-sm font-bold"
+                  />
+                </div>
+
+                <div>
+                  <button
+                    type="submit"
+                    disabled={authLoading}
+                    className="w-full flex justify-center py-2.5 px-4 border-2 border-black font-black text-black bg-[#ffd615] hover:bg-yellow-400 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] shadow-[4px_4px_0px_rgba(0,0,0,1)] transition-all uppercase disabled:opacity-50"
+                  >
+                    {authLoading ? 'Resetting Password...' : 'Reset Password'}
+                  </button>
+                </div>
+
+                <div className="pt-2 text-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthMode('login');
+                      setAuthError('');
+                      setStatusMessage('');
+                    }}
+                    className="text-xs font-bold text-black underline hover:no-underline"
+                  >
+                    Back to Log In
+                  </button>
+                </div>
+              </form>
+            )}
+
           </div>
         </div>
       </div>
@@ -999,6 +1403,21 @@ export default function App() {
               className={`flex items-center justify-center px-4 py-2 text-xs font-black border-2 border-black transition-all ${activeTab === 'support' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-slate-50'}`}
             >
               CONTACT SUPPORT
+            </button>
+            <button
+              onClick={() => { 
+                setActiveTab('settings'); 
+                setExecuteError(''); 
+                setMobileMenuOpen(false);
+                setCurrentPassword('');
+                setProfileNewPassword('');
+                setProfileConfirmNewPassword('');
+                setProfileSuccessMsg('');
+                setProfileErrorMsg('');
+              }}
+              className={`flex items-center justify-center px-4 py-2 text-xs font-black border-2 border-black transition-all ${activeTab === 'settings' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-slate-50'}`}
+            >
+              PROFILE & SECURITY
             </button>
             {user.is_admin && (
               <button
@@ -2259,6 +2678,87 @@ export default function App() {
                     className="w-full py-2.5 px-4 border-2 border-black font-black text-white bg-black hover:bg-zinc-800 uppercase shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-all text-xs disabled:opacity-50"
                   >
                     {supportLoading ? "SUBMITTING..." : "Submit Support Ticket"}
+                  </button>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* --- TAB 7: PROFILE & SECURITY PAGE --- */}
+          {activeTab === 'settings' && (
+            <div className="space-y-6 max-w-md mx-auto bg-white p-8 border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)]">
+              <h3 className="text-xl font-black text-black uppercase mb-2 border-b-2 border-black pb-2">Profile & Security</h3>
+              
+              <div className="space-y-4">
+                <div className="border-2 border-black p-4 bg-slate-50">
+                  <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest">Logged In Email</span>
+                  <span className="block font-black text-black text-sm">{user.email}</span>
+                </div>
+
+                <div className="border-2 border-black p-4 bg-slate-50">
+                  <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest">Available Page Credits</span>
+                  <span className="block font-black text-black text-lg">{user.page_credits} Credits</span>
+                </div>
+              </div>
+
+              <div className="border-2 border-black p-6 bg-white pt-4">
+                <h4 className="font-black text-black uppercase text-sm mb-4 border-b border-black pb-1">Change Account Password</h4>
+                
+                <form onSubmit={handleProfileChangePassword} className="space-y-4">
+                  <div>
+                    <label className="block text-[10px] font-black text-black uppercase mb-1">Current Password</label>
+                    <input
+                      type="password"
+                      required
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      placeholder="Enter current password"
+                      className="w-full px-3 py-2 border-2 border-black font-bold focus:outline-none bg-white text-xs"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-[10px] font-black text-black uppercase mb-1">New Password</label>
+                    <input
+                      type="password"
+                      required
+                      value={profileNewPassword}
+                      onChange={(e) => setProfileNewPassword(e.target.value)}
+                      placeholder="Enter new password"
+                      className="w-full px-3 py-2 border-2 border-black font-bold focus:outline-none bg-white text-xs"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black text-black uppercase mb-1">Confirm New Password</label>
+                    <input
+                      type="password"
+                      required
+                      value={profileConfirmNewPassword}
+                      onChange={(e) => setProfileConfirmNewPassword(e.target.value)}
+                      placeholder="Confirm new password"
+                      className="w-full px-3 py-2 border-2 border-black font-bold focus:outline-none bg-white text-xs"
+                    />
+                  </div>
+
+                  {profileErrorMsg && (
+                    <div className="bg-[#ff5757] text-white p-3 border-2 border-black font-bold text-xs">
+                      ERROR: {profileErrorMsg}
+                    </div>
+                  )}
+
+                  {profileSuccessMsg && (
+                    <div className="bg-[#25D366] text-white p-3 border-2 border-black font-bold text-xs">
+                      SUCCESS: {profileSuccessMsg}
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={profileLoading}
+                    className="w-full py-2.5 px-4 border-2 border-black font-black text-white bg-black hover:bg-zinc-800 uppercase shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-all text-xs disabled:opacity-50"
+                  >
+                    {profileLoading ? "CHANGING PASSWORD..." : "Update Password"}
                   </button>
                 </form>
               </div>

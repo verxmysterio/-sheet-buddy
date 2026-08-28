@@ -41,7 +41,8 @@ def setup_module(module):
                 email="admin@sheetbuddy.com",
                 hashed_password=hash_password("adminpassword"),
                 page_credits=99999,
-                is_admin=True
+                is_admin=True,
+                is_verified=True
             )
             db.add(admin_user)
             db.commit()
@@ -92,6 +93,20 @@ def test_full_saas_workflow():
     assert data["email"] == "test@example.com"
     assert data["page_credits"] == 100
     user_id = data["id"]
+    
+    # Retrieve OTP from DB to verify
+    from app.models.models import UserOTP
+    db = TestingSessionLocal()
+    otp_entry = db.query(UserOTP).filter_by(email="test@example.com").first()
+    assert otp_entry is not None
+    db.close()
+    
+    # Verify OTP
+    verify_res = client.post("/api/auth/verify-otp", json={
+        "email": "test@example.com",
+        "otp_code": otp_entry.otp_code
+    })
+    assert verify_res.status_code == 200
     
     # 2. Login
     login_response = client.post("/api/auth/login", json={
@@ -220,6 +235,15 @@ def test_conversion_overrides_and_simulators():
     # Register & Login new user
     email = f"override_tester_{uuid.uuid4()}@example.com"
     client.post("/api/auth/register", json={"email": email, "password": "mypassword"})
+    
+    # Retrieve OTP from DB to verify
+    from app.models.models import UserOTP
+    db = TestingSessionLocal()
+    otp_entry = db.query(UserOTP).filter_by(email=email).first()
+    assert otp_entry is not None
+    db.close()
+    client.post("/api/auth/verify-otp", json={"email": email, "otp_code": otp_entry.otp_code})
+    
     login_res = client.post("/api/auth/login", json={"email": email, "password": "mypassword"})
     headers = {"Authorization": f"Bearer {login_res.json()['access_token']}"}
     
@@ -264,6 +288,15 @@ def test_wallet_pricing_and_redemption():
     # Register & Login new user
     email = f"wallet_tester_{uuid.uuid4()}@example.com"
     client.post("/api/auth/register", json={"email": email, "password": "mypassword"})
+    
+    # Retrieve OTP from DB to verify
+    from app.models.models import UserOTP
+    db = TestingSessionLocal()
+    otp_entry = db.query(UserOTP).filter_by(email=email).first()
+    assert otp_entry is not None
+    db.close()
+    client.post("/api/auth/verify-otp", json={"email": email, "otp_code": otp_entry.otp_code})
+    
     login_res = client.post("/api/auth/login", json={"email": email, "password": "mypassword"})
     headers = {"Authorization": f"Bearer {login_res.json()['access_token']}"}
     
@@ -346,6 +379,14 @@ def test_admin_endpoints():
     import uuid
     email = f"user_for_admin_test_{uuid.uuid4()}@example.com"
     client.post("/api/auth/register", json={"email": email, "password": "testpassword"})
+    
+    # Retrieve OTP from DB to verify
+    from app.models.models import UserOTP
+    db = TestingSessionLocal()
+    otp_entry = db.query(UserOTP).filter_by(email=email).first()
+    assert otp_entry is not None
+    client.post("/api/auth/verify-otp", json={"email": email, "otp_code": otp_entry.otp_code})
+    db.close()
     
     # Fetch that user ID
     all_users = client.get("/api/admin/users", headers=headers).json()
@@ -463,6 +504,76 @@ def test_admin_endpoints():
     # Try redeeming expired code (should fail)
     expired_redeem_res = client.post("/api/wallet/redeem", headers=norm_headers, json={"code": "TESTEXPIRED"})
     assert expired_redeem_res.status_code == 400
+
+def test_otp_flows():
+    import uuid
+    from app.models.models import UserOTP
+    db = TestingSessionLocal()
+    
+    email = f"otp_flow_{uuid.uuid4()}@example.com"
+    password = "flowpassword"
+    
+    # 1. Register user
+    reg_res = client.post("/api/auth/register", json={"email": email, "password": password})
+    assert reg_res.status_code == 200
+    
+    # 2. Login fails with NOT_VERIFIED
+    login_res = client.post("/api/auth/login", json={"email": email, "password": password})
+    assert login_res.status_code == 400
+    assert login_res.json()["detail"] == "NOT_VERIFIED"
+    
+    # 3. Resend OTP
+    resend_res = client.post("/api/auth/resend-otp", json={"email": email})
+    assert resend_res.status_code == 200
+    
+    # 4. Fetch OTP from database
+    otp_entry = db.query(UserOTP).filter_by(email=email, purpose="VERIFICATION").first()
+    assert otp_entry is not None
+    
+    # 5. Verify OTP
+    verify_res = client.post("/api/auth/verify-otp", json={"email": email, "otp_code": otp_entry.otp_code})
+    assert verify_res.status_code == 200
+    token = verify_res.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+    
+    # 6. Login succeeds now
+    login_ok_res = client.post("/api/auth/login", json={"email": email, "password": password})
+    assert login_ok_res.status_code == 200
+    
+    # 7. Forgot password
+    forgot_res = client.post("/api/auth/forgot-password", json={"email": email})
+    assert forgot_res.status_code == 200
+    
+    # 8. Fetch recovery OTP from database
+    recovery_entry = db.query(UserOTP).filter_by(email=email, purpose="RECOVERY").first()
+    assert recovery_entry is not None
+    
+    # 9. Reset password
+    new_password = "newflowpassword"
+    reset_res = client.post("/api/auth/reset-password", json={
+        "email": email,
+        "otp_code": recovery_entry.otp_code,
+        "new_password": new_password
+    })
+    assert reset_res.status_code == 200
+    
+    # 10. Login with new password succeeds
+    login_new_res = client.post("/api/auth/login", json={"email": email, "password": new_password})
+    assert login_new_res.status_code == 200
+    new_token = login_new_res.json()["access_token"]
+    new_headers = {"Authorization": f"Bearer {new_token}"}
+    
+    # 11. Change password
+    change_res = client.post("/api/auth/change-password", headers=new_headers, json={
+        "old_password": new_password,
+        "new_password": "finalpassword"
+    })
+    assert change_res.status_code == 200
+    
+    # 12. Login with final password succeeds
+    login_final_res = client.post("/api/auth/login", json={"email": email, "password": "finalpassword"})
+    assert login_final_res.status_code == 200
+    db.close()
 
 
 

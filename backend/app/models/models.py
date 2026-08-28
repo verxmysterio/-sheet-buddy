@@ -15,6 +15,7 @@ class User(Base):
     hashed_password = Column(String(200), nullable=False)
     page_credits = Column(Integer, default=0, nullable=False)
     is_admin = Column(Boolean, default=False, nullable=False)
+    is_verified = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -83,4 +84,14 @@ class PromoCode(Base):
     type = Column(String(50), nullable=False) # UNIVERSAL_ONCE, PER_USER_ONCE, TIME_BASED
     is_active = Column(Boolean, default=True, nullable=False)
     expires_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class UserOTP(Base):
+    __tablename__ = "user_otps"
+    
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    email = Column(String(150), nullable=False, index=True)
+    otp_code = Column(String(10), nullable=False)
+    purpose = Column(String(50), nullable=False)  # VERIFICATION, RECOVERY
+    expires_at = Column(DateTime, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
