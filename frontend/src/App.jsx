@@ -1237,8 +1237,7 @@ export default function App() {
           {/* Right: User Credits status and logout in header */}
           <div className="flex items-center justify-between md:justify-end px-6 py-4 md:py-0 space-x-4 border-t-2 md:border-t-0 md:border-l-4 border-black bg-slate-50 flex-shrink-0">
             <div className="text-left md:text-right py-1">
-              <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest">{user.email}</span>
-              <div className="flex items-center space-x-1.5 mt-0.5 justify-start md:justify-end">
+              <div className="flex items-center space-x-1.5 justify-start md:justify-end">
                 <span className="text-sm font-black text-black">{user.page_credits}</span>
                 <span className="text-[10px] font-bold text-slate-600">Credits</span>
               </div>
