@@ -69,10 +69,11 @@ def send_otp_email(to_email: str, otp_code: str, purpose: str) -> bool:
         server.quit()
         return True
     except Exception as e:
+        error_msg = f"SMTP Failure: {str(e)}"
         print(f"SMTP Error: Failed to send OTP to {to_email}: {str(e)}")
         # Print fallback to console in case of delivery failure
         print("\n" + "="*60)
         print("FALLBACK: SMTP Failed - Printing OTP directly:")
         print(f"Email: {to_email} | Purpose: {purpose} | OTP: {otp_code}")
         print("="*60 + "\n")
-        return True
+        raise RuntimeError(error_msg)

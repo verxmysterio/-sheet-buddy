@@ -70,7 +70,17 @@ def register(user_in: UserCreate, db: Session = Depends(get_db)):
     db.add(otp_entry)
     db.commit()
     
-    send_otp_email(user.email, otp_code, "VERIFICATION")
+    try:
+        send_otp_email(user.email, otp_code, "VERIFICATION")
+    except Exception as e:
+        db.delete(otp_entry)
+        db.delete(credit_tx)
+        db.delete(user)
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to send verification email: {str(e)}. Please check your SMTP environment variables."
+        )
     
     return user
 
@@ -160,7 +170,15 @@ def resend_otp(req: ResendOTPRequest, db: Session = Depends(get_db)):
     db.add(otp_entry)
     db.commit()
     
-    send_otp_email(req.email, otp_code, "VERIFICATION")
+    try:
+        send_otp_email(req.email, otp_code, "VERIFICATION")
+    except Exception as e:
+        db.delete(otp_entry)
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to send email: {str(e)}. Please check your SMTP environment variables."
+        )
     return {"message": "Verification code resent successfully."}
 
 @router.post("/forgot-password")
@@ -182,7 +200,15 @@ def forgot_password(req: ForgotPasswordRequest, db: Session = Depends(get_db)):
     db.add(otp_entry)
     db.commit()
     
-    send_otp_email(req.email, otp_code, "RECOVERY")
+    try:
+        send_otp_email(req.email, otp_code, "RECOVERY")
+    except Exception as e:
+        db.delete(otp_entry)
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to send recovery email: {str(e)}."
+        )
     return {"message": "If the account exists, a recovery code has been sent."}
 
 @router.post("/reset-password")
