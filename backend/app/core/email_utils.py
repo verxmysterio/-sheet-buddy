@@ -45,7 +45,8 @@ def send_otp_email(to_email: str, otp_code: str, purpose: str) -> bool:
             url = "https://api.resend.com/emails"
             headers = {
                 "Authorization": f"Bearer {settings.RESEND_API_KEY}",
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
             }
             payload = {
                 "from": from_email,
