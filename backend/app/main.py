@@ -20,9 +20,10 @@ try:
 except Exception:
     db.rollback()
     try:
-        db.execute(text("ALTER TABLE users ADD COLUMN is_admin BOOLEAN DEFAULT 0 NOT NULL"))
+        db.execute(text("ALTER TABLE users ADD COLUMN is_admin BOOLEAN DEFAULT FALSE NOT NULL"))
         db.commit()
     except Exception as e:
+        db.rollback()
         print("Schema update log:", e)
 
 # SQLite migration check: auto-add is_verified column if missing
@@ -31,9 +32,10 @@ try:
 except Exception:
     db.rollback()
     try:
-        db.execute(text("ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT 0 NOT NULL"))
+        db.execute(text("ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT FALSE NOT NULL"))
         db.commit()
     except Exception as e:
+        db.rollback()
         print("Schema update is_verified log:", e)
 
 # SQLite migration check: auto-add status column to wallet_transactions if missing
@@ -45,6 +47,7 @@ except Exception:
         db.execute(text("ALTER TABLE wallet_transactions ADD COLUMN status VARCHAR(50) DEFAULT 'COMPLETED' NOT NULL"))
         db.commit()
     except Exception as e:
+        db.rollback()
         print("Schema update status col log:", e)
 
 try:
