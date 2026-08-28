@@ -118,6 +118,15 @@ export default function App() {
   const [bankFormConfigJson, setBankFormConfigJson] = useState('{\n  \n}');
   const [bankFormError, setBankFormError] = useState('');
 
+  // --- Admin User Creation State ---
+  const [adminNewUserEmail, setAdminNewUserEmail] = useState('');
+  const [adminNewUserPassword, setAdminNewUserPassword] = useState('');
+  const [adminNewUserCredits, setAdminNewUserCredits] = useState(100);
+  const [adminNewUserIsAdmin, setAdminNewUserIsAdmin] = useState(false);
+  const [adminNewUserLoading, setAdminNewUserLoading] = useState(false);
+  const [adminNewUserSuccess, setAdminNewUserSuccess] = useState('');
+  const [adminNewUserError, setAdminNewUserError] = useState('');
+
 
   // Synchronize auth state
   useEffect(() => {
@@ -956,6 +965,45 @@ export default function App() {
     setBankFormError('');
   };
 
+  const handleAdminCreateUser = async (e) => {
+    e.preventDefault();
+    setAdminNewUserError('');
+    setAdminNewUserSuccess('');
+    setAdminNewUserLoading(true);
+
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          email: adminNewUserEmail,
+          password: adminNewUserPassword,
+          page_credits: parseInt(adminNewUserCredits, 10) || 0,
+          is_admin: adminNewUserIsAdmin
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setAdminNewUserSuccess(`User ${adminNewUserEmail} created successfully!`);
+        setAdminNewUserEmail('');
+        setAdminNewUserPassword('');
+        setAdminNewUserCredits(100);
+        setAdminNewUserIsAdmin(false);
+        fetchAdminData();
+      } else {
+        setAdminNewUserError(data.detail || 'Failed to create user account.');
+      }
+    } catch (err) {
+      setAdminNewUserError('Network connection failed. Please try again.');
+    } finally {
+      setAdminNewUserLoading(false);
+    }
+  };
+
   const handleAdjustCredits = async (userId) => {
     const amountStr = creditAdjustmentInputs[userId] || '';
     const amountVal = parseInt(amountStr, 10);
@@ -1083,21 +1131,6 @@ export default function App() {
                   />
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setVerificationEmail(email);
-                      setAuthMode('forgot');
-                      setAuthError('');
-                      setStatusMessage('');
-                    }}
-                    className="text-xs font-bold text-black underline hover:no-underline"
-                  >
-                    Forgot Password?
-                  </button>
-                </div>
-
                 <div>
                   <button
                     type="submit"
@@ -1105,234 +1138,6 @@ export default function App() {
                     className="w-full flex justify-center py-2.5 px-4 border-2 border-black font-black text-black bg-[#ffd615] hover:bg-yellow-400 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] shadow-[4px_4px_0px_rgba(0,0,0,1)] transition-all uppercase disabled:opacity-50"
                   >
                     {authLoading ? 'Logging in...' : 'Log In'}
-                  </button>
-                </div>
-
-                <div className="pt-2 text-center">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAuthMode('register');
-                      setAuthError('');
-                      setStatusMessage('');
-                    }}
-                    className="text-sm font-black text-black underline hover:no-underline"
-                  >
-                    Don't have an account? Sign Up
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {authMode === 'register' && (
-              <form className="space-y-6" onSubmit={handleAuthSubmit}>
-                <div>
-                  <label className="block text-sm font-black text-black uppercase">Email Address</label>
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="mt-1 block w-full px-3 py-2 border-2 border-black focus:outline-none focus:bg-yellow-50 text-sm font-bold"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-black text-black uppercase">Password</label>
-                  <input
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="mt-1 block w-full px-3 py-2 border-2 border-black focus:outline-none focus:bg-yellow-50 text-sm font-bold"
-                  />
-                </div>
-
-                <div>
-                  <button
-                    type="submit"
-                    disabled={authLoading}
-                    className="w-full flex justify-center py-2.5 px-4 border-2 border-black font-black text-black bg-[#ffd615] hover:bg-yellow-400 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] shadow-[4px_4px_0px_rgba(0,0,0,1)] transition-all uppercase disabled:opacity-50"
-                  >
-                    {authLoading ? 'Creating account...' : 'Create Account'}
-                  </button>
-                </div>
-
-                <div className="pt-2 text-center">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAuthMode('login');
-                      setAuthError('');
-                      setStatusMessage('');
-                    }}
-                    className="text-sm font-black text-black underline hover:no-underline"
-                  >
-                    Already have an account? Log In
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {authMode === 'verify' && (
-              <form className="space-y-6" onSubmit={handleVerifyOTP}>
-                <div>
-                  <label className="block text-sm font-black text-slate-600 uppercase">Verifying Email</label>
-                  <span className="block text-sm font-black text-black border-2 border-black bg-slate-50 px-3 py-2 mt-1">
-                    {verificationEmail}
-                  </span>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-black text-black uppercase">6-Digit Verification Code</label>
-                  <input
-                    type="text"
-                    required
-                    maxLength={10}
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    placeholder="Enter code"
-                    className="mt-1 block w-full px-3 py-2 border-2 border-black focus:outline-none focus:bg-yellow-50 text-sm font-bold text-center tracking-widest text-lg"
-                  />
-                </div>
-
-                <div className="flex space-x-3">
-                  <button
-                    type="submit"
-                    disabled={authLoading}
-                    className="flex-1 py-2.5 px-4 border-2 border-black font-black text-black bg-[#ffd615] hover:bg-yellow-400 active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] shadow-[3px_3px_0px_rgba(0,0,0,1)] transition-all uppercase disabled:opacity-50 text-xs"
-                  >
-                    Verify Code
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleResendOTP}
-                    className="flex-1 py-2.5 px-4 border-2 border-black font-black text-black bg-white hover:bg-slate-50 active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] shadow-[3px_3px_0px_rgba(0,0,0,1)] transition-all uppercase text-xs"
-                  >
-                    Resend OTP
-                  </button>
-                </div>
-
-                <div className="pt-2 text-center">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAuthMode('login');
-                      setAuthError('');
-                      setStatusMessage('');
-                    }}
-                    className="text-xs font-bold text-black underline hover:no-underline"
-                  >
-                    Back to Log In
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {authMode === 'forgot' && (
-              <form className="space-y-6" onSubmit={handleForgotPassword}>
-                <div>
-                  <label className="block text-sm font-black text-black uppercase">Enter Your Email Address</label>
-                  <input
-                    type="email"
-                    required
-                    value={verificationEmail}
-                    onChange={(e) => setVerificationEmail(e.target.value)}
-                    className="mt-1 block w-full px-3 py-2 border-2 border-black focus:outline-none focus:bg-yellow-50 text-sm font-bold"
-                  />
-                </div>
-
-                <div>
-                  <button
-                    type="submit"
-                    disabled={authLoading}
-                    className="w-full flex justify-center py-2.5 px-4 border-2 border-black font-black text-black bg-[#ffd615] hover:bg-yellow-400 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] shadow-[4px_4px_0px_rgba(0,0,0,1)] transition-all uppercase disabled:opacity-50"
-                  >
-                    {authLoading ? 'Sending...' : 'Send Recovery Code'}
-                  </button>
-                </div>
-
-                <div className="pt-2 text-center">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAuthMode('login');
-                      setAuthError('');
-                      setStatusMessage('');
-                    }}
-                    className="text-xs font-bold text-black underline hover:no-underline"
-                  >
-                    Back to Log In
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {authMode === 'reset' && (
-              <form className="space-y-6" onSubmit={handleResetPassword}>
-                <div>
-                  <label className="block text-sm font-black text-slate-600 uppercase">Recovering Email</label>
-                  <span className="block text-sm font-black text-black border-2 border-black bg-slate-50 px-3 py-2 mt-1">
-                    {verificationEmail}
-                  </span>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-black text-black uppercase">6-Digit Recovery Code</label>
-                  <input
-                    type="text"
-                    required
-                    maxLength={10}
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    placeholder="Enter code"
-                    className="mt-1 block w-full px-3 py-2 border-2 border-black focus:outline-none focus:bg-yellow-50 text-sm font-bold text-center tracking-widest text-lg"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-black text-black uppercase">New Password</label>
-                  <input
-                    type="password"
-                    required
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    className="mt-1 block w-full px-3 py-2 border-2 border-black focus:outline-none focus:bg-yellow-50 text-sm font-bold"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-black text-black uppercase">Confirm New Password</label>
-                  <input
-                    type="password"
-                    required
-                    value={confirmNewPassword}
-                    onChange={(e) => setConfirmNewPassword(e.target.value)}
-                    className="mt-1 block w-full px-3 py-2 border-2 border-black focus:outline-none focus:bg-yellow-50 text-sm font-bold"
-                  />
-                </div>
-
-                <div>
-                  <button
-                    type="submit"
-                    disabled={authLoading}
-                    className="w-full flex justify-center py-2.5 px-4 border-2 border-black font-black text-black bg-[#ffd615] hover:bg-yellow-400 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] shadow-[4px_4px_0px_rgba(0,0,0,1)] transition-all uppercase disabled:opacity-50"
-                  >
-                    {authLoading ? 'Resetting Password...' : 'Reset Password'}
-                  </button>
-                </div>
-
-                <div className="pt-2 text-center">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAuthMode('login');
-                      setAuthError('');
-                      setStatusMessage('');
-                    }}
-                    className="text-xs font-bold text-black underline hover:no-underline"
-                  >
-                    Back to Log In
                   </button>
                 </div>
               </form>
@@ -2094,6 +1899,82 @@ export default function App() {
                     <p className="text-2xl font-black text-black mt-1">₹{adminStats?.total_revenue?.toFixed(2) || '0.00'}</p>
                   </div>
                 </div>
+              </div>
+
+              {/* Create User Card */}
+              <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 space-y-4">
+                <h4 className="text-md font-black text-black uppercase border-b-2 border-black pb-2">Create New Client Account</h4>
+                
+                <form onSubmit={handleAdminCreateUser} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                  <div>
+                    <label className="block text-xs font-black text-black uppercase mb-1">Email Address</label>
+                    <input
+                      type="email"
+                      required
+                      placeholder="client@email.com"
+                      value={adminNewUserEmail}
+                      onChange={(e) => setAdminNewUserEmail(e.target.value)}
+                      className="w-full px-3 py-2 border-2 border-black text-xs font-bold bg-white focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-black text-black uppercase mb-1">Initial Password</label>
+                    <input
+                      type="password"
+                      required
+                      placeholder="Password"
+                      value={adminNewUserPassword}
+                      onChange={(e) => setAdminNewUserPassword(e.target.value)}
+                      className="w-full px-3 py-2 border-2 border-black text-xs font-bold bg-white focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-xs font-black text-black uppercase mb-1">Initial Credits</label>
+                      <input
+                        type="number"
+                        required
+                        min={0}
+                        value={adminNewUserCredits}
+                        onChange={(e) => setAdminNewUserCredits(e.target.value)}
+                        className="w-full px-3 py-2 border-2 border-black text-xs font-bold bg-white focus:outline-none"
+                      />
+                    </div>
+                    <div className="flex flex-col justify-center items-center h-[38px] border-2 border-black bg-slate-50">
+                      <label className="text-[9px] font-black text-black uppercase">Is Admin?</label>
+                      <input
+                        type="checkbox"
+                        checked={adminNewUserIsAdmin}
+                        onChange={(e) => setAdminNewUserIsAdmin(e.target.checked)}
+                        className="w-4 h-4 border-2 border-black focus:ring-0 cursor-pointer accent-black"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <button
+                      type="submit"
+                      disabled={adminNewUserLoading}
+                      className="w-full py-2.5 px-4 border-2 border-black font-black text-white bg-black hover:bg-zinc-800 uppercase shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-all text-xs disabled:opacity-50"
+                    >
+                      {adminNewUserLoading ? 'Creating...' : 'Create Account'}
+                    </button>
+                  </div>
+                </form>
+
+                {adminNewUserError && (
+                  <div className="bg-[#ff5757] text-white p-3 border-2 border-black font-bold text-xs">
+                    ERROR: {adminNewUserError}
+                  </div>
+                )}
+
+                {adminNewUserSuccess && (
+                  <div className="bg-[#25D366] text-white p-3 border-2 border-black font-bold text-xs">
+                    SUCCESS: {adminNewUserSuccess}
+                  </div>
+                )}
               </div>
 
               {/* Manage Users Card */}

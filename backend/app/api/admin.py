@@ -365,3 +365,53 @@ def toggle_promo_code(
     promo.is_active = not promo.is_active
     db.commit()
     return {"status": "success", "is_active": promo.is_active}
+
+class AdminUserCreateRequest(BaseModel):
+    email: str
+    password: str
+    page_credits: int = 100
+    is_admin: bool = False
+
+@router.post("/users")
+def create_user(
+    payload: AdminUserCreateRequest,
+    db: Session = Depends(get_db),
+    admin: User = Depends(get_current_admin)
+):
+    from ..core.security import hash_password
+    import re
+    EMAIL_REGEX = re.compile(r"^[^@]+@[^@]+\.[^@]+$")
+    if not EMAIL_REGEX.match(payload.email):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid email address format."
+        )
+        
+    # Check if user already exists
+    existing = db.query(User).filter(User.email == payload.email).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="User already exists.")
+        
+    new_user = User(
+        email=payload.email,
+        hashed_password=hash_password(payload.password),
+        page_credits=payload.page_credits,
+        is_admin=payload.is_admin,
+        is_verified=True
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    
+    # Log credit addition transaction
+    tx = WalletTransaction(
+        user_id=new_user.id,
+        amount_in_inr=0.0,
+        pages_purchased=payload.page_credits,
+        type="REFUND",
+        description="Admin seeded credits on creation"
+    )
+    db.add(tx)
+    db.commit()
+    
+    return {"message": "User created successfully.", "user_id": new_user.id}
