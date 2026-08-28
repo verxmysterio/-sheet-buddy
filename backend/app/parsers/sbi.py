@@ -203,13 +203,27 @@ class SBIParser(BankParser):
             from datetime import date
             val_date_obj = date.today()
             
+        # Clean amount string safely
         amount_clean = tx['amount_val'].replace(',', '').strip() if tx['amount_val'] else '0'
-        amount = float(amount_clean)
+        if not amount_clean or amount_clean == '-' or amount_clean.isspace():
+            amount = 0.0
+        else:
+            try:
+                amount = float(amount_clean)
+            except ValueError:
+                amount = 0.0
         debit = amount if tx['is_debit'] else None
         credit = amount if tx['is_credit'] else None
         
+        # Clean balance string safely
         balance_clean = tx['balance_val'].replace(',', '').replace('CR', '').replace('DR', '').replace('Cr', '').replace('Dr', '').strip() if tx['balance_val'] else '0'
-        balance = float(balance_clean)
+        if not balance_clean or balance_clean == '-' or balance_clean.isspace():
+            balance = 0.0
+        else:
+            try:
+                balance = float(balance_clean)
+            except ValueError:
+                balance = 0.0
         
         return StandardTransaction(
             txn_date=txn_date_obj,

@@ -91,7 +91,7 @@ async def upload_statement(
             os.remove(temp_filepath)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="This PDF does not match the selected State Bank of India statement format."
+            detail=f"This PDF does not match the selected {bank_name} statement format. Details: {str(e)}"
         )
         
     # 5. Reconcile
@@ -158,12 +158,12 @@ async def execute_conversion(
     try:
         parser = get_parser(bank_name)
         metadata, transactions = parser.parse(temp_filepath)
-    except Exception:
+    except Exception as e:
         if os.path.exists(temp_filepath):
             os.remove(temp_filepath)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Failed to parse statement during conversion. Please try again."
+            detail=f"Failed to parse statement during conversion. Details: {str(e)}"
         )
         
     # Apply user narration edits if provided

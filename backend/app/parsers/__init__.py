@@ -64,7 +64,7 @@ class BOBParser(BankParser):
                 all_elements.append(row_el)
                 
         transactions = []
-        date_re = re.compile(r'^\d{2}/\d{2}/\d{4}$')
+        date_re = re.compile(r'^\d{2}[/-]\d{2}[/-]\d{4}$')
         current_tx = None
         
         for row_el in all_elements:
@@ -83,8 +83,10 @@ class BOBParser(BankParser):
                 val_date_str = row_el[1]['text']
                 
                 try:
-                    txn_date = dt_class.strptime(txn_date_str, "%d/%m/%Y").date()
-                    val_date = dt_class.strptime(val_date_str, "%d/%m/%Y").date()
+                    t_str = txn_date_str.replace('-', '/')
+                    v_str = val_date_str.replace('-', '/')
+                    txn_date = dt_class.strptime(t_str, "%d/%m/%Y").date()
+                    val_date = dt_class.strptime(v_str, "%d/%m/%Y").date()
                 except Exception:
                     txn_date = date.today()
                     val_date = date.today()
@@ -141,6 +143,65 @@ class BOBParser(BankParser):
         for tx in transactions:
             tx.narration = re.sub(r'\s+', ' ', tx.narration).strip()
             
+        if not transactions:
+            # Fallback to line-by-line text-based parsing
+            fallback_date_re = re.compile(r'^(\d{2}[/-]\d{2}[/-]\d{4})')
+            for p_idx, page in enumerate(reader.pages):
+                text_content = page.extract_text() or ""
+                lines = text_content.split("\n")
+                for line in lines:
+                    line_clean = line.strip()
+                    m = fallback_date_re.match(line_clean)
+                    if m:
+                        line_clean = line_clean.replace("₹", "").replace("Rs.", "").strip()
+                        parts = re.split(r'\s{2,}', line_clean)
+                        if len(parts) >= 2:
+                            date_str = parts[0][:10]
+                            try:
+                                t_str = date_str.replace('-', '/')
+                                txn_date = dt_class.strptime(t_str, "%d/%m/%Y").date()
+                            except Exception:
+                                txn_date = date.today()
+                            
+                            narration = parts[0][10:].strip()
+                            
+                            try:
+                                bal_clean = parts[-1].replace(',', '').replace('Cr', '').replace('Dr', '').strip()
+                                balance = float(bal_clean)
+                            except Exception:
+                                balance = 0.0
+                                
+                            try:
+                                amt_clean = parts[-2].replace(',', '').replace('Cr', '').replace('Dr', '').strip()
+                                amount = float(amt_clean)
+                            except Exception:
+                                amount = 0.0
+                                
+                            # Heuristic classification for fallback (no coordinates)
+                            narr_up = narration.upper()
+                            is_credit = False
+                            # Ends with an instrument number -> Debit
+                            if re.search(r'\s\d{3,6}$', narration):
+                                is_credit = False
+                            elif any(k in narr_up for k in ["BY TRANSFER", "BY CASH", "RTN:", "INTEREST", "NEFT"]):
+                                if "BY INST" not in narr_up:
+                                    is_credit = True
+                            elif "AMRITA" in narr_up:
+                                is_credit = True
+                                
+                            debit = None if is_credit else amount
+                            credit = amount if is_credit else None
+                            
+                            transactions.append(StandardTransaction(
+                                txn_date=txn_date,
+                                val_date=txn_date,
+                                narration=narration,
+                                ref_no=f"BOB{txn_date.strftime('%Y%m%d')}{hash(narration)%10000}",
+                                debit=debit,
+                                credit=credit,
+                                balance=balance
+                            ))
+            
         if transactions:
             oldest_tx = transactions[-1]
             newest_tx = transactions[0]
@@ -188,7 +249,7 @@ class BOBParser(BankParser):
         import re
         
         pages_count = len(reader.pages)
-        page2_text = reader.pages[1].extract_text()
+        page2_text = reader.pages[1].extract_text() if pages_count >= 2 else reader.pages[0].extract_text()
         
         account_name = "AMRITA"
         account_number = "80300100010082"
