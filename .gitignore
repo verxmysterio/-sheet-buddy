@@ -1,0 +1,39 @@
+# Python files
+**/__pycache__/
+*.py[cod]
+*$py.class
+
+# Database files
+*.db
+*.sqlite3
+backend/balance_sheet_buddy.db
+balance_sheet_buddy.db
+
+# Env files
+.env
+backend/.env
+env/
+venv/
+.venv/
+
+# Scratch & Upload files
+backend/scratch/
+backend/app/scratch/
+scratch/
+temp_uploads/
+xml_cache/
+*.pdf
+
+# IDE files
+.vscode/
+.idea/
+
+# Output files
+*.xml
+output_tally.xml
+
+# Node modules & builds
+node_modules/
+dist/
+frontend/dist/
+frontend/node_modules/
