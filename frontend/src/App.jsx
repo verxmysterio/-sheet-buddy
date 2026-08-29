@@ -1571,52 +1571,10 @@ export default function App() {
 
                       {/* Step 2: Upload and Convert Form */}
                       <form onSubmit={handleExcelToXmlSubmit} className="space-y-4">
-                        <h4 className="text-xs font-black text-black uppercase">2. Map Ledgers & Upload Excel</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-[9px] font-black text-black uppercase mb-1">Bank Ledger Name (in Tally)</label>
-                            <input
-                              type="text"
-                              required
-                              value={excelBankLedger}
-                              onChange={(e) => setExcelBankLedger(e.target.value)}
-                              className="w-full px-3 py-2 border-2 border-black font-bold focus:outline-none bg-white text-xs"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-[9px] font-black text-black uppercase mb-1">Counter Ledger Name (in Tally)</label>
-                            <input
-                              type="text"
-                              required
-                              value={excelSuspenseLedger}
-                              onChange={(e) => setExcelSuspenseLedger(e.target.value)}
-                              className="w-full px-3 py-2 border-2 border-black font-bold focus:outline-none bg-white text-xs"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-[9px] font-black text-black uppercase mb-1">Receipt Voucher Type</label>
-                            <input
-                              type="text"
-                              required
-                              value={excelReceiptType}
-                              onChange={(e) => setExcelReceiptType(e.target.value)}
-                              className="w-full px-3 py-2 border-2 border-black font-bold focus:outline-none bg-white text-xs"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-[9px] font-black text-black uppercase mb-1">Payment Voucher Type</label>
-                            <input
-                              type="text"
-                              required
-                              value={excelPaymentType}
-                              onChange={(e) => setExcelPaymentType(e.target.value)}
-                              className="w-full px-3 py-2 border-2 border-black font-bold focus:outline-none bg-white text-xs"
-                            />
-                          </div>
-                        </div>
+                        <h4 className="text-xs font-black text-black uppercase">2. Upload Excel File</h4>
+                        <p className="text-[10px] font-bold text-slate-500 leading-relaxed">
+                          Sheet Buddy reads transaction details, Ledger Names (Bank and Counter), and Voucher Types directly from the columns inside your uploaded template.
+                        </p>
 
                         <div className="border-2 border-dashed border-black p-4 bg-slate-50 text-center space-y-2">
                           <label className="block text-[10px] font-black text-black uppercase cursor-pointer">
@@ -2901,7 +2859,36 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t-4 border-black py-6 text-center text-xs font-bold text-black mt-auto space-y-2">
+      <footer className="bg-white border-t-4 border-black py-6 text-center text-xs font-bold text-black mt-auto space-y-4">
+        {/* Contact CTA */}
+        <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-3 pb-2 border-b border-slate-100 max-w-lg mx-auto">
+          <span>To know more, book demo or pricing contact us:</span>
+          <div className="flex items-center space-x-3">
+            {/* WhatsApp Link */}
+            <a
+              href="https://wa.me/919204915729?text=Hello!%20I'd%20like%20to%20know%20more,%20book%20a%20demo,%20or%20discuss%20pricing%20for%20Sheet%20Buddy."
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-1 border-2 border-black bg-[#25D366] hover:bg-green-500 text-white rounded-none shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-all flex items-center justify-center w-7 h-7"
+              title="Contact on WhatsApp"
+            >
+              <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                <path d="M17.472 14.382c-.022-.079-.116-.123-.27-.2c-.155-.077-.915-.452-1.056-.502c-.142-.053-.247-.077-.35.077c-.104.154-.4.502-.49.603c-.09.1-.18.11-.33.037c-.152-.074-.64-.236-1.22-.756c-.45-.4-.754-.896-.838-1.042c-.085-.145-.01-.223.067-.3c.068-.07.155-.18.23-.27c.077-.09.104-.15.155-.25c.05-.1.025-.19-.012-.265c-.038-.076-.35-.85-.48-1.164c-.127-.31-.257-.267-.35-.272c-.09-.004-.19-.004-.29-.004c-.1-.004-.263.038-.4.19c-.138.15-.527.513-.527 1.253s.54 1.455.614 1.555c.077.1 1.06 1.622 2.57 2.27c.36.155.64.248.86.315c.36.115.69.098.95.06c.29-.044.9-.368 1.03-.722c.13-.356.13-.663.09-.723M12 2C6.477 2 2 6.477 2 12c0 2.01.524 3.9 1.524 5.56L2 22l4.632-1.216C8.204 21.464 9.99 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2z"/>
+              </svg>
+            </a>
+            {/* Email Link */}
+            <a
+              href="mailto:sheetbuddyorg@gmail.com?subject=Sheet%20Buddy%20Demo%20and%20Pricing%20Inquiry"
+              className="p-1 border-2 border-black bg-[#3b82f6] hover:bg-blue-500 text-white rounded-none shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-all flex items-center justify-center w-7 h-7"
+              title="Send an Email"
+            >
+              <svg className="w-4 h-4 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </a>
+          </div>
+        </div>
+
         <p>© 2026 Sheet Buddy. Designed in Neo-Brutalist Layout. Bank statements are processed and deleted immediately.</p>
         <p className="text-slate-600 font-bold">
           Build with ❤️ by{" "}

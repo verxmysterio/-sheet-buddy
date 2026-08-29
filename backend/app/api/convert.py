@@ -360,7 +360,10 @@ def download_excel_template(
         "Reference No",
         "Debit (Payment)",
         "Credit (Receipt)",
-        "Balance"
+        "Balance",
+        "Bank Ledger Name (in Tally)",
+        "Counter Ledger Name (in Tally)",
+        "Voucher Type (in Tally)"
     ]
     ws.append(headers)
     
@@ -373,26 +376,38 @@ def download_excel_template(
         bottom=Side(style='thin', color='000000')
     )
     
-    for col_idx in range(1, 7):
+    for col_idx in range(1, 10):
         cell = ws.cell(row=1, column=col_idx)
         cell.fill = header_fill
         cell.font = header_font
         cell.alignment = Alignment(horizontal="center", vertical="center")
         cell.border = thin_border
         
-    sample = ["28-08-2026", "Sample opening receipt transaction", "REF00001", "", "1500.00", "1500.00"]
+    sample = [
+        "28-08-2026",
+        "Sample transaction narration",
+        "REF00001",
+        "",
+        "1500.00",
+        "1500.00",
+        "HDFC Bank",
+        "Suspense",
+        "Receipt"
+    ]
     ws.append(sample)
     
-    for col_idx in range(1, 7):
+    for col_idx in range(1, 10):
         cell = ws.cell(row=2, column=col_idx)
         cell.font = Font(name="Calibri", size=11)
         cell.border = thin_border
-        if col_idx in [1, 3]:
+        if col_idx in [1, 3, 9]:
             cell.alignment = Alignment(horizontal="center")
         elif col_idx in [4, 5, 6]:
             cell.alignment = Alignment(horizontal="right")
+        else:
+            cell.alignment = Alignment(horizontal="left")
             
-    column_widths = {"A": 20, "B": 45, "C": 18, "D": 15, "E": 15, "F": 15}
+    column_widths = {"A": 20, "B": 45, "C": 18, "D": 15, "E": 15, "F": 15, "G": 25, "H": 25, "I": 20}
     for col, width in column_widths.items():
         ws.column_dimensions[col].width = width
         
@@ -455,6 +470,9 @@ async def convert_excel_to_xml(
             debit_val = ws.cell(row=r_idx, column=4).value
             credit_val = ws.cell(row=r_idx, column=5).value
             balance_val = ws.cell(row=r_idx, column=6).value
+            bank_ledger_val = ws.cell(row=r_idx, column=7).value
+            counter_ledger_val = ws.cell(row=r_idx, column=8).value
+            voucher_type_val = ws.cell(row=r_idx, column=9).value
             
             if date_val is None and narration_val is None and debit_val is None and credit_val is None:
                 continue
@@ -492,6 +510,10 @@ async def convert_excel_to_xml(
             if debit is None and credit is None:
                 raise ValueError(f"Both Debit and Credit columns cannot be empty at row {r_idx}.")
                 
+            tally_bank_ledger = str(bank_ledger_val).strip() if bank_ledger_val is not None and str(bank_ledger_val).strip() != "" else None
+            tally_counter_ledger = str(counter_ledger_val).strip() if counter_ledger_val is not None and str(counter_ledger_val).strip() != "" else None
+            tally_voucher_type = str(voucher_type_val).strip() if voucher_type_val is not None and str(voucher_type_val).strip() != "" else None
+
             transactions.append(
                 StandardTransaction(
                     txn_date=txn_date,
@@ -500,7 +522,10 @@ async def convert_excel_to_xml(
                     ref_no=str(ref_val).strip() if ref_val is not None else None,
                     debit=debit,
                     credit=credit,
-                    balance=balance
+                    balance=balance,
+                    tally_bank_ledger=tally_bank_ledger,
+                    tally_counter_ledger=tally_counter_ledger,
+                    tally_voucher_type=tally_voucher_type
                 )
             )
             

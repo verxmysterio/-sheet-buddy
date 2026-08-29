@@ -12,6 +12,9 @@ class StandardTransaction(BaseModel):
     credit: Optional[float] = None
     balance: float
     branch_code: Optional[str] = None
+    tally_bank_ledger: Optional[str] = None
+    tally_counter_ledger: Optional[str] = None
+    tally_voucher_type: Optional[str] = None
 
 class StatementMetadata(BaseModel):
     bank_name: str
