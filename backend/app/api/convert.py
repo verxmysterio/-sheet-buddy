@@ -326,3 +326,203 @@ def download_cached_xml(
         media_type="application/xml",
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
+
+@router.get("/excel-template")
+def download_excel_template(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    # Gating check: Must be admin or have at least one approved/completed purchase
+    has_purchased = current_user.is_admin or db.query(WalletTransaction).filter(
+        WalletTransaction.user_id == current_user.id,
+        WalletTransaction.type == "PURCHASE",
+        WalletTransaction.status.in_(["APPROVED", "COMPLETED"])
+    ).first() is not None
+
+    if not has_purchased:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This free utility is only available to users who have purchased a credit plan. Please buy credits to unlock it."
+        )
+
+    import io
+    import openpyxl
+    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+    
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Excel Import Template"
+    ws.views.sheetView[0].showGridLines = True
+    
+    headers = [
+        "Date (DD-MM-YYYY)",
+        "Narration",
+        "Reference No",
+        "Debit (Payment)",
+        "Credit (Receipt)",
+        "Balance"
+    ]
+    ws.append(headers)
+    
+    header_fill = PatternFill(start_color="ffd615", end_color="ffd615", fill_type="solid")
+    header_font = Font(name="Calibri", size=11, bold=True, color="000000")
+    thin_border = Border(
+        left=Side(style='thin', color='000000'),
+        right=Side(style='thin', color='000000'),
+        top=Side(style='thin', color='000000'),
+        bottom=Side(style='thin', color='000000')
+    )
+    
+    for col_idx in range(1, 7):
+        cell = ws.cell(row=1, column=col_idx)
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+        cell.border = thin_border
+        
+    sample = ["28-08-2026", "Sample opening receipt transaction", "REF00001", "", "1500.00", "1500.00"]
+    ws.append(sample)
+    
+    for col_idx in range(1, 7):
+        cell = ws.cell(row=2, column=col_idx)
+        cell.font = Font(name="Calibri", size=11)
+        cell.border = thin_border
+        if col_idx in [1, 3]:
+            cell.alignment = Alignment(horizontal="center")
+        elif col_idx in [4, 5, 6]:
+            cell.alignment = Alignment(horizontal="right")
+            
+    column_widths = {"A": 20, "B": 45, "C": 18, "D": 15, "E": 15, "F": 15}
+    for col, width in column_widths.items():
+        ws.column_dimensions[col].width = width
+        
+    out = io.BytesIO()
+    wb.save(out)
+    out.seek(0)
+    
+    return StreamingResponse(
+        out,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": "attachment; filename=sheetbuddy_excel_tally_template.xlsx"}
+    )
+
+@router.post("/excel-to-xml")
+async def convert_excel_to_xml(
+    file: UploadFile = File(...),
+    bank_ledger_name: str = Form("Bank Account"),
+    counter_ledger_name: str = Form("Suspense"),
+    credit_voucher_type: str = Form("Receipt"),
+    debit_voucher_type: str = Form("Payment"),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    # Gating check
+    has_purchased = current_user.is_admin or db.query(WalletTransaction).filter(
+        WalletTransaction.user_id == current_user.id,
+        WalletTransaction.type == "PURCHASE",
+        WalletTransaction.status.in_(["APPROVED", "COMPLETED"])
+    ).first() is not None
+
+    if not has_purchased:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This free utility is only available to users who have purchased a credit plan. Please buy credits to unlock it."
+        )
+
+    if not file.filename.lower().endswith((".xlsx", ".xls")):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Unsupported file format. Please upload an Excel file (.xlsx or .xls)."
+        )
+
+    content = await file.read()
+    
+    import io
+    import openpyxl
+    import datetime
+    from ..parsers.base import StandardTransaction
+    from ..services.xml_generator import generate_tally_xml
+
+    try:
+        wb = openpyxl.load_workbook(io.BytesIO(content), data_only=True)
+        ws = wb.active
+        
+        transactions = []
+        for r_idx in range(2, ws.max_row + 1):
+            date_val = ws.cell(row=r_idx, column=1).value
+            narration_val = ws.cell(row=r_idx, column=2).value
+            ref_val = ws.cell(row=r_idx, column=3).value
+            debit_val = ws.cell(row=r_idx, column=4).value
+            credit_val = ws.cell(row=r_idx, column=5).value
+            balance_val = ws.cell(row=r_idx, column=6).value
+            
+            if date_val is None and narration_val is None and debit_val is None and credit_val is None:
+                continue
+                
+            txn_date = None
+            if isinstance(date_val, (datetime.date, datetime.datetime)):
+                txn_date = date_val.date() if isinstance(date_val, datetime.datetime) else date_val
+            elif isinstance(date_val, str):
+                for fmt in ("%d-%m-%Y", "%Y-%m-%d", "%d/%m/%Y", "%Y/%m/%d"):
+                    try:
+                        txn_date = datetime.datetime.strptime(date_val.strip(), fmt).date()
+                        break
+                    except ValueError:
+                        continue
+            
+            if txn_date is None:
+                raise ValueError(f"Invalid date format at row {r_idx}: '{date_val}'. Expected DD-MM-YYYY.")
+                
+            narration = str(narration_val).strip() if narration_val is not None else ""
+            if not narration:
+                raise ValueError(f"Missing narration at row {r_idx}.")
+                
+            def clean_amount(val):
+                if val is None or str(val).strip() == "":
+                    return None
+                try:
+                    return float(str(val).replace(",", "").strip())
+                except ValueError:
+                    raise ValueError(f"Invalid numeric value at row {r_idx}: '{val}'")
+                    
+            debit = clean_amount(debit_val)
+            credit = clean_amount(credit_val)
+            balance = clean_amount(balance_val) or 0.0
+            
+            if debit is None and credit is None:
+                raise ValueError(f"Both Debit and Credit columns cannot be empty at row {r_idx}.")
+                
+            transactions.append(
+                StandardTransaction(
+                    txn_date=txn_date,
+                    val_date=txn_date,
+                    narration=narration,
+                    ref_no=str(ref_val).strip() if ref_val is not None else None,
+                    debit=debit,
+                    credit=credit,
+                    balance=balance
+                )
+            )
+            
+        if not transactions:
+            raise ValueError("No valid transactions found in the Excel sheet.")
+
+        xml_data = generate_tally_xml(
+            transactions=transactions,
+            bank_ledger_name=bank_ledger_name,
+            counter_ledger_name=counter_ledger_name,
+            credit_voucher_type=credit_voucher_type,
+            debit_voucher_type=debit_voucher_type
+        )
+        
+        return Response(
+            content=xml_data,
+            media_type="application/xml",
+            headers={"Content-Disposition": "attachment; filename=excel_tally_import.xml"}
+        )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Excel parsing failed: {str(e)}"
+        )

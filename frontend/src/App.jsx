@@ -79,6 +79,16 @@ export default function App() {
   // --- History Search State ---
   const [historySearch, setHistorySearch] = useState('');
 
+  // --- Excel-to-XML Tally Tool State ---
+  const [excelFile, setExcelFile] = useState(null);
+  const [excelBankLedger, setExcelBankLedger] = useState('Bank Account');
+  const [excelSuspenseLedger, setExcelSuspenseLedger] = useState('Suspense');
+  const [excelReceiptType, setExcelReceiptType] = useState('Receipt');
+  const [excelPaymentType, setExcelPaymentType] = useState('Payment');
+  const [excelLoading, setExcelLoading] = useState(false);
+  const [excelError, setExcelError] = useState('');
+  const [excelSuccess, setExcelSuccess] = useState(false);
+
   // --- Wallet Purchase State & Checkout ---
   const [purchaseLoading, setPurchaseLoading] = useState(false);
   const [purchaseMessage, setPurchaseMessage] = useState('');
@@ -411,6 +421,85 @@ export default function App() {
     setPaymentLoading(false);
     setUpiId('');
     setCheckoutError('');
+  };
+
+  const handleDownloadTemplate = async () => {
+    try {
+      const res = await fetch('/api/convert/excel-template', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'sheetbuddy_excel_tally_template.xlsx';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+      } else {
+        const err = await res.json();
+        alert(err.detail || 'Failed to download template.');
+      }
+    } catch (err) {
+      alert('Network error downloading template.');
+    }
+  };
+
+  const handleExcelToXmlSubmit = async (e) => {
+    e.preventDefault();
+    if (!excelFile) {
+      setExcelError('Please select a valid Excel file to upload.');
+      return;
+    }
+    setExcelError('');
+    setExcelSuccess(false);
+    setExcelLoading(true);
+
+    const formData = new FormData();
+    formData.append('file', excelFile);
+    formData.append('bank_ledger_name', excelBankLedger);
+    formData.append('counter_ledger_name', excelSuspenseLedger);
+    formData.append('credit_voucher_type', excelReceiptType);
+    formData.append('debit_voucher_type', excelPaymentType);
+
+    try {
+      const res = await fetch('/api/convert/excel-to-xml', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'excel_tally_import.xml';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        setExcelSuccess(true);
+        setExcelFile(null);
+        const inputElem = document.getElementById('excelFileInput');
+        if (inputElem) {
+          inputElem.value = '';
+        }
+      } else {
+        const data = await res.json();
+        setExcelError(data.detail || 'Excel conversion failed.');
+      }
+    } catch (err) {
+      setExcelError('Network error uploading Excel file.');
+    } finally {
+      setExcelLoading(false);
+    }
   };
 
   const handleFileUploadChange = (e) => {
@@ -1196,6 +1285,12 @@ export default function App() {
               className={`flex items-center justify-center px-4 py-2 text-xs font-black border-2 border-black transition-all ${activeTab === 'history' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-slate-50'}`}
             >
               HISTORY ARCHIVE
+            </button>
+            <button
+              onClick={() => { setActiveTab('excel_tool'); setExecuteError(''); setMobileMenuOpen(false); }}
+              className={`flex items-center justify-center px-4 py-2 text-xs font-black border-2 border-black transition-all ${activeTab === 'excel_tool' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-slate-50'}`}
+            >
+              EXCEL TO TALLY
             </button>
             <button
               onClick={() => { setActiveTab('wallet'); setExecuteError(''); setMobileMenuOpen(false); }}
@@ -2562,6 +2657,161 @@ export default function App() {
                   </button>
                 </form>
               </div>
+            </div>
+          )}
+
+          {/* --- TAB 6.5: EXCEL TO TALLY TOOL --- */}
+          {activeTab === 'excel_tool' && (
+            <div className="space-y-6 max-w-4xl mx-auto">
+              {!user.has_purchased_plan ? (
+                /* Locked State Panel */
+                <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-8 text-center space-y-6">
+                  <div className="text-5xl">🔒</div>
+                  <h3 className="text-xl font-black text-black uppercase">Excel-to-Tally Import Tool is Locked</h3>
+                  <p className="text-xs font-bold text-slate-700 max-w-lg mx-auto leading-relaxed">
+                    This premium import utility is a free bonus for clients who have purchased any credit plan. 
+                    It allows you to download a standardized Excel sheet, input transactions, and instantly convert it to a Tally Prime compatible XML file for direct batch importing.
+                  </p>
+                  <div className="pt-2">
+                    <button
+                      onClick={() => setActiveTab('wallet')}
+                      className="px-6 py-3 border-4 border-black font-black text-black bg-[#ffd615] hover:bg-yellow-400 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_rgba(0,0,0,1)] shadow-[6px_6px_0px_rgba(0,0,0,1)] transition-all uppercase text-sm"
+                    >
+                      Unlock Tool (Buy Credits)
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* Unlocked Active Tool */
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  {/* Left Column: Download and Instructions */}
+                  <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 space-y-6 md:col-span-1">
+                    <h3 className="text-md font-black text-black uppercase border-b-2 border-black pb-2">1. Get the Template</h3>
+                    <p className="text-xs font-bold text-slate-700 leading-relaxed">
+                      Download our pre-formatted Excel template. Do not change the column headers as the system relies on them to read transactions correctly.
+                    </p>
+                    <button
+                      onClick={handleDownloadTemplate}
+                      className="w-full py-2.5 px-4 border-2 border-black font-black text-black bg-[#ffd615] hover:bg-yellow-400 uppercase shadow-[3px_3px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-all text-xs"
+                    >
+                      Download Excel Template
+                    </button>
+
+                    <h3 className="text-md font-black text-black uppercase border-b-2 border-black pb-2 pt-2">2. How to Fill In</h3>
+                    <ul className="text-[10px] font-bold text-slate-600 space-y-2 list-disc pl-4">
+                      <li><strong>Date:</strong> Use DD-MM-YYYY format (e.g. 28-08-2026).</li>
+                      <li><strong>Narration:</strong> Clear text description of the transaction.</li>
+                      <li><strong>Reference No:</strong> Voucher, cheque, or reference number (optional).</li>
+                      <li><strong>Debit/Credit:</strong> Enter positive numbers. Use Debit for payments (outflow) and Credit for receipts (inflow).</li>
+                      <li><strong>Balance:</strong> Enter the running balance (optional).</li>
+                    </ul>
+                  </div>
+
+                  {/* Right Column: Upload and Convert Form */}
+                  <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 space-y-6 md:col-span-2">
+                    <h3 className="text-md font-black text-black uppercase border-b-2 border-black pb-2">3. Convert to Tally XML</h3>
+                    
+                    <form onSubmit={handleExcelToXmlSubmit} className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-[10px] font-black text-black uppercase mb-1">Bank Ledger Name (in Tally)</label>
+                          <input
+                            type="text"
+                            required
+                            value={excelBankLedger}
+                            onChange={(e) => setExcelBankLedger(e.target.value)}
+                            className="w-full px-3 py-2 border-2 border-black font-bold focus:outline-none bg-white text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-black text-black uppercase mb-1">Counter Ledger Name (in Tally)</label>
+                          <input
+                            type="text"
+                            required
+                            value={excelSuspenseLedger}
+                            onChange={(e) => setExcelSuspenseLedger(e.target.value)}
+                            className="w-full px-3 py-2 border-2 border-black font-bold focus:outline-none bg-white text-xs"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-[10px] font-black text-black uppercase mb-1">Receipt Voucher Type</label>
+                          <input
+                            type="text"
+                            required
+                            value={excelReceiptType}
+                            onChange={(e) => setExcelReceiptType(e.target.value)}
+                            className="w-full px-3 py-2 border-2 border-black font-bold focus:outline-none bg-white text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-black text-black uppercase mb-1">Payment Voucher Type</label>
+                          <input
+                            type="text"
+                            required
+                            value={excelPaymentType}
+                            onChange={(e) => setExcelPaymentType(e.target.value)}
+                            className="w-full px-3 py-2 border-2 border-black font-bold focus:outline-none bg-white text-xs"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="border-4 border-dashed border-black p-6 bg-slate-50 text-center space-y-3">
+                        <label className="block text-xs font-black text-black uppercase cursor-pointer">
+                          Select your filled-out Excel file
+                          <input
+                            id="excelFileInput"
+                            type="file"
+                            required
+                            accept=".xlsx, .xls"
+                            onChange={(e) => {
+                              if (e.target.files && e.target.files[0]) {
+                                setExcelFile(e.target.files[0]);
+                                setExcelError('');
+                                setExcelSuccess(false);
+                              }
+                            }}
+                            className="hidden"
+                          />
+                        </label>
+                        {excelFile ? (
+                          <div className="inline-block px-3 py-1 border-2 border-black bg-white text-xs font-black text-black">
+                            📄 {excelFile.name} ({(excelFile.size / 1024).toFixed(1)} KB)
+                          </div>
+                        ) : (
+                          <p className="text-[10px] font-bold text-slate-500">
+                            Click to browse or drag your file here
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <button
+                          type="submit"
+                          disabled={excelLoading || !excelFile}
+                          className="w-full py-3 px-4 border-2 border-black font-black text-black bg-[#ffd615] hover:bg-yellow-400 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] shadow-[4px_4px_0px_rgba(0,0,0,1)] transition-all uppercase text-xs disabled:opacity-50"
+                        >
+                          {excelLoading ? 'Generating Tally XML...' : 'Convert Excel to Tally XML'}
+                        </button>
+                      </div>
+
+                      {excelError && (
+                        <div className="bg-[#ff5757] text-white p-3 border-2 border-black font-bold text-xs">
+                          ERROR: {excelError}
+                        </div>
+                      )}
+
+                      {excelSuccess && (
+                        <div className="bg-[#25D366] text-white p-3 border-2 border-black font-bold text-xs">
+                          SUCCESS: XML file downloaded successfully! You can now import it directly into Tally Prime.
+                        </div>
+                      )}
+                    </form>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
