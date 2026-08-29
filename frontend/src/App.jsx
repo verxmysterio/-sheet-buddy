@@ -1278,19 +1278,13 @@ export default function App() {
               onClick={() => { setActiveTab('convert'); setExecuteError(''); setMobileMenuOpen(false); }}
               className={`flex items-center justify-center px-4 py-2 text-xs font-black border-2 border-black transition-all ${activeTab === 'convert' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-slate-50'}`}
             >
-              CONVERT PDF
+              IMPORT TRANSACTION
             </button>
             <button
               onClick={() => { setActiveTab('history'); setExecuteError(''); setMobileMenuOpen(false); }}
               className={`flex items-center justify-center px-4 py-2 text-xs font-black border-2 border-black transition-all ${activeTab === 'history' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-slate-50'}`}
             >
               HISTORY ARCHIVE
-            </button>
-            <button
-              onClick={() => { setActiveTab('excel_tool'); setExecuteError(''); setMobileMenuOpen(false); }}
-              className={`flex items-center justify-center px-4 py-2 text-xs font-black border-2 border-black transition-all ${activeTab === 'excel_tool' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-slate-50'}`}
-            >
-              EXCEL TO TALLY
             </button>
             <button
               onClick={() => { setActiveTab('wallet'); setExecuteError(''); setMobileMenuOpen(false); }}
@@ -1435,91 +1429,250 @@ export default function App() {
             
             {/* UPLOAD FORM */}
             {!parsedSummary && (
-              <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 max-w-2xl mx-auto">
-                <div className="flex items-center space-x-3 mb-6 bg-[#ffd615] p-3 border-2 border-black shadow-[2px_2px_0px_rgba(0,0,0,1)]">
-                  <div className="p-1 bg-white border-2 border-black text-black">
-                    <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-black text-black uppercase">Import PDF Statement</h2>
-                    <p className="text-xs font-bold text-black opacity-80">Converts statement layout coordinates into Tally Vouchers</p>
-                  </div>
-                </div>
-
-                <form onSubmit={handleUploadAndParse} className="space-y-6">
-                  <div>
-                    <label className="block text-sm font-black text-black uppercase mb-1">Select Bank Statement Format</label>
-                    <select
-                      value={bankName}
-                      onChange={(e) => setBankName(e.target.value)}
-                      className="w-full pl-3 pr-10 py-2.5 text-sm border-2 border-black font-bold focus:outline-none focus:bg-yellow-50 bg-white"
-                    >
-                      {supportedBanks.map((b) => (
-                        <option key={b.bank_key} value={b.name}>{b.name}</option>
-                      ))}
-                    </select>
-                    {supportedBanks.find((b) => b.name === bankName)?.parser_type === "SIMULATOR" && (
-                      <p className="mt-2 text-xs font-black text-black bg-[#3fecff] border-2 border-black px-2 py-0.5 inline-block">
-                        MOCK SIMULATOR ACTIVE: You can upload any test PDF to try.
-                      </p>
-                    )}
+              <>
+                <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 max-w-2xl mx-auto">
+                  <div className="flex items-center space-x-3 mb-6 bg-[#ffd615] p-3 border-2 border-black shadow-[2px_2px_0px_rgba(0,0,0,1)]">
+                    <div className="p-1 bg-white border-2 border-black text-black">
+                      <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-black text-black uppercase">Import BANK PDF Statement</h2>
+                      <p className="text-xs font-bold text-black opacity-80">Converts statement layout coordinates into Tally Vouchers</p>
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-black text-black uppercase mb-1">Upload File (PDF)</label>
-                    <div className="flex justify-center px-6 pt-8 pb-8 border-4 border-black border-dashed rounded-none hover:bg-yellow-50/20 cursor-pointer bg-slate-50 transition-colors">
-                      <div className="space-y-2 text-center">
-                        <svg className="mx-auto h-12 w-12 text-black" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                          <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                        <div className="flex text-sm justify-center">
-                          <label className="relative cursor-pointer bg-transparent rounded-none font-black text-black underline hover:no-underline">
-                            <span>Choose bank statement PDF</span>
-                            <input
-                              type="file"
-                              accept=".pdf"
-                              onChange={handleFileUploadChange}
-                              className="sr-only"
-                            />
-                          </label>
+                  <form onSubmit={handleUploadAndParse} className="space-y-6">
+                    <div>
+                      <label className="block text-sm font-black text-black uppercase mb-1">Select Bank Statement Format</label>
+                      <select
+                        value={bankName}
+                        onChange={(e) => setBankName(e.target.value)}
+                        className="w-full pl-3 pr-10 py-2.5 text-sm border-2 border-black font-bold focus:outline-none focus:bg-yellow-50 bg-white"
+                      >
+                        {supportedBanks.map((b) => (
+                          <option key={b.bank_key} value={b.name}>{b.name}</option>
+                        ))}
+                      </select>
+                      {supportedBanks.find((b) => b.name === bankName)?.parser_type === "SIMULATOR" && (
+                        <p className="mt-2 text-xs font-black text-black bg-[#3fecff] border-2 border-black px-2 py-0.5 inline-block">
+                          MOCK SIMULATOR ACTIVE: You can upload any test PDF to try.
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-black text-black uppercase mb-1">Upload File (PDF)</label>
+                      <div className="flex justify-center px-6 pt-8 pb-8 border-4 border-black border-dashed rounded-none hover:bg-yellow-50/20 cursor-pointer bg-slate-50 transition-colors">
+                        <div className="space-y-2 text-center">
+                          <svg className="mx-auto h-12 w-12 text-black" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                          <div className="flex text-sm justify-center">
+                            <label className="relative cursor-pointer bg-transparent rounded-none font-black text-black underline hover:no-underline">
+                              <span>Choose bank statement PDF</span>
+                              <input
+                                type="file"
+                                accept=".pdf"
+                                onChange={handleFileUploadChange}
+                                className="sr-only"
+                              />
+                            </label>
+                          </div>
+                          <p className="text-xs font-bold text-slate-500">Maximum size limit: 15MB</p>
                         </div>
-                        <p className="text-xs font-bold text-slate-500">Maximum size limit: 15MB</p>
                       </div>
                     </div>
-                  </div>
 
-                  {selectedFile && (
-                    <div className="bg-white p-3 border-2 border-black shadow-[2px_2px_0px_rgba(0,0,0,1)] flex items-center justify-between text-xs font-bold">
-                      <span className="text-black truncate max-w-md">{selectedFile.name}</span>
+                    {selectedFile && (
+                      <div className="bg-white p-3 border-2 border-black shadow-[2px_2px_0px_rgba(0,0,0,1)] flex items-center justify-between text-xs font-bold">
+                        <span className="text-black truncate max-w-md">{selectedFile.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedFile(null)}
+                          className="text-[#ff4b3f] hover:underline uppercase font-black"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    )}
+
+                    {uploadError && (
+                      <div className="bg-[#ff5757] text-white p-3 border-2 border-black font-bold text-sm shadow-[2px_2px_0px_rgba(0,0,0,1)]">
+                        ERROR: {uploadError}
+                      </div>
+                    )}
+
+                    <div className="pt-2">
                       <button
-                        type="button"
-                        onClick={() => setSelectedFile(null)}
-                        className="text-[#ff4b3f] hover:underline uppercase font-black"
+                        type="submit"
+                        disabled={uploadLoading || !selectedFile}
+                        className="w-full flex justify-center py-3 px-4 border-2 border-black font-black text-black bg-[#ffd615] hover:bg-yellow-400 hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[2px_2px_0px_rgba(0,0,0,1)] shadow-[4px_4px_0px_rgba(0,0,0,1)] transition-all uppercase disabled:opacity-50"
                       >
-                        Remove
+                        {uploadLoading ? 'Uploading & Extracting PDF Data...' : 'PARSE STATEMENT PDF'}
                       </button>
                     </div>
-                  )}
+                  </form>
+                </div>
 
-                  {uploadError && (
-                    <div className="bg-[#ff5757] text-white p-3 border-2 border-black font-bold text-sm shadow-[2px_2px_0px_rgba(0,0,0,1)]">
-                      ERROR: {uploadError}
+                {/* Divider or spacer */}
+                <div className="my-8 max-w-2xl mx-auto border-t-2 border-black border-dashed"></div>
+
+                {/* Excel to Tally Card */}
+                <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 max-w-2xl mx-auto">
+                  <div className="flex items-center space-x-3 mb-6 bg-[#ffd615] p-3 border-2 border-black shadow-[2px_2px_0px_rgba(0,0,0,1)]">
+                    <div className="p-1 bg-white border-2 border-black text-black">
+                      <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2a4 4 0 00-4-4H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-black text-black uppercase">Import Excel Transactions</h2>
+                      <p className="text-xs font-bold text-black opacity-80">Free bonus tool: Enter transactions manually in Excel and export to Tally XML</p>
+                    </div>
+                  </div>
+
+                  {!user.has_purchased_plan ? (
+                    /* Locked State Panel */
+                    <div className="text-center py-6 space-y-4">
+                      <div className="text-4xl">🔒</div>
+                      <h3 className="text-sm font-black text-black uppercase">Excel Import Utility is Locked</h3>
+                      <p className="text-[11px] font-bold text-slate-600 max-w-md mx-auto leading-relaxed">
+                        This free bonus utility is exclusively available for users who have purchased any credit plan. Buy credits to instantly unlock this tool.
+                      </p>
+                      <div className="pt-2">
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab('wallet')}
+                          className="px-4 py-2 border-2 border-black font-black text-black bg-[#ffd615] hover:bg-yellow-400 active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] shadow-[3px_3px_0px_rgba(0,0,0,1)] transition-all uppercase text-xs"
+                        >
+                          Unlock Tool (Buy Credits)
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Unlocked Active Tool */
+                    <div className="space-y-6">
+                      {/* Step 1: Download Template */}
+                      <div className="border-2 border-black p-4 bg-slate-50 space-y-3">
+                        <h4 className="text-xs font-black text-black uppercase">1. Download Pre-Formatted Excel Template</h4>
+                        <p className="text-[10px] font-bold text-slate-600 leading-relaxed">
+                          Do not modify the column headers (Date, Narration, Reference No, Debit, Credit, Balance) as Sheet Buddy expects them to generate the Tally file correctly.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={handleDownloadTemplate}
+                          className="py-2 px-3 border-2 border-black font-black text-black bg-[#ffd615] hover:bg-yellow-400 uppercase shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-all text-[10px]"
+                        >
+                          Download Template Sheet
+                        </button>
+                      </div>
+
+                      {/* Step 2: Upload and Convert Form */}
+                      <form onSubmit={handleExcelToXmlSubmit} className="space-y-4">
+                        <h4 className="text-xs font-black text-black uppercase">2. Map Ledgers & Upload Excel</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-[9px] font-black text-black uppercase mb-1">Bank Ledger Name (in Tally)</label>
+                            <input
+                              type="text"
+                              required
+                              value={excelBankLedger}
+                              onChange={(e) => setExcelBankLedger(e.target.value)}
+                              className="w-full px-3 py-2 border-2 border-black font-bold focus:outline-none bg-white text-xs"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[9px] font-black text-black uppercase mb-1">Counter Ledger Name (in Tally)</label>
+                            <input
+                              type="text"
+                              required
+                              value={excelSuspenseLedger}
+                              onChange={(e) => setExcelSuspenseLedger(e.target.value)}
+                              className="w-full px-3 py-2 border-2 border-black font-bold focus:outline-none bg-white text-xs"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-[9px] font-black text-black uppercase mb-1">Receipt Voucher Type</label>
+                            <input
+                              type="text"
+                              required
+                              value={excelReceiptType}
+                              onChange={(e) => setExcelReceiptType(e.target.value)}
+                              className="w-full px-3 py-2 border-2 border-black font-bold focus:outline-none bg-white text-xs"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[9px] font-black text-black uppercase mb-1">Payment Voucher Type</label>
+                            <input
+                              type="text"
+                              required
+                              value={excelPaymentType}
+                              onChange={(e) => setExcelPaymentType(e.target.value)}
+                              className="w-full px-3 py-2 border-2 border-black font-bold focus:outline-none bg-white text-xs"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="border-2 border-dashed border-black p-4 bg-slate-50 text-center space-y-2">
+                          <label className="block text-[10px] font-black text-black uppercase cursor-pointer">
+                            Select Excel import file (.xlsx, .xls)
+                            <input
+                              id="excelFileInput"
+                              type="file"
+                              required
+                              accept=".xlsx, .xls"
+                              onChange={(e) => {
+                                if (e.target.files && e.target.files[0]) {
+                                  setExcelFile(e.target.files[0]);
+                                  setExcelError('');
+                                  setExcelSuccess(false);
+                                }
+                              }}
+                              className="hidden"
+                            />
+                          </label>
+                          {excelFile ? (
+                            <div className="inline-block px-3 py-1 border-2 border-black bg-white text-[10px] font-black text-black">
+                              📄 {excelFile.name} ({(excelFile.size / 1024).toFixed(1)} KB)
+                            </div>
+                          ) : (
+                            <p className="text-[9px] font-bold text-slate-500">
+                              Click to select Excel file
+                            </p>
+                          )}
+                        </div>
+
+                        <div>
+                          <button
+                            type="submit"
+                            disabled={excelLoading || !excelFile}
+                            className="w-full py-2.5 px-4 border-2 border-black font-black text-white bg-black hover:bg-zinc-800 active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] shadow-[3px_3px_0px_rgba(0,0,0,1)] transition-all uppercase text-xs disabled:opacity-50"
+                          >
+                            {excelLoading ? 'Converting...' : 'Convert Excel to Tally XML'}
+                          </button>
+                        </div>
+
+                        {excelError && (
+                          <div className="bg-[#ff5757] text-white p-2 border-2 border-black font-bold text-xs">
+                            ERROR: {excelError}
+                          </div>
+                        )}
+
+                        {excelSuccess && (
+                          <div className="bg-[#25D366] text-white p-2 border-2 border-black font-bold text-xs">
+                            SUCCESS: XML downloaded successfully! Import it into Tally Prime.
+                          </div>
+                        )}
+                      </form>
                     </div>
                   )}
-
-                  <div className="pt-2">
-                    <button
-                      type="submit"
-                      disabled={uploadLoading || !selectedFile}
-                      className="w-full flex justify-center py-3 px-4 border-2 border-black font-black text-black bg-[#ffd615] hover:bg-yellow-400 hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[2px_2px_0px_rgba(0,0,0,1)] shadow-[4px_4px_0px_rgba(0,0,0,1)] transition-all uppercase disabled:opacity-50"
-                    >
-                      {uploadLoading ? 'Uploading & Extracting PDF Data...' : 'PARSE STATEMENT PDF'}
-                    </button>
-                  </div>
-                </form>
-              </div>
+                </div>
+              </>
             )}
 
             {/* DETAILED STATS PREVIEW & EXECUTION STEP */}
@@ -2660,160 +2813,7 @@ export default function App() {
             </div>
           )}
 
-          {/* --- TAB 6.5: EXCEL TO TALLY TOOL --- */}
-          {activeTab === 'excel_tool' && (
-            <div className="space-y-6 max-w-4xl mx-auto">
-              {!user.has_purchased_plan ? (
-                /* Locked State Panel */
-                <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-8 text-center space-y-6">
-                  <div className="text-5xl">🔒</div>
-                  <h3 className="text-xl font-black text-black uppercase">Excel-to-Tally Import Tool is Locked</h3>
-                  <p className="text-xs font-bold text-slate-700 max-w-lg mx-auto leading-relaxed">
-                    This premium import utility is a free bonus for clients who have purchased any credit plan. 
-                    It allows you to download a standardized Excel sheet, input transactions, and instantly convert it to a Tally Prime compatible XML file for direct batch importing.
-                  </p>
-                  <div className="pt-2">
-                    <button
-                      onClick={() => setActiveTab('wallet')}
-                      className="px-6 py-3 border-4 border-black font-black text-black bg-[#ffd615] hover:bg-yellow-400 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_rgba(0,0,0,1)] shadow-[6px_6px_0px_rgba(0,0,0,1)] transition-all uppercase text-sm"
-                    >
-                      Unlock Tool (Buy Credits)
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                /* Unlocked Active Tool */
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  {/* Left Column: Download and Instructions */}
-                  <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 space-y-6 md:col-span-1">
-                    <h3 className="text-md font-black text-black uppercase border-b-2 border-black pb-2">1. Get the Template</h3>
-                    <p className="text-xs font-bold text-slate-700 leading-relaxed">
-                      Download our pre-formatted Excel template. Do not change the column headers as the system relies on them to read transactions correctly.
-                    </p>
-                    <button
-                      onClick={handleDownloadTemplate}
-                      className="w-full py-2.5 px-4 border-2 border-black font-black text-black bg-[#ffd615] hover:bg-yellow-400 uppercase shadow-[3px_3px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-all text-xs"
-                    >
-                      Download Excel Template
-                    </button>
 
-                    <h3 className="text-md font-black text-black uppercase border-b-2 border-black pb-2 pt-2">2. How to Fill In</h3>
-                    <ul className="text-[10px] font-bold text-slate-600 space-y-2 list-disc pl-4">
-                      <li><strong>Date:</strong> Use DD-MM-YYYY format (e.g. 28-08-2026).</li>
-                      <li><strong>Narration:</strong> Clear text description of the transaction.</li>
-                      <li><strong>Reference No:</strong> Voucher, cheque, or reference number (optional).</li>
-                      <li><strong>Debit/Credit:</strong> Enter positive numbers. Use Debit for payments (outflow) and Credit for receipts (inflow).</li>
-                      <li><strong>Balance:</strong> Enter the running balance (optional).</li>
-                    </ul>
-                  </div>
-
-                  {/* Right Column: Upload and Convert Form */}
-                  <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 space-y-6 md:col-span-2">
-                    <h3 className="text-md font-black text-black uppercase border-b-2 border-black pb-2">3. Convert to Tally XML</h3>
-                    
-                    <form onSubmit={handleExcelToXmlSubmit} className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-[10px] font-black text-black uppercase mb-1">Bank Ledger Name (in Tally)</label>
-                          <input
-                            type="text"
-                            required
-                            value={excelBankLedger}
-                            onChange={(e) => setExcelBankLedger(e.target.value)}
-                            className="w-full px-3 py-2 border-2 border-black font-bold focus:outline-none bg-white text-xs"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[10px] font-black text-black uppercase mb-1">Counter Ledger Name (in Tally)</label>
-                          <input
-                            type="text"
-                            required
-                            value={excelSuspenseLedger}
-                            onChange={(e) => setExcelSuspenseLedger(e.target.value)}
-                            className="w-full px-3 py-2 border-2 border-black font-bold focus:outline-none bg-white text-xs"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-[10px] font-black text-black uppercase mb-1">Receipt Voucher Type</label>
-                          <input
-                            type="text"
-                            required
-                            value={excelReceiptType}
-                            onChange={(e) => setExcelReceiptType(e.target.value)}
-                            className="w-full px-3 py-2 border-2 border-black font-bold focus:outline-none bg-white text-xs"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[10px] font-black text-black uppercase mb-1">Payment Voucher Type</label>
-                          <input
-                            type="text"
-                            required
-                            value={excelPaymentType}
-                            onChange={(e) => setExcelPaymentType(e.target.value)}
-                            className="w-full px-3 py-2 border-2 border-black font-bold focus:outline-none bg-white text-xs"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="border-4 border-dashed border-black p-6 bg-slate-50 text-center space-y-3">
-                        <label className="block text-xs font-black text-black uppercase cursor-pointer">
-                          Select your filled-out Excel file
-                          <input
-                            id="excelFileInput"
-                            type="file"
-                            required
-                            accept=".xlsx, .xls"
-                            onChange={(e) => {
-                              if (e.target.files && e.target.files[0]) {
-                                setExcelFile(e.target.files[0]);
-                                setExcelError('');
-                                setExcelSuccess(false);
-                              }
-                            }}
-                            className="hidden"
-                          />
-                        </label>
-                        {excelFile ? (
-                          <div className="inline-block px-3 py-1 border-2 border-black bg-white text-xs font-black text-black">
-                            📄 {excelFile.name} ({(excelFile.size / 1024).toFixed(1)} KB)
-                          </div>
-                        ) : (
-                          <p className="text-[10px] font-bold text-slate-500">
-                            Click to browse or drag your file here
-                          </p>
-                        )}
-                      </div>
-
-                      <div>
-                        <button
-                          type="submit"
-                          disabled={excelLoading || !excelFile}
-                          className="w-full py-3 px-4 border-2 border-black font-black text-black bg-[#ffd615] hover:bg-yellow-400 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] shadow-[4px_4px_0px_rgba(0,0,0,1)] transition-all uppercase text-xs disabled:opacity-50"
-                        >
-                          {excelLoading ? 'Generating Tally XML...' : 'Convert Excel to Tally XML'}
-                        </button>
-                      </div>
-
-                      {excelError && (
-                        <div className="bg-[#ff5757] text-white p-3 border-2 border-black font-bold text-xs">
-                          ERROR: {excelError}
-                        </div>
-                      )}
-
-                      {excelSuccess && (
-                        <div className="bg-[#25D366] text-white p-3 border-2 border-black font-bold text-xs">
-                          SUCCESS: XML file downloaded successfully! You can now import it directly into Tally Prime.
-                        </div>
-                      )}
-                    </form>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
 
           {/* --- TAB 7: PROFILE SECURITY PAGE --- */}
           {activeTab === 'settings' && (
