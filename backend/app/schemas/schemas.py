@@ -13,7 +13,6 @@ class UserResponse(BaseModel):
     is_admin: bool
     is_verified: bool
     created_at: datetime
-    has_purchased_plan: bool = False
 
     class Config:
         from_attributes = True

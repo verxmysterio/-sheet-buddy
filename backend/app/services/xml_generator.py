@@ -40,7 +40,7 @@ def generate_tally_xml(
         
         vch_uuid = str(uuid.uuid4())
         is_payment = tx.debit is not None
-        vtype = tx.tally_voucher_type or (debit_voucher_type if is_payment else credit_voucher_type)
+        vtype = debit_voucher_type if is_payment else credit_voucher_type
         
         voucher = ET.SubElement(
             tally_msg,
@@ -69,7 +69,7 @@ def generate_tally_xml(
         vch_narration.text = tx.narration
         
         vch_party = ET.SubElement(voucher, "PARTYLEDGERNAME")
-        vch_party.text = tx.tally_bank_ledger or bank_ledger_name
+        vch_party.text = bank_ledger_name
         
         vch_eff_date = ET.SubElement(voucher, "EFFECTIVEDATE")
         vch_eff_date.text = date_str
@@ -81,14 +81,13 @@ def generate_tally_xml(
         # --- LEDGER ENTRY 1: Counter Ledger ---
         suspense_entry = ET.SubElement(voucher, "ALLLEDGERENTRIES.LIST")
         susp_ledger = ET.SubElement(suspense_entry, "LEDGERNAME")
-        susp_ledger.text = tx.tally_counter_ledger or counter_ledger_name
+        susp_ledger.text = counter_ledger_name
         
         # Suspense is DEBITED in Payment: DeemedPositive = Yes, Amount = -amount
         # Suspense is CREDITED in Receipt: DeemedPositive = No, Amount = amount
         susp_pos = ET.SubElement(suspense_entry, "ISDEEMEDPOSITIVE")
         susp_pos.text = "Yes" if is_payment else "No"
         
-        # Determine actual sign based on debit vs credit presence
         susp_amt = ET.SubElement(suspense_entry, "AMOUNT")
         val = tx.debit if is_payment else tx.credit
         if val is None:
@@ -98,14 +97,13 @@ def generate_tally_xml(
         # --- LEDGER ENTRY 2: Bank ---
         bank_entry = ET.SubElement(voucher, "ALLLEDGERENTRIES.LIST")
         bank_ledger = ET.SubElement(bank_entry, "LEDGERNAME")
-        bank_ledger.text = tx.tally_bank_ledger or bank_ledger_name
+        bank_ledger.text = bank_ledger_name
         
         # Bank is CREDITED in Payment: DeemedPositive = No, Amount = amount
         # Bank is DEBITED in Receipt: DeemedPositive = Yes, Amount = -amount
         bank_pos = ET.SubElement(bank_entry, "ISDEEMEDPOSITIVE")
         bank_pos.text = "No" if is_payment else "Yes"
         
-        # Determine actual sign
         bank_amt = ET.SubElement(bank_entry, "AMOUNT")
         bank_val = tx.debit if is_payment else tx.credit
         if bank_val is None:
@@ -127,7 +125,7 @@ def generate_tally_xml(
         alloc_inst_date.text = date_str
         
         alloc_favour = ET.SubElement(bank_allocs, "PAYMENTFAVOURING")
-        alloc_favour.text = tx.tally_counter_ledger or counter_ledger_name
+        alloc_favour.text = counter_ledger_name
         
         alloc_type = ET.SubElement(bank_allocs, "TRANSACTIONTYPE")
         alloc_type.text = "Cheque"
