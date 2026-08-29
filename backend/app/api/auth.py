@@ -7,7 +7,7 @@ from ..core.security import hash_password, verify_password, create_access_token
 from ..models.database import get_db
 from ..models.models import User, WalletTransaction, UserOTP
 from ..schemas.schemas import (
-    UserCreate, UserResponse, Token,
+    UserCreate, LoginRequest, UserResponse, Token,
     VerifyOTPRequest, ResendOTPRequest, ForgotPasswordRequest,
     ResetPasswordRequest, ChangePasswordRequest
 )
@@ -26,7 +26,7 @@ def register(user_in: UserCreate, db: Session = Depends(get_db)):
     )
 
 @router.post("/login", response_model=Token)
-def login_json(user_in: UserCreate, db: Session = Depends(get_db)):
+def login_json(user_in: LoginRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == user_in.email).first()
     if not user or not verify_password(user_in.password, user.hashed_password):
         raise HTTPException(
@@ -34,7 +34,9 @@ def login_json(user_in: UserCreate, db: Session = Depends(get_db)):
             detail="Incorrect email or password."
         )
     
-    access_token = create_access_token(data={"sub": user.email})
+    # If remember is checked, issue a 365-day token. Otherwise, standard 1-day.
+    expires_delta = timedelta(days=365) if user_in.remember else timedelta(days=1)
+    access_token = create_access_token(data={"sub": user.email}, expires_delta=expires_delta)
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.post("/login-form", response_model=Token)

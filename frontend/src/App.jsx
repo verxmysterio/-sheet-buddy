@@ -18,6 +18,7 @@ export default function App() {
   const [isRegistering, setIsRegistering] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [remember, setRemember] = useState(false);
   const [authError, setAuthError] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
   
@@ -219,7 +220,7 @@ export default function App() {
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email, password, remember })
       });
 
       const data = await res.json();
@@ -1080,74 +1081,134 @@ export default function App() {
   // --- Auth View ---
   if (!token || !user) {
     return (
-      <div className="flex-1 flex flex-col justify-center py-12 px-4 bg-[#f4f2ed] min-h-screen">
-        <div className="sm:mx-auto sm:w-full sm:max-w-md">
-          <div className="flex justify-center text-black">
-            <svg className="w-20 h-20 bg-[#ffd615] border-4 border-black p-2 shadow-[4px_4px_0px_rgba(0,0,0,1)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
+      <div className="min-h-screen flex flex-col bg-[#f4f2ed]">
+        <div className="flex-grow flex flex-col justify-center py-12 px-4">
+          <div className="sm:mx-auto sm:w-full sm:max-w-md">
+            <div className="flex justify-center text-black">
+              <svg className="w-20 h-20 bg-[#ffd615] border-4 border-black p-2 shadow-[4px_4px_0px_rgba(0,0,0,1)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <h2 className="mt-6 text-center text-4xl font-black text-black tracking-tight uppercase">
+              Sheet Buddy
+            </h2>
+            <p className="mt-2 text-center text-sm text-black border-2 border-black bg-white inline-block px-3 py-1 mx-auto shadow-[2px_2px_0px_rgba(0,0,0,1)] font-bold uppercase">
+              A complete tally supporting tool
+            </p>
           </div>
-          <h2 className="mt-6 text-center text-4xl font-black text-black tracking-tight uppercase">
-            Sheet Buddy
-          </h2>
-          <p className="mt-2 text-center text-sm text-black border-2 border-black bg-white inline-block px-3 py-1 mx-auto shadow-[2px_2px_0px_rgba(0,0,0,1)] font-bold uppercase">
-            A complete tally supporting tool
+
+          <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+            <div className="bg-white py-8 px-4 border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] sm:rounded-none sm:px-10 space-y-6">
+              
+              {statusMessage && (
+                <div className="bg-[#25D366] text-white p-3 border-2 border-black font-bold text-sm">
+                  INFO: {statusMessage}
+                </div>
+              )}
+
+              {authError && (
+                <div className="bg-[#ff5757] text-white p-3 border-2 border-black font-bold text-sm">
+                  ERROR: {authError}
+                </div>
+              )}
+
+              {authMode === 'login' && (
+                <form className="space-y-6" onSubmit={handleAuthSubmit}>
+                  <div>
+                    <label className="block text-sm font-black text-black uppercase">Email Address</label>
+                    <input
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="mt-1 block w-full px-3 py-2 border-2 border-black focus:outline-none focus:bg-yellow-50 text-sm font-bold"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-black text-black uppercase">Password</label>
+                    <input
+                      type="password"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="mt-1 block w-full px-3 py-2 border-2 border-black focus:outline-none focus:bg-yellow-50 text-sm font-bold"
+                    />
+                  </div>
+
+                  <div className="flex items-center">
+                    <input
+                      id="remember_me"
+                      name="remember_me"
+                      type="checkbox"
+                      checked={remember}
+                      onChange={(e) => setRemember(e.target.checked)}
+                      className="h-4 w-4 text-black focus:ring-black border-2 border-black rounded-none cursor-pointer"
+                    />
+                    <label htmlFor="remember_me" className="ml-2 block text-xs font-black text-black uppercase cursor-pointer select-none">
+                      Remember Me
+                    </label>
+                  </div>
+
+                  <div>
+                    <button
+                      type="submit"
+                      disabled={authLoading}
+                      className="w-full flex justify-center py-2.5 px-4 border-2 border-black font-black text-black bg-[#ffd615] hover:bg-yellow-400 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] shadow-[4px_4px_0px_rgba(0,0,0,1)] transition-all uppercase disabled:opacity-50"
+                    >
+                      {authLoading ? 'Logging in...' : 'Log In'}
+                    </button>
+                  </div>
+                </form>
+              )}
+
+            </div>
+          </div>
+        </div>
+
+        {/* Footer on Login Page */}
+        <footer className="bg-white border-t-4 border-black py-6 text-center text-xs font-bold text-black mt-auto space-y-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-3 pb-2 border-b border-slate-100 max-w-lg mx-auto">
+            <span>To know more, book demo or pricing contact us:</span>
+            <div className="flex items-center space-x-3">
+              {/* WhatsApp Link */}
+              <a
+                href="https://wa.me/919204915729?text=Hello!%20I'd%20like%20to%20know%20more,%20book%20a%20demo,%20or%20discuss%20pricing%20for%20Sheet%20Buddy."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-1 border-2 border-black bg-[#25D366] hover:bg-green-500 text-white rounded-none shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-all flex items-center justify-center w-7 h-7"
+                title="Contact on WhatsApp"
+              >
+                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                  <path d="M17.472 14.382c-.022-.079-.116-.123-.27-.2c-.155-.077-.915-.452-1.056-.502c-.142-.053-.247-.077-.35.077c-.104.154-.4.502-.49.603c-.09.1-.18.11-.33.037c-.152-.074-.64-.236-1.22-.756c-.45-.4-.754-.896-.838-1.042c-.085-.145-.01-.223.067-.3c.068-.07.155-.18.23-.27c.077-.09.104-.15.155-.25c.05-.1.025-.19-.012-.265c-.038-.076-.35-.85-.48-1.164c-.127-.31-.257-.267-.35-.272c-.09-.004-.19-.004-.29-.004c-.1-.004-.263.038-.4.19c-.138.15-.527.513-.527 1.253s.54 1.455.614 1.555c.077.1 1.06 1.622 2.57 2.27c.36.155.64.248.86.315c.36.115.69.098.95.06c.29-.044.9-.368 1.03-.722c.13-.356.13-.663.09-.723M12 2C6.477 2 2 6.477 2 12c0 2.01.524 3.9 1.524 5.56L2 22l4.632-1.216C8.204 21.464 9.99 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2z"/>
+                </svg>
+              </a>
+              {/* Email Link */}
+              <a
+                href="mailto:sheetbuddyorg@gmail.com?subject=Sheet%20Buddy%20Demo%20and%20Pricing%20Inquiry"
+                className="p-1 border-2 border-black bg-[#3b82f6] hover:bg-blue-500 text-white rounded-none shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-all flex items-center justify-center w-7 h-7"
+                title="Send an Email"
+              >
+                <svg className="w-4 h-4 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </a>
+            </div>
+          </div>
+
+          <p>© 2026 Sheet Buddy. Designed in Neo-Brutalist Layout. Bank statements are processed and deleted immediately.</p>
+          <p className="text-slate-600 font-bold">
+            Build with ❤️ by{" "}
+            <a
+              href="https://www.instagram.com/verx_mysterio?igsi=MzliODFvcWt0emhn"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:no-underline text-black font-black"
+            >
+              verx_mysterio
+            </a>
           </p>
-        </div>
-
-        <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-          <div className="bg-white py-8 px-4 border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] sm:rounded-none sm:px-10 space-y-6">
-            
-            {statusMessage && (
-              <div className="bg-[#25D366] text-white p-3 border-2 border-black font-bold text-sm">
-                INFO: {statusMessage}
-              </div>
-            )}
-
-            {authError && (
-              <div className="bg-[#ff5757] text-white p-3 border-2 border-black font-bold text-sm">
-                ERROR: {authError}
-              </div>
-            )}
-
-            {authMode === 'login' && (
-              <form className="space-y-6" onSubmit={handleAuthSubmit}>
-                <div>
-                  <label className="block text-sm font-black text-black uppercase">Email Address</label>
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="mt-1 block w-full px-3 py-2 border-2 border-black focus:outline-none focus:bg-yellow-50 text-sm font-bold"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-black text-black uppercase">Password</label>
-                  <input
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="mt-1 block w-full px-3 py-2 border-2 border-black focus:outline-none focus:bg-yellow-50 text-sm font-bold"
-                  />
-                </div>
-
-                <div>
-                  <button
-                    type="submit"
-                    disabled={authLoading}
-                    className="w-full flex justify-center py-2.5 px-4 border-2 border-black font-black text-black bg-[#ffd615] hover:bg-yellow-400 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] shadow-[4px_4px_0px_rgba(0,0,0,1)] transition-all uppercase disabled:opacity-50"
-                  >
-                    {authLoading ? 'Logging in...' : 'Log In'}
-                  </button>
-                </div>
-              </form>
-            )}
-
-          </div>
-        </div>
+        </footer>
       </div>
     );
   }

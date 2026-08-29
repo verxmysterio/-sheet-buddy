@@ -6,6 +6,11 @@ class UserCreate(BaseModel):
     email: str
     password: str
 
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+    remember: bool = False
+
 class UserResponse(BaseModel):
     id: str
     email: str
