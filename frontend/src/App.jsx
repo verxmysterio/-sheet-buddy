@@ -1177,7 +1177,7 @@ export default function App() {
             Sheet Buddy
           </h2>
           <p className="mt-2 text-center text-sm text-black border-2 border-black bg-white inline-block px-3 py-1 mx-auto shadow-[2px_2px_0px_rgba(0,0,0,1)] font-bold uppercase">
-            Statement PDF to Tally XML SaaS
+            A complete tally supporting tool
           </p>
         </div>
 
@@ -2901,8 +2901,19 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t-4 border-black py-4 text-center text-xs font-bold text-black mt-auto">
+      <footer className="bg-white border-t-4 border-black py-6 text-center text-xs font-bold text-black mt-auto space-y-2">
         <p>© 2026 Sheet Buddy. Designed in Neo-Brutalist Layout. Bank statements are processed and deleted immediately.</p>
+        <p className="text-slate-600 font-bold">
+          Build with ❤️ by{" "}
+          <a
+            href="https://www.instagram.com/verx_mysterio?igsi=MzliODFvcWt0emhn"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:no-underline text-black font-black"
+          >
+            verx_mysterio
+          </a>
+        </p>
       </footer>
 
     </div>
