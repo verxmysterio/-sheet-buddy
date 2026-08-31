@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="650" viewBox="0 0 1600 650">
+<defs><pattern id="p" width="220" height="180" patternUnits="userSpaceOnUse"><path d="M20 120h45V65h35v55h35V35h35v85h30" fill="none" stroke="#FFFFFF" stroke-width="5" opacity=".08"/><circle cx="175" cy="35" r="20" fill="none" stroke="#FFD629" stroke-width="5" opacity=".1"/></pattern></defs>
+<rect width="1600" height="650" fill="#000000"/><rect width="1600" height="650" fill="url(#p)"/>
+<text x="100" y="240" font-family="Arial, Helvetica, sans-serif" font-size="120" font-weight="900"><tspan fill="#FFD629">S</tspan><tspan fill="#FFFFFF">HEET</tspan><tspan fill="#FFD629">B</tspan><tspan fill="#D9D9D9">UDDY</tspan></text>
+<text x="105" y="305" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700" fill="#FFFFFF">A TALLY SUPPORTING TOOL FOR YOUR BANK STATEMENT ENTRIES</text>
+<rect x="105" y="350" width="225" height="58" rx="29" fill="#FFD629"/><text x="217" y="388" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="800" fill="#000000">SINCE 2026</text>
+<g transform="translate(1030 115)"><rect width="420" height="390" rx="32" fill="#151515" stroke="#FFFFFF" stroke-width="3" opacity=".96"/><rect x="45" y="55" width="330" height="45" rx="10" fill="#242424"/><rect x="45" y="130" width="145" height="95" rx="15" fill="#222"/><rect x="210" y="130" width="165" height="95" rx="15" fill="#222"/><rect x="45" y="250" width="330" height="80" rx="15" fill="#FFD629"/><polyline points="70,200 105,170 140,185 175,145" fill="none" stroke="#FFD629" stroke-width="7"/><text x="210" y="300" text-anchor="middle" font-family="Arial" font-size="28" font-weight="800" fill="#000000">BANK → SHEET → TALLY</text></g>
+</svg>

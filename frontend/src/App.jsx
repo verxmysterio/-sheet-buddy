@@ -1083,17 +1083,19 @@ export default function App() {
     return (
       <div className="min-h-screen flex flex-col bg-[#f4f2ed]">
         <div className="flex-grow flex flex-col justify-center py-12 px-4">
-          <div className="sm:mx-auto sm:w-full sm:max-w-md">
+          <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
             <div className="flex justify-center text-black">
-              <svg className="w-20 h-20 bg-[#ffd615] border-4 border-black p-2 shadow-[4px_4px_0px_rgba(0,0,0,1)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
+              <img 
+                src="/symbol_mark.svg" 
+                alt="Sheet Buddy Symbol" 
+                className="w-20 h-20 border-4 border-black p-1 shadow-[4px_4px_0px_rgba(0,0,0,1)] bg-black object-contain mx-auto" 
+              />
             </div>
-            <h2 className="mt-6 text-center text-4xl font-black text-black tracking-tight uppercase">
+            <h2 className="mt-5 text-center text-4xl font-black text-black tracking-tight uppercase">
               Sheet Buddy
             </h2>
-            <p className="mt-2 text-center text-sm text-black border-2 border-black bg-white inline-block px-3 py-1 mx-auto shadow-[2px_2px_0px_rgba(0,0,0,1)] font-bold uppercase">
-              A complete tally supporting tool
+            <p className="mt-2 text-center text-xs text-black border-2 border-black bg-white inline-block px-3 py-1 mx-auto shadow-[2px_2px_0px_rgba(0,0,0,1)] font-black uppercase tracking-wider">
+              A Complete Tally Supporting Tool • Since 2026
             </p>
           </div>
 
@@ -1163,6 +1165,12 @@ export default function App() {
               )}
 
             </div>
+
+            {/* Feature Capability Strip */}
+            <div className="mt-6 bg-black border-4 border-black p-4 shadow-[6px_6px_0px_rgba(0,0,0,1)] text-center">
+              <p className="text-[10px] font-black text-[#FFD629] uppercase tracking-widest mb-2 text-center">POWERFUL ACCOUNTING AUTOMATION</p>
+              <img src="/feature_icons.svg" alt="Statements, Analytics, Automation, Validation, Export" className="w-full h-auto object-contain mx-auto" />
+            </div>
           </div>
         </div>
 
@@ -1196,7 +1204,13 @@ export default function App() {
             </div>
           </div>
 
-          <p>© 2026 Sheet Buddy. Designed in Neo-Brutalist Layout. Bank statements are processed and deleted immediately.</p>
+          <div className="flex items-center justify-center space-x-2 pt-2">
+            <img src="/symbol_mark.svg" alt="Sheet Buddy" className="w-5 h-5 border border-black bg-black inline-block" />
+            <span className="font-black uppercase tracking-tight">Sheet Buddy</span>
+            <span className="text-slate-400 font-normal">|</span>
+            <span className="text-slate-600 font-bold">A Tally Supporting Tool • Since 2026</span>
+          </div>
+
           <p className="text-slate-600 font-bold">
             Build with ❤️ by{" "}
             <a
@@ -1221,12 +1235,13 @@ export default function App() {
       <header className="bg-white border-b-4 border-black flex flex-col md:flex-row items-stretch md:items-center justify-between shadow-[0px_4px_0px_rgba(0,0,0,0.05)] sticky top-0 z-50">
         
         {/* Left: Brand Logo & Mobile hamburger toggle */}
-        <div className="h-16 flex items-center justify-between px-6 border-b-4 md:border-b-0 md:border-r-4 border-black bg-[#ffd615] flex-shrink-0">
-          <div className="flex items-center">
-            <svg className="w-7 h-7 text-black mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            <span className="font-black text-black text-lg tracking-tight uppercase">Sheet Buddy</span>
+        <div className="h-16 flex items-center justify-between px-5 border-b-4 md:border-b-0 md:border-r-4 border-black bg-[#ffd615] flex-shrink-0">
+          <div className="flex items-center space-x-2.5 cursor-pointer" onClick={() => { setActiveTab('convert'); setExecuteError(''); }}>
+            <img src="/symbol_mark.svg" alt="Sheet Buddy Logo" className="w-8 h-8 border-2 border-black rounded-none shadow-[2px_2px_0px_rgba(0,0,0,1)] bg-black flex-shrink-0" />
+            <div>
+              <span className="font-black text-black text-lg tracking-tight uppercase block leading-none">Sheet Buddy</span>
+              <span className="text-[8px] font-black text-black opacity-75 uppercase tracking-wider block mt-0.5">Tally Companion • 2026</span>
+            </div>
           </div>
 
           {/* Hamburger Icon button for mobile screen */}
@@ -1400,16 +1415,28 @@ export default function App() {
 
         {/* --- TAB 1: CONVERT STATEMENT --- */}
         {activeTab === 'convert' && (
-          <div className="space-y-8">
+          <div className="space-y-6">
+            
+            {/* Top Brand Banner */}
+            {!parsedSummary && (
+              <div className="bg-black text-white p-4 border-4 border-black shadow-[6px_6px_0px_rgba(0,0,0,1)] max-w-2xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center space-x-3">
+                  <img src="/symbol_mark.svg" alt="Sheet Buddy" className="w-10 h-10 border border-yellow-400 bg-black flex-shrink-0" />
+                  <div>
+                    <h3 className="font-black text-sm text-[#FFD629] uppercase tracking-wider">BANK STATEMENT → TALLY VOUCHERS</h3>
+                    <p className="text-[10px] font-bold text-slate-300">Fast, Automated & Mathematically Reconciled XML Export</p>
+                  </div>
+                </div>
+                <span className="px-3 py-1 bg-[#FFD629] text-black text-[10px] font-black uppercase shadow-[2px_2px_0px_rgba(255,255,255,1)]">SINCE 2026</span>
+              </div>
+            )}
             
             {/* UPLOAD FORM */}
             {!parsedSummary && (
               <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 max-w-2xl mx-auto">
                 <div className="flex items-center space-x-3 mb-6 bg-[#ffd615] p-3 border-2 border-black shadow-[2px_2px_0px_rgba(0,0,0,1)]">
-                  <div className="p-1 bg-white border-2 border-black text-black">
-                    <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                    </svg>
+                  <div className="p-0.5 bg-white border-2 border-black text-black">
+                    <img src="/app_icon_yellow.svg" alt="SB Icon" className="w-8 h-8" />
                   </div>
                   <div>
                     <h2 className="text-lg font-black text-black uppercase">Import BANK PDF Statement</h2>
@@ -1439,10 +1466,12 @@ export default function App() {
                   <div>
                     <label className="block text-sm font-black text-black uppercase mb-1">Upload File (PDF)</label>
                     <div className="flex justify-center px-6 pt-8 pb-8 border-4 border-black border-dashed rounded-none hover:bg-yellow-50/20 cursor-pointer bg-slate-50 transition-colors">
-                      <div className="space-y-2 text-center">
-                        <svg className="mx-auto h-12 w-12 text-black" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                          <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
+                      <div className="space-y-3 text-center">
+                        <img 
+                          src="/symbol_mark.svg" 
+                          alt="PDF Upload" 
+                          className="mx-auto h-12 w-12 border-2 border-black bg-black p-1 shadow-[3px_3px_0px_rgba(0,0,0,1)]" 
+                        />
                         <div className="flex text-sm justify-center">
                           <label className="relative cursor-pointer bg-transparent rounded-none font-black text-black underline hover:no-underline">
                             <span>Choose bank statement PDF</span>
@@ -1561,9 +1590,12 @@ export default function App() {
                 {parsedSummary.transactions_preview && parsedSummary.transactions_preview.length > 0 && (
                   <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] overflow-hidden">
                     <div className="px-6 py-4 bg-[#ffd615] border-b-4 border-black flex justify-between items-center">
-                      <div>
-                        <h4 className="font-black text-black text-sm uppercase">Statement Transactions & Live Narration Editor</h4>
-                        <p className="text-xs font-bold text-black opacity-80">You can edit narrations inline below. Customized entries will save directly to Tally XML.</p>
+                      <div className="flex items-center space-x-3">
+                        <img src="/symbol_mark.svg" alt="SB" className="w-8 h-8 border-2 border-black bg-black shadow-[2px_2px_0px_rgba(0,0,0,1)] flex-shrink-0" />
+                        <div>
+                          <h4 className="font-black text-black text-sm uppercase">Statement Transactions & Live Narration Editor</h4>
+                          <p className="text-xs font-bold text-black opacity-80">You can edit narrations inline below. Customized entries will save directly to Tally XML.</p>
+                        </div>
                       </div>
                       <span className="text-xs font-black bg-white border-2 border-black px-2 py-0.5 shadow-[2px_2px_0px_rgba(0,0,0,1)] uppercase">
                         PREVIEW MODE
@@ -1731,9 +1763,12 @@ export default function App() {
               
               {/* Header and Search */}
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 border-b-4 border-black pb-4">
-                <div>
-                  <h3 className="text-xl font-black text-black uppercase">Conversion History Archive</h3>
-                  <p className="text-xs font-bold text-slate-500 mt-1">Re-download processed XML statements from cache free of charge.</p>
+                <div className="flex items-center space-x-3">
+                  <img src="/app_icon_yellow.svg" alt="History" className="w-10 h-10 border-2 border-black bg-white shadow-[2px_2px_0px_rgba(0,0,0,1)] flex-shrink-0" />
+                  <div>
+                    <h3 className="text-xl font-black text-black uppercase">Conversion History Archive</h3>
+                    <p className="text-xs font-bold text-slate-500 mt-0.5">Re-download processed XML statements from cache free of charge.</p>
+                  </div>
                 </div>
                 <div className="w-full sm:w-72">
                   <label className="block text-[10px] font-black text-black uppercase mb-1">Search Archives</label>
@@ -1795,8 +1830,13 @@ export default function App() {
               {/* Purchase plans */}
               <div className="space-y-6">
                 <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6">
-                  <h3 className="text-xl font-black text-black uppercase mb-1">Buy Credit Vouchers</h3>
-                  <p className="text-xs font-bold text-slate-500 mb-6">Purchase page credits directly. Base pricing is **25 paise per page** with bulk volume extra credits. Failed conversions are never charged.</p>
+                  <div className="flex items-center space-x-3 mb-6">
+                    <img src="/symbol_mark.svg" alt="SB" className="w-10 h-10 border-2 border-black bg-black shadow-[2px_2px_0px_rgba(0,0,0,1)] flex-shrink-0" />
+                    <div>
+                      <h3 className="text-xl font-black text-black uppercase mb-0.5">Buy Credit Vouchers</h3>
+                      <p className="text-xs font-bold text-slate-500">Purchase page credits directly. Base pricing is **25 paise per page** with bulk volume extra credits. Failed conversions are never charged.</p>
+                    </div>
+                  </div>
                   
                   {purchaseMessage && (
                     <div className="bg-[#3fecff] text-black border-2 border-black p-3 text-sm font-black shadow-[2px_2px_0px_rgba(0,0,0,1)] mb-6 uppercase">
@@ -1939,7 +1979,13 @@ export default function App() {
               
               {/* Analytics Header Grid */}
               <div className="bg-[#ffd615] border-4 border-black shadow-[6px_6px_0px_rgba(0,0,0,1)] p-6">
-                <h3 className="text-xl font-black text-black uppercase mb-4 border-b-2 border-black pb-2">Sheet Buddy Global System Overview</h3>
+                <div className="flex items-center space-x-3 mb-4 border-b-2 border-black pb-3">
+                  <img src="/symbol_mark.svg" alt="Admin" className="w-10 h-10 border-2 border-black bg-black shadow-[2px_2px_0px_rgba(0,0,0,1)] flex-shrink-0" />
+                  <div>
+                    <h3 className="text-xl font-black text-black uppercase">Sheet Buddy Global System Overview</h3>
+                    <p className="text-xs font-bold text-black opacity-80">Administrative Management Dashboard</p>
+                  </div>
+                </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="bg-white p-4 border-2 border-black shadow-[3px_3px_0px_rgba(0,0,0,1)]">
@@ -1958,23 +2004,133 @@ export default function App() {
                   </div>
                   
                   <div className="bg-white p-4 border-2 border-black shadow-[3px_3px_0px_rgba(0,0,0,1)]">
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Simulated Revenue (INR)</p>
-                    <p className="text-2xl font-black text-black mt-1">₹{adminStats?.total_revenue?.toFixed(2) || '0.00'}</p>
+                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Pending Support Queries</p>
+                    <p className="text-2xl font-black text-black mt-1">{adminStats?.pending_queries || 0}</p>
                   </div>
                 </div>
               </div>
 
-              {/* Create User Card */}
+              {/* Admin Actions Bar */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                
+                {/* Create Promo Code Card */}
+                <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 space-y-4">
+                  <h4 className="text-md font-black text-black uppercase border-b-2 border-black pb-2">Generate Promo Code</h4>
+                  <form onSubmit={handleCreatePromoCode} className="space-y-3">
+                    <div>
+                      <label className="block text-[10px] font-black text-black uppercase mb-1">Code Name</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. VIPBONUS50"
+                        required
+                        value={adminNewPromoCode}
+                        onChange={(e) => setAdminNewPromoCode(e.target.value.toUpperCase())}
+                        className="w-full px-3 py-2 border-2 border-black text-xs font-bold uppercase bg-white focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-black uppercase mb-1">Page Credits Awarded</label>
+                      <input
+                        type="number"
+                        required
+                        min={1}
+                        value={adminNewPromoCredits}
+                        onChange={(e) => setAdminNewPromoCredits(e.target.value)}
+                        className="w-full px-3 py-2 border-2 border-black text-xs font-bold bg-white focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-black uppercase mb-1">Lifetime Usage Limit</label>
+                      <input
+                        type="number"
+                        required
+                        min={1}
+                        value={adminNewPromoMaxUses}
+                        onChange={(e) => setAdminNewPromoMaxUses(e.target.value)}
+                        className="w-full px-3 py-2 border-2 border-black text-xs font-bold bg-white focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-black uppercase mb-1">Expires After (Days)</label>
+                      <input
+                        type="number"
+                        required
+                        min={1}
+                        value={adminNewPromoDays}
+                        onChange={(e) => setAdminNewPromoDays(e.target.value)}
+                        className="w-full px-3 py-2 border-2 border-black text-xs font-bold bg-white focus:outline-none"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={adminPromoLoading}
+                      className="w-full py-2.5 px-4 border-2 border-black font-black text-white bg-black hover:bg-zinc-800 uppercase shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-all text-xs disabled:opacity-50"
+                    >
+                      {adminPromoLoading ? 'Generating...' : 'Issue Promo Code'}
+                    </button>
+                  </form>
+                  {adminPromoStatus && (
+                    <div className="bg-[#3fecff] text-black p-3 border-2 border-black font-black text-xs shadow-[2px_2px_0px_rgba(0,0,0,1)] uppercase">
+                      {adminPromoStatus}
+                    </div>
+                  )}
+                </div>
+
+                {/* Promo Codes History List */}
+                <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 space-y-4 md:col-span-2 flex flex-col justify-between">
+                  <div>
+                    <h4 className="text-md font-black text-black uppercase border-b-2 border-black pb-2">Active Promo Codes</h4>
+                    <div className="overflow-x-auto max-h-[280px]">
+                      {adminPromoCodes.length === 0 ? (
+                        <p className="text-slate-400 text-xs py-4 text-center font-bold">No promo codes generated yet.</p>
+                      ) : (
+                        <table className="min-w-full divide-y divide-black border-2 border-black text-left">
+                          <thead className="bg-slate-100 text-[9px] font-black text-black uppercase tracking-wider border-b border-black">
+                            <tr>
+                              <th className="px-3 py-2 border-r border-black">Code</th>
+                              <th className="px-3 py-2 border-r border-black text-center">Credits</th>
+                              <th className="px-3 py-2 border-r border-black text-center">Used / Max</th>
+                              <th className="px-3 py-2 border-r border-black">Expires At</th>
+                              <th className="px-3 py-2 text-center">Action</th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-black text-xs font-bold text-black">
+                            {adminPromoCodes.map((p) => (
+                              <tr key={p.id} className="hover:bg-slate-50">
+                                <td className="px-3 py-2 border-r border-black font-mono font-black">{p.code}</td>
+                                <td className="px-3 py-2 border-r border-black text-center text-emerald-600 font-black">+{p.page_credits}</td>
+                                <td className="px-3 py-2 border-r border-black text-center">{p.times_used} / {p.max_uses}</td>
+                                <td className="px-3 py-2 border-r border-black text-[10px] whitespace-nowrap">{parseUtcDate(p.expires_at).toLocaleDateString()}</td>
+                                <td className="px-3 py-2 text-center">
+                                  <button
+                                    onClick={() => handleDeletePromoCode(p.id)}
+                                    className="text-[10px] font-black text-[#ff4b3f] hover:underline uppercase"
+                                  >
+                                    Delete
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Create New User Card */}
               <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 space-y-4">
                 <h4 className="text-md font-black text-black uppercase border-b-2 border-black pb-2">Create New Client Account</h4>
-                
-                <form onSubmit={handleAdminCreateUser} className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                <p className="text-xs font-bold text-slate-500">Since open self-registration is disabled, administrators provision accounts directly for clients here.</p>
+                <form onSubmit={handleAdminCreateUser} className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
                   <div>
                     <label className="block text-xs font-black text-black uppercase mb-1">Email Address</label>
                     <input
                       type="email"
                       required
-                      placeholder="client@email.com"
+                      placeholder="client@example.com"
                       value={adminNewUserEmail}
                       onChange={(e) => setAdminNewUserEmail(e.target.value)}
                       className="w-full px-3 py-2 border-2 border-black text-xs font-bold bg-white focus:outline-none"
@@ -1982,11 +2138,11 @@ export default function App() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-black text-black uppercase mb-1">Initial Password</label>
+                    <label className="block text-xs font-black text-black uppercase mb-1">Password</label>
                     <input
-                      type="password"
+                      type="text"
                       required
-                      placeholder="Password"
+                      placeholder="Initial password"
                       value={adminNewUserPassword}
                       onChange={(e) => setAdminNewUserPassword(e.target.value)}
                       className="w-full px-3 py-2 border-2 border-black text-xs font-bold bg-white focus:outline-none"
@@ -1994,7 +2150,7 @@ export default function App() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-black text-black uppercase mb-1">Initial Credits</label>
+                    <label className="block text-xs font-black text-black uppercase mb-1">Initial Page Credits</label>
                     <input
                       type="number"
                       required
@@ -2540,7 +2696,13 @@ export default function App() {
           {/* --- TAB 6: SUPPORT PAGE --- */}
           {activeTab === 'support' && (
             <div className="space-y-6 max-w-2xl mx-auto bg-white p-8 border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)]">
-              <h3 className="text-xl font-black text-black uppercase mb-2 border-b-2 border-black pb-2">Support & Assistance</h3>
+              <div className="flex items-center space-x-4 mb-2 border-b-2 border-black pb-3">
+                <img src="/social_square.svg" alt="Support" className="w-14 h-14 border-2 border-black shadow-[2px_2px_0px_rgba(0,0,0,1)] flex-shrink-0" />
+                <div>
+                  <h3 className="text-xl font-black text-black uppercase">Support & Assistance</h3>
+                  <p className="text-xs font-bold text-slate-600">Technical help, statement format requests & custom Tally ledgers</p>
+                </div>
+              </div>
               <p className="text-xs font-bold text-slate-700 leading-relaxed">
                 Facing an issue with statement conversions, missing credits, or custom bank configurations? Let us know! Raise a ticket below or connect with the administrator directly via WhatsApp.
               </p>
@@ -2634,7 +2796,10 @@ export default function App() {
           {/* --- TAB 7: PROFILE SECURITY PAGE --- */}
           {activeTab === 'settings' && (
             <div className="space-y-6 max-w-md mx-auto bg-white p-8 border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)]">
-              <h3 className="text-xl font-black text-black uppercase mb-2 border-b-2 border-black pb-2">Profile Security</h3>
+              <div className="flex items-center space-x-3 mb-2 border-b-2 border-black pb-2">
+                <img src="/app_icon_yellow.svg" alt="Profile" className="w-8 h-8 border-2 border-black" />
+                <h3 className="text-xl font-black text-black uppercase">Profile Security</h3>
+              </div>
               
               <div className="space-y-4">
                 <div className="border-2 border-black p-4 bg-slate-50">
@@ -2747,7 +2912,13 @@ export default function App() {
           </div>
         </div>
 
-        <p>© 2026 Sheet Buddy. Designed in Neo-Brutalist Layout. Bank statements are processed and deleted immediately.</p>
+        <div className="flex items-center justify-center space-x-2 pt-2">
+          <img src="/symbol_mark.svg" alt="Sheet Buddy" className="w-5 h-5 border border-black bg-black inline-block" />
+          <span className="font-black uppercase tracking-tight">Sheet Buddy</span>
+          <span className="text-slate-400 font-normal">|</span>
+          <span className="text-slate-600 font-bold">A Tally Supporting Tool • Since 2026</span>
+        </div>
+
         <p className="text-slate-600 font-bold">
           Build with ❤️ by{" "}
           <a
