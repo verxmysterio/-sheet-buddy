@@ -1,17 +1,18 @@
 import uuid
 import xml.etree.ElementTree as ET
-from typing import List
+from typing import List, Dict, Any, Tuple
 from ..parsers.base import StandardTransaction
 
 def generate_tally_xml(
     transactions: List[StandardTransaction], 
     bank_ledger_name: str,
-    counter_ledger_name: str = "Suspense",
+    counter_ledger_name: str = "Suspense Account",
     credit_voucher_type: str = "Receipt",
     debit_voucher_type: str = "Payment"
 ) -> str:
     """
-    Generates a clean, minimal Tally Prime compatible XML document.
+    Generates a 100% Tally Prime and Tally.ERP 9 compliant XML envelope with individualized
+    assigned ledgers and voucher types per transaction.
     """
     envelope = ET.Element("ENVELOPE")
     
@@ -35,13 +36,21 @@ def generate_tally_xml(
     request_data = ET.SubElement(import_data, "REQUESTDATA")
     
     # 3. Vouchers
-    for tx in transactions:
+    for idx, tx in enumerate(transactions):
         tally_msg = ET.SubElement(request_data, "TALLYMESSAGE", {"xmlns:UDF": "TallyUDF"})
         
         vch_uuid = str(uuid.uuid4())
-        is_payment = tx.debit is not None
+        is_payment = (tx.debit is not None and tx.debit > 0)
+        
+        # Voucher type determination
         vtype = debit_voucher_type if is_payment else credit_voucher_type
         
+        # Counter party ledger resolution
+        if counter_ledger_name and counter_ledger_name not in ["Suspense", "Suspense Account"]:
+            counter_party = counter_ledger_name
+        else:
+            counter_party = tx.assigned_ledger or tx.suggested_ledger or counter_ledger_name
+            
         voucher = ET.SubElement(
             tally_msg,
             "VOUCHER",
@@ -62,11 +71,14 @@ def generate_tally_xml(
         vch_guid = ET.SubElement(voucher, "GUID")
         vch_guid.text = vch_uuid
         
+        vch_num = ET.SubElement(voucher, "VOUCHERNUMBER")
+        vch_num.text = str(idx + 1)
+        
         vch_typename = ET.SubElement(voucher, "VOUCHERTYPENAME")
         vch_typename.text = vtype
         
         vch_narration = ET.SubElement(voucher, "NARRATION")
-        vch_narration.text = tx.narration
+        vch_narration.text = tx.narration or "Bank Transaction"
         
         vch_party = ET.SubElement(voucher, "PARTYLEDGERNAME")
         vch_party.text = bank_ledger_name
@@ -74,24 +86,19 @@ def generate_tally_xml(
         vch_eff_date = ET.SubElement(voucher, "EFFECTIVEDATE")
         vch_eff_date.text = date_str
         
-        # We need a cashflow flag for payment/receipt vouchers
         vch_cashflow = ET.SubElement(voucher, "HASCASHFLOW")
         vch_cashflow.text = "Yes"
         
         # --- LEDGER ENTRY 1: Counter Ledger ---
         suspense_entry = ET.SubElement(voucher, "ALLLEDGERENTRIES.LIST")
         susp_ledger = ET.SubElement(suspense_entry, "LEDGERNAME")
-        susp_ledger.text = counter_ledger_name
+        susp_ledger.text = counter_party
         
-        # Suspense is DEBITED in Payment: DeemedPositive = Yes, Amount = -amount
-        # Suspense is CREDITED in Receipt: DeemedPositive = No, Amount = amount
         susp_pos = ET.SubElement(suspense_entry, "ISDEEMEDPOSITIVE")
         susp_pos.text = "Yes" if is_payment else "No"
         
         susp_amt = ET.SubElement(suspense_entry, "AMOUNT")
-        val = tx.debit if is_payment else tx.credit
-        if val is None:
-            val = 0.00
+        val = tx.debit if is_payment else (tx.credit or 0.0)
         susp_amt.text = f"{-val:.2f}" if is_payment else f"{val:.2f}"
         
         # --- LEDGER ENTRY 2: Bank ---
@@ -99,40 +106,34 @@ def generate_tally_xml(
         bank_ledger = ET.SubElement(bank_entry, "LEDGERNAME")
         bank_ledger.text = bank_ledger_name
         
-        # Bank is CREDITED in Payment: DeemedPositive = No, Amount = amount
-        # Bank is DEBITED in Receipt: DeemedPositive = Yes, Amount = -amount
         bank_pos = ET.SubElement(bank_entry, "ISDEEMEDPOSITIVE")
         bank_pos.text = "No" if is_payment else "Yes"
         
         bank_amt = ET.SubElement(bank_entry, "AMOUNT")
-        bank_val = tx.debit if is_payment else tx.credit
-        if bank_val is None:
-            bank_val = 0.00
-        bank_amt.text = f"{bank_val:.2f}" if is_payment else f"{-bank_val:.2f}"
+        bank_amt.text = f"{val:.2f}" if is_payment else f"{-val:.2f}"
         
-        # Mark party ledger as Yes for bank
         bank_party = ET.SubElement(bank_entry, "ISPARTYLEDGER")
         bank_party.text = "Yes"
         
-        # Bank Allocation details (essential for bank statements)
+        # Bank Allocation details
         bank_allocs = ET.SubElement(bank_entry, "BANKALLOCATIONS.LIST")
         
         alloc_date = ET.SubElement(bank_allocs, "DATE")
         alloc_date.text = date_str
         
-        # In Tally Prime, the default TRANSACTIONTYPE is "Cheque" for bank allocations
         alloc_inst_date = ET.SubElement(bank_allocs, "INSTRUMENTDATE")
         alloc_inst_date.text = date_str
         
         alloc_favour = ET.SubElement(bank_allocs, "PAYMENTFAVOURING")
-        alloc_favour.text = counter_ledger_name
+        alloc_favour.text = counter_party
         
         alloc_type = ET.SubElement(bank_allocs, "TRANSACTIONTYPE")
-        alloc_type.text = "Cheque"
+        alloc_type.text = "Cheque" if (tx.cheque_number or not tx.utr) else "Inter Bank Transfer"
         
-        if tx.ref_no:
+        ref_val = tx.ref_no or tx.utr or tx.cheque_number
+        if ref_val:
             alloc_num = ET.SubElement(bank_allocs, "INSTRUMENTNUMBER")
-            alloc_num.text = tx.ref_no
+            alloc_num.text = str(ref_val)
             
         alloc_status = ET.SubElement(bank_allocs, "STATUS")
         alloc_status.text = "No"
@@ -141,11 +142,66 @@ def generate_tally_xml(
         alloc_mode.text = "Transacted"
         
         alloc_party = ET.SubElement(bank_allocs, "BANKPARTYNAME")
-        alloc_party.text = counter_ledger_name
+        alloc_party.text = counter_party
         
         alloc_amt = ET.SubElement(bank_allocs, "AMOUNT")
         alloc_amt.text = f"{val:.2f}" if is_payment else f"{-val:.2f}"
 
-    # Return XML as a decoded string with standard encoding and indentation declaration
     raw_xml = ET.tostring(envelope, encoding="utf-8")
     return '<?xml version="1.0" encoding="utf-8"?>\n' + raw_xml.decode("utf-8")
+
+def validate_tally_xml(xml_string: str) -> Dict[str, Any]:
+    """
+    Performs comprehensive pre-download schema and accounting validation on generated Tally XML.
+    """
+    errors = []
+    voucher_count = 0
+    malformed_count = 0
+    
+    try:
+        root = ET.fromstring(xml_string)
+        if root.tag != "ENVELOPE":
+            errors.append("Root element is not <ENVELOPE>")
+            
+        vouchers = root.findall(".//VOUCHER")
+        voucher_count = len(vouchers)
+        
+        for idx, vch in enumerate(vouchers):
+            vtype = vch.get("VCHTYPE")
+            if not vtype:
+                errors.append(f"Voucher #{idx+1} missing VCHTYPE attribute")
+                malformed_count += 1
+                
+            entries = vch.findall("ALLLEDGERENTRIES.LIST")
+            if len(entries) < 2:
+                errors.append(f"Voucher #{idx+1} has fewer than 2 ledger entries")
+                malformed_count += 1
+                
+            amounts = []
+            for entry in entries:
+                amt_node = entry.find("AMOUNT")
+                if amt_node is not None and amt_node.text:
+                    try:
+                        amounts.append(float(amt_node.text))
+                    except ValueError:
+                        errors.append(f"Voucher #{idx+1} contains non-numeric amount '{amt_node.text}'")
+                        malformed_count += 1
+            if amounts and abs(sum(amounts)) > 0.01:
+                errors.append(f"Voucher #{idx+1} ledger entries sum ({sum(amounts)}) is not balanced")
+                malformed_count += 1
+                
+    except ET.ParseError as pe:
+        errors.append(f"XML Parse Syntax Error: {pe}")
+        return {
+            "is_valid": False,
+            "voucher_count": 0,
+            "malformed_count": 1,
+            "errors": errors
+        }
+        
+    return {
+        "is_valid": (len(errors) == 0),
+        "voucher_count": voucher_count,
+        "malformed_count": malformed_count,
+        "errors": errors
+    }

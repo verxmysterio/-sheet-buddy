@@ -39,22 +39,43 @@ export default function App() {
   const [profileLoading, setProfileLoading] = useState(false);
 
   // --- App View State ---
-  const [activeTab, setActiveTab] = useState('convert'); // 'convert' | 'history' | 'wallet' | 'easter' | 'settings'
+  const [activeTab, setActiveTab] = useState('convert'); // 'convert' | 'history' | 'wallet' | 'rules' | 'settings' | 'admin'
 
   // --- Upload / Convert State ---
-  const [bankName, setBankName] = useState('');
+  const [bankName, setBankName] = useState('auto');
   const [supportedBanks, setSupportedBanks] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploadLoading, setUploadLoading] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [parsedSummary, setParsedSummary] = useState(null);
+  const [allTransactions, setAllTransactions] = useState([]);
   
+  // --- Review Queue & Filter States ---
+  const [filterMode, setFilterMode] = useState('ALL'); // 'ALL' | 'READY' | 'REVIEW' | 'DUPLICATES' | 'DEBIT' | 'CREDIT'
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedRowIds, setSelectedRowIds] = useState(new Set());
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [currentReviewIdx, setCurrentReviewIdx] = useState(0);
+  const [shortcutsModalOpen, setShortcutsModalOpen] = useState(false);
+  const [undoStack, setUndoStack] = useState([]);
+  const [bulkLedgerInput, setBulkLedgerInput] = useState('');
+
   // --- Custom Tally Overrides ---
   const [tallyLedgerName, setTallyLedgerName] = useState('');
   const [counterLedgerName, setCounterLedgerName] = useState('Suspense');
   const [creditVoucherType, setCreditVoucherType] = useState('Receipt');
   const [debitVoucherType, setDebitVoucherType] = useState('Payment');
   const [editedNarrations, setEditedNarrations] = useState({}); // idx -> customized narration text
+  const [editedLedgers, setEditedLedgers] = useState({}); // idx -> customized counter ledger
+  
+  // --- Ledger Rules State ---
+  const [userRules, setUserRules] = useState([]);
+  const [ruleNameInput, setRuleNameInput] = useState('');
+  const [rulePatternInput, setRulePatternInput] = useState('');
+  const [ruleMatchType, setRuleMatchType] = useState('CONTAINS');
+  const [ruleLedgerInput, setRuleLedgerInput] = useState('');
+  const [ruleVoucherType, setRuleVoucherType] = useState('Payment');
+  const [ruleCategoryInput, setRuleCategoryInput] = useState('General');
   
   const [executeLoading, setExecuteLoading] = useState(false);
   const [executeError, setExecuteError] = useState('');
@@ -139,11 +160,48 @@ export default function App() {
       fetchHistory();
       fetchWalletTxs();
       fetchSupportedBanks();
+      fetchUserRules();
     } else {
       localStorage.removeItem('token');
       setUser(null);
     }
   }, [token]);
+
+  // Keyboard shortcut listener for productivity
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Ctrl + F / Cmd + F -> Focus search input in convert or history table
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
+        const searchEl = document.getElementById('table-search-input') || document.getElementById('history-search-input');
+        if (searchEl) {
+          e.preventDefault();
+          searchEl.focus();
+          searchEl.select();
+        }
+      }
+      // Ctrl + Z -> Undo last narration change
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) {
+        if (undoStack.length > 0) {
+          e.preventDefault();
+          const lastUndo = undoStack[undoStack.length - 1];
+          if (lastUndo && lastUndo.type === 'NARRATION') {
+            setEditedNarrations(prev => ({
+              ...prev,
+              [lastUndo.idx]: lastUndo.oldText
+            }));
+            setUndoStack(prev => prev.slice(0, -1));
+          }
+        }
+      }
+      // Esc -> Close modals
+      if (e.key === 'Escape') {
+        setReviewModalOpen(false);
+        setShortcutsModalOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [undoStack, parsedSummary]);
 
   // --- API Functions ---
   const fetchUserProfile = async () => {
@@ -159,6 +217,76 @@ export default function App() {
       }
     } catch (e) {
       console.error("Profile fetch error", e);
+    }
+  };
+
+  const fetchUserRules = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch('/api/convert/rules', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUserRules(data);
+      }
+    } catch (e) {
+      console.error("Rules fetch error", e);
+    }
+  };
+
+  const handleCreateRule = async (e) => {
+    e.preventDefault();
+    if (!rulePatternInput.trim() || !ruleLedgerInput.trim()) {
+      alert("Please enter a match pattern and ledger name.");
+      return;
+    }
+    try {
+      const res = await fetch('/api/convert/rules', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          rule_name: ruleNameInput.trim() || `Rule for ${ruleLedgerInput.trim()}`,
+          pattern: rulePatternInput.trim(),
+          match_type: ruleMatchType,
+          ledger_name: ruleLedgerInput.trim(),
+          voucher_type: ruleVoucherType,
+          category: ruleCategoryInput.trim() || 'General',
+          priority: 10
+        })
+      });
+      if (res.ok) {
+        setRuleNameInput('');
+        setRulePatternInput('');
+        setRuleLedgerInput('');
+        fetchUserRules();
+        alert("Ledger rule saved successfully!");
+      } else {
+        const err = await res.json();
+        alert(err.detail || "Failed to save rule.");
+      }
+    } catch (err) {
+      alert("Network error. Failed to save rule.");
+    }
+  };
+
+  const handleDeleteRule = async (ruleId) => {
+    if (!confirm("Are you sure you want to delete this rule?")) return;
+    try {
+      const res = await fetch(`/api/convert/rules/${ruleId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        fetchUserRules();
+      } else {
+        alert("Failed to delete rule.");
+      }
+    } catch (err) {
+      alert("Network error.");
     }
   };
 
@@ -454,11 +582,17 @@ export default function App() {
         setUploadError(data.detail || 'Failed to parse statement.');
       } else {
         setParsedSummary(data);
+        const txList = data.all_transactions || data.transactions_preview || [];
+        setAllTransactions(txList);
+        setSelectedRowIds(new Set());
         const initialNarrs = {};
-        data.transactions_preview.forEach((tx, index) => {
+        const initialLedgers = {};
+        txList.forEach((tx, index) => {
           initialNarrs[index] = tx.narration;
+          initialLedgers[index] = tx.assigned_ledger || tx.suggested_ledger || counterLedgerName;
         });
         setEditedNarrations(initialNarrs);
+        setEditedLedgers(initialLedgers);
       }
     } catch (err) {
       setUploadError('Network error. Failed to parse statement PDF.');
@@ -468,10 +602,64 @@ export default function App() {
   };
 
   const handleNarrationEdit = (idx, newText) => {
+    setUndoStack(prev => [...prev.slice(-20), { type: 'NARRATION', idx, oldText: editedNarrations[idx] }]);
     setEditedNarrations(prev => ({
       ...prev,
       [idx]: newText
     }));
+  };
+
+  const handleLedgerEdit = (idx, newLedger) => {
+    setEditedLedgers(prev => ({
+      ...prev,
+      [idx]: newLedger
+    }));
+  };
+
+  const handleToggleRowSelection = (id) => {
+    setSelectedRowIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const handleSelectAllRows = (rows) => {
+    if (selectedRowIds.size === rows.length) {
+      setSelectedRowIds(new Set());
+    } else {
+      setSelectedRowIds(new Set(rows.map(r => r.id)));
+    }
+  };
+
+  const handleBulkAssignLedger = () => {
+    if (!bulkLedgerInput.trim()) {
+      alert("Please type a ledger name to assign.");
+      return;
+    }
+    const nextLedgers = { ...editedLedgers };
+    allTransactions.forEach((tx, idx) => {
+      if (selectedRowIds.has(tx.id)) {
+        nextLedgers[idx] = bulkLedgerInput.trim();
+      }
+    });
+    setEditedLedgers(nextLedgers);
+    setBulkLedgerInput('');
+    setSelectedRowIds(new Set());
+  };
+
+  const handleBulkMarkReviewed = () => {
+    setAllTransactions(prev => prev.map(tx => {
+      if (selectedRowIds.has(tx.id)) {
+        return { ...tx, requires_review: false };
+      }
+      return tx;
+    }));
+    setSelectedRowIds(new Set());
   };
 
   const handleExecuteConversion = async () => {
@@ -479,28 +667,34 @@ export default function App() {
       setExecuteError('Please enter the bank ledger name exactly as it exists in Tally.');
       return;
     }
-    if (!counterLedgerName.trim()) {
-      setExecuteError('Please enter a valid counter ledger name (e.g. Suspense).');
-      return;
-    }
 
     setExecuteLoading(true);
     setExecuteError('');
 
-    const formData = new FormData();
-    formData.append('temp_file_id', parsedSummary.temp_file_id);
-    formData.append('tally_bank_ledger_name', tallyLedgerName);
-    formData.append('bank_name', bankName);
-    formData.append('counter_ledger_name', counterLedgerName);
-    formData.append('credit_voucher_type', creditVoucherType);
-    formData.append('debit_voucher_type', debitVoucherType);
-    formData.append('edited_narrations', JSON.stringify(editedNarrations));
+    const formattedPayload = {
+      temp_file_id: parsedSummary.temp_file_id,
+      bank_name: parsedSummary.bank_name || bankName,
+      tally_bank_ledger_name: tallyLedgerName,
+      counter_ledger_name: counterLedgerName,
+      credit_voucher_type: creditVoucherType,
+      debit_voucher_type: debitVoucherType,
+      pages_count: parsedSummary.pages_count,
+      file_fingerprint: parsedSummary.file_fingerprint,
+      transactions: allTransactions.map((tx, idx) => ({
+        ...tx,
+        narration: editedNarrations[idx] !== undefined ? editedNarrations[idx] : tx.narration,
+        assigned_ledger: editedLedgers[idx] !== undefined ? editedLedgers[idx] : (tx.assigned_ledger || counterLedgerName)
+      }))
+    };
 
     try {
       const res = await fetch('/api/convert/execute', {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-        body: formData
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
+        body: JSON.stringify(formattedPayload)
       });
 
       if (!res.ok) {
@@ -511,7 +705,7 @@ export default function App() {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `Tally_Import_${bankName.replace(/ /g, '_')}_Statement.xml`;
+        a.download = `Tally_Import_${(parsedSummary.bank_name || bankName).replace(/ /g, '_')}_Statement.xml`;
         document.body.appendChild(a);
         a.click();
         a.remove();
@@ -521,6 +715,8 @@ export default function App() {
         setTallyLedgerName('');
         setCounterLedgerName('Suspense');
         setEditedNarrations({});
+        setEditedLedgers({});
+        setAllTransactions([]);
         
         fetchUserProfile();
         fetchHistory();
@@ -1271,6 +1467,12 @@ export default function App() {
               IMPORT TRANSACTION
             </button>
             <button
+              onClick={() => { setActiveTab('rules'); setExecuteError(''); setMobileMenuOpen(false); }}
+              className={`flex items-center justify-center px-4 py-2 text-xs font-black border-2 border-black transition-all ${activeTab === 'rules' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-slate-50'}`}
+            >
+              LEDGER RULES
+            </button>
+            <button
               onClick={() => { setActiveTab('history'); setExecuteError(''); setMobileMenuOpen(false); }}
               className={`flex items-center justify-center px-4 py-2 text-xs font-black border-2 border-black transition-all ${activeTab === 'history' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-slate-50'}`}
             >
@@ -1522,8 +1724,68 @@ export default function App() {
 
             {/* DETAILED STATS PREVIEW & EXECUTION STEP */}
             {parsedSummary && (
-              <div className="space-y-8 max-w-5xl mx-auto">
+              <div className="space-y-8 max-w-6xl mx-auto">
                 
+                {/* 1. Multi-Signal Auto-Detected Bank Banner */}
+                <div className="bg-black text-white p-5 border-4 border-black shadow-[6px_6px_0px_rgba(0,0,0,1)] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                  <div className="flex items-center space-x-3.5">
+                    <img src="/symbol_mark.svg" alt="Bank Logo" className="w-11 h-11 border-2 border-[#FFD629] bg-black p-0.5 flex-shrink-0" />
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-[#FFD629]">
+                          INTELLIGENT DETECTION ENGINE
+                        </span>
+                        <span className="bg-[#3affaa] text-black text-[9px] font-black px-1.5 py-0.2 border border-black uppercase">
+                          {parsedSummary.detection_confidence ? `${Math.round(parsedSummary.detection_confidence)}% CONFIDENCE` : 'HIGH CONFIDENCE'}
+                        </span>
+                      </div>
+                      <h3 className="text-xl font-black text-white tracking-tight uppercase mt-0.5">
+                        {parsedSummary.bank_name || parsedSummary.detected_bank || 'Standard Bank Statement'}
+                      </h3>
+                      <div className="flex flex-wrap gap-1.5 mt-1.5">
+                        <span className="bg-zinc-800 text-zinc-300 text-[10px] font-mono font-bold px-2 py-0.5 border border-zinc-700">
+                          TYPE: {parsedSummary.document_type || 'NATIVE_PDF'}
+                        </span>
+                        {parsedSummary.account_number && (
+                          <span className="bg-zinc-800 text-zinc-300 text-[10px] font-mono font-bold px-2 py-0.5 border border-zinc-700">
+                            A/C: {parsedSummary.account_number}
+                          </span>
+                        )}
+                        {parsedSummary.statement_period && (
+                          <span className="bg-zinc-800 text-zinc-300 text-[10px] font-mono font-bold px-2 py-0.5 border border-zinc-700">
+                            PERIOD: {parsedSummary.statement_period}
+                          </span>
+                        )}
+                        {parsedSummary.detection_signals && parsedSummary.detection_signals.slice(0, 3).map((sig, sIdx) => (
+                          <span key={sIdx} className="bg-yellow-400 text-black text-[9px] font-mono font-bold px-1.5 py-0.5 border border-black">
+                            {sig}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2 self-stretch md:self-auto justify-end">
+                    <button
+                      onClick={() => setShortcutsModalOpen(true)}
+                      className="px-3 py-1.5 bg-white text-black font-black text-xs border-2 border-black hover:bg-slate-100 shadow-[2px_2px_0px_rgba(255,255,255,1)] uppercase"
+                      title="View Keyboard Shortcuts"
+                    >
+                      ⌨️ SHORTCUTS
+                    </button>
+                    <button
+                      onClick={() => {
+                        setParsedSummary(null);
+                        setSelectedFile(null);
+                        setAllTransactions([]);
+                      }}
+                      className="px-3 py-1.5 bg-[#ff5757] text-white font-black text-xs border-2 border-black hover:bg-red-600 shadow-[2px_2px_0px_rgba(255,255,255,1)] uppercase"
+                    >
+                      RE-UPLOAD
+                    </button>
+                  </div>
+                </div>
+
                 {/* Warning Alerts */}
                 {parsedSummary.is_duplicate && (
                   <div className="bg-[#ffde47] border-4 border-black p-4 text-sm font-bold text-black flex items-start space-x-3 shadow-[4px_4px_0px_rgba(0,0,0,1)]">
@@ -1544,7 +1806,7 @@ export default function App() {
                     </svg>
                     <div>
                       <span className="font-black uppercase block">RECONCILIATION AUDIT WARNING:</span>
-                      The transaction sum (Opening + Credits - Debits) does not reconcile with the reported Closing Balance. Please check the PDF.
+                      The transaction sum (Opening + Credits - Debits) differs from the reported Closing Balance {parsedSummary.reconciliation_discrepancy ? `by ₹${Math.abs(parsedSummary.reconciliation_discrepancy).toFixed(2)}` : ''}. Review highlighted rows below.
                     </div>
                   </div>
                 )}
@@ -1553,24 +1815,24 @@ export default function App() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="bg-white p-4 border-4 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] flex flex-col justify-between">
                     <p className="text-[10px] font-black text-black uppercase tracking-wider">Total Transactions</p>
-                    <p className="text-3xl font-black text-black mt-1">{parsedSummary.transactions_count}</p>
+                    <p className="text-3xl font-black text-black mt-1">{allTransactions.length || parsedSummary.transactions_count}</p>
                     <span className="text-[10px] text-slate-500 font-bold mt-1">{parsedSummary.pages_count} PDF Pages</span>
                   </div>
 
                   <div className="bg-white p-4 border-4 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] flex flex-col justify-between">
                     <p className="text-[10px] font-black text-black uppercase tracking-wider">Opening Balance</p>
-                    <p className="text-xl font-black text-black mt-1">₹{parsedSummary.opening_balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+                    <p className="text-xl font-black text-black mt-1">₹{(parsedSummary.opening_balance || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
                     <span className="text-[10px] text-slate-500 font-bold mt-1">Start of Period</span>
                   </div>
 
                   <div className="bg-white p-4 border-4 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] flex flex-col justify-between">
                     <p className="text-[10px] font-black text-black uppercase tracking-wider">Closing Balance</p>
-                    <p className="text-xl font-black text-black mt-1">₹{parsedSummary.closing_balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+                    <p className="text-xl font-black text-black mt-1">₹{(parsedSummary.closing_balance || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
                     <span className="text-[10px] text-slate-500 font-bold mt-1">End of Period</span>
                   </div>
 
                   <div className="bg-white p-4 border-4 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] flex flex-col justify-between">
-                    <p className="text-[10px] font-black text-black uppercase tracking-wider">Audit Result</p>
+                    <p className="text-[10px] font-black text-black uppercase tracking-wider">Reconciliation Audit</p>
                     <div className="mt-2">
                       {parsedSummary.reconciled ? (
                         <span className="inline-flex items-center px-3 py-1 border-2 border-black font-black bg-[#3affaa] text-black text-xs uppercase shadow-[2px_2px_0px_rgba(0,0,0,1)]">
@@ -1582,73 +1844,283 @@ export default function App() {
                         </span>
                       )}
                     </div>
-                    <span className="text-[10px] text-slate-500 font-bold mt-1">Mathematical verify</span>
+                    <span className="text-[10px] text-slate-500 font-bold mt-1">
+                      {allTransactions.filter(t => t.requires_review).length} items need review
+                    </span>
                   </div>
                 </div>
 
-                {/* Interactive Preview Table with inline Narration Editing */}
-                {parsedSummary.transactions_preview && parsedSummary.transactions_preview.length > 0 && (
-                  <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] overflow-hidden">
-                    <div className="px-6 py-4 bg-[#ffd615] border-b-4 border-black flex justify-between items-center">
-                      <div className="flex items-center space-x-3">
-                        <img src="/symbol_mark.svg" alt="SB" className="w-8 h-8 border-2 border-black bg-black shadow-[2px_2px_0px_rgba(0,0,0,1)] flex-shrink-0" />
-                        <div>
-                          <h4 className="font-black text-black text-sm uppercase">Statement Transactions & Live Narration Editor</h4>
-                          <p className="text-xs font-bold text-black opacity-80">You can edit narrations inline below. Customized entries will save directly to Tally XML.</p>
-                        </div>
-                      </div>
-                      <span className="text-xs font-black bg-white border-2 border-black px-2 py-0.5 shadow-[2px_2px_0px_rgba(0,0,0,1)] uppercase">
-                        PREVIEW MODE
-                      </span>
+                {/* 2. Review Queue Filter Tabs & Action Toolbar */}
+                <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] overflow-hidden">
+                  
+                  {/* Top Bar with Queue Filter Tabs */}
+                  <div className="p-4 bg-[#ffd615] border-b-4 border-black flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        onClick={() => setFilterMode('ALL')}
+                        className={`px-3 py-1.5 border-2 border-black font-black text-xs uppercase transition-all ${filterMode === 'ALL' ? 'bg-black text-white shadow-[2px_2px_0px_rgba(0,0,0,1)]' : 'bg-white text-black hover:bg-slate-100'}`}
+                      >
+                        ALL ({allTransactions.length})
+                      </button>
+                      <button
+                        onClick={() => setFilterMode('READY')}
+                        className={`px-3 py-1.5 border-2 border-black font-black text-xs uppercase transition-all ${filterMode === 'READY' ? 'bg-black text-white shadow-[2px_2px_0px_rgba(0,0,0,1)]' : 'bg-white text-black hover:bg-slate-100'}`}
+                      >
+                        READY ({allTransactions.filter(t => !t.requires_review).length})
+                      </button>
+                      <button
+                        onClick={() => setFilterMode('REVIEW')}
+                        className={`px-3 py-1.5 border-2 border-black font-black text-xs uppercase transition-all ${filterMode === 'REVIEW' ? 'bg-[#ff5757] text-white shadow-[2px_2px_0px_rgba(0,0,0,1)]' : allTransactions.filter(t => t.requires_review).length > 0 ? 'bg-[#ff5757] text-white hover:bg-red-600' : 'bg-white text-black'}`}
+                      >
+                        NEEDS REVIEW ({allTransactions.filter(t => t.requires_review).length})
+                      </button>
+                      <button
+                        onClick={() => setFilterMode('DUPLICATES')}
+                        className={`px-3 py-1.5 border-2 border-black font-black text-xs uppercase transition-all ${filterMode === 'DUPLICATES' ? 'bg-amber-400 text-black shadow-[2px_2px_0px_rgba(0,0,0,1)]' : 'bg-white text-black hover:bg-slate-100'}`}
+                      >
+                        DUPLICATES ({allTransactions.filter(t => t.is_duplicate).length})
+                      </button>
+                      <button
+                        onClick={() => setFilterMode('DEBIT')}
+                        className={`px-3 py-1.5 border-2 border-black font-black text-xs uppercase transition-all ${filterMode === 'DEBIT' ? 'bg-black text-white shadow-[2px_2px_0px_rgba(0,0,0,1)]' : 'bg-white text-black hover:bg-slate-100'}`}
+                      >
+                        DEBITS ({allTransactions.filter(t => (t.debit || 0) > 0).length})
+                      </button>
+                      <button
+                        onClick={() => setFilterMode('CREDIT')}
+                        className={`px-3 py-1.5 border-2 border-black font-black text-xs uppercase transition-all ${filterMode === 'CREDIT' ? 'bg-black text-white shadow-[2px_2px_0px_rgba(0,0,0,1)]' : 'bg-white text-black hover:bg-slate-100'}`}
+                      >
+                        CREDITS ({allTransactions.filter(t => (t.credit || 0) > 0).length})
+                      </button>
                     </div>
-                    <div className="overflow-x-auto max-h-[380px] overflow-y-auto">
-                      <table className="min-w-full divide-y divide-black">
-                        <thead className="bg-slate-100 text-[10px] font-black text-black uppercase tracking-wider sticky top-0 border-b-2 border-black bg-slate-100 z-10">
-                          <tr>
-                            <th className="px-4 py-3 text-left border-r border-black">Date</th>
-                            <th className="px-4 py-3 text-left border-r border-black w-2/5">Narration (Double click or type to edit)</th>
-                            <th className="px-4 py-3 text-left border-r border-black">Ref No.</th>
-                            <th className="px-4 py-3 text-right border-r border-black">Debit (Out)</th>
-                            <th className="px-4 py-3 text-right border-r border-black">Credit (In)</th>
-                            <th className="px-4 py-3 text-right">Balance</th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-black text-xs font-bold text-black">
-                          {parsedSummary.transactions_preview.map((tx, idx) => (
-                            <tr key={idx} className="hover:bg-yellow-50/20">
-                              <td className="px-4 py-2.5 border-r border-black whitespace-nowrap">{tx.txn_date}</td>
-                              <td className="px-4 py-2.5 border-r border-black">
+
+                    <div className="flex items-center space-x-2 w-full lg:w-auto">
+                      <input
+                        id="table-search-input"
+                        type="text"
+                        placeholder="Search narration, ref, ledger... (Ctrl+F)"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="px-3 py-1.5 border-2 border-black text-xs font-bold bg-white focus:outline-none w-full lg:w-64"
+                      />
+                      {allTransactions.filter(t => t.requires_review).length > 0 && (
+                        <button
+                          onClick={() => {
+                            setCurrentReviewIdx(0);
+                            setReviewModalOpen(true);
+                          }}
+                          className="px-3 py-1.5 bg-black text-[#FFD629] font-black text-xs border-2 border-black uppercase whitespace-nowrap hover:bg-zinc-800 shadow-[2px_2px_0px_rgba(0,0,0,1)]"
+                        >
+                          ⚡ REVIEW NEXT ISSUE
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Bulk Actions Toolbar */}
+                  <div className="px-4 py-2.5 bg-slate-100 border-b-2 border-black flex flex-wrap items-center justify-between gap-3 text-xs font-bold">
+                    <div className="flex items-center space-x-3">
+                      <label className="flex items-center space-x-1.5 cursor-pointer font-black select-none">
+                        <input
+                          type="checkbox"
+                          checked={selectedRowIds.size > 0 && selectedRowIds.size === allTransactions.length}
+                          onChange={() => handleSelectAllRows(allTransactions)}
+                          className="w-4 h-4 border-2 border-black accent-black rounded-none"
+                        />
+                        <span>SELECT ALL ({selectedRowIds.size} selected)</span>
+                      </label>
+                      {undoStack.length > 0 && (
+                        <button
+                          onClick={() => {
+                            const lastUndo = undoStack[undoStack.length - 1];
+                            if (lastUndo && lastUndo.type === 'NARRATION') {
+                              setEditedNarrations(prev => ({
+                                ...prev,
+                                [lastUndo.idx]: lastUndo.oldText
+                              }));
+                              setUndoStack(prev => prev.slice(0, -1));
+                            }
+                          }}
+                          className="px-2 py-0.5 border border-black bg-white hover:bg-slate-200 font-bold text-[11px] shadow-[1px_1px_0px_rgba(0,0,0,1)]"
+                          title="Undo last narration edit (Ctrl+Z)"
+                        >
+                          ↩ UNDO ({undoStack.length})
+                        </button>
+                      )}
+                    </div>
+
+                    {selectedRowIds.size > 0 && (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <input
+                          type="text"
+                          placeholder="Type Counter Ledger..."
+                          value={bulkLedgerInput}
+                          onChange={(e) => setBulkLedgerInput(e.target.value)}
+                          className="px-2 py-1 border-2 border-black text-xs font-bold bg-white focus:outline-none"
+                        />
+                        <button
+                          onClick={handleBulkAssignLedger}
+                          className="px-3 py-1 bg-[#ffd615] border-2 border-black font-black text-xs hover:bg-yellow-400 shadow-[1px_1px_0px_rgba(0,0,0,1)] uppercase"
+                        >
+                          ASSIGN LEDGER
+                        </button>
+                        <button
+                          onClick={handleBulkMarkReviewed}
+                          className="px-3 py-1 bg-[#3affaa] border-2 border-black font-black text-xs hover:bg-emerald-400 shadow-[1px_1px_0px_rgba(0,0,0,1)] uppercase"
+                        >
+                          MARK REVIEWED
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (!confirm(`Delete ${selectedRowIds.size} selected transactions?`)) return;
+                            setAllTransactions(prev => prev.filter(t => !selectedRowIds.has(t.id)));
+                            setSelectedRowIds(new Set());
+                          }}
+                          className="px-3 py-1 bg-[#ff5757] text-white border-2 border-black font-black text-xs hover:bg-red-600 shadow-[1px_1px_0px_rgba(0,0,0,1)] uppercase"
+                        >
+                          DELETE SELECTED
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 3. Interactive Transactions Grid */}
+                  <div className="overflow-x-auto max-h-[440px] overflow-y-auto">
+                    <table className="min-w-full divide-y divide-black text-left">
+                      <thead className="bg-slate-200 text-[10px] font-black text-black uppercase tracking-wider sticky top-0 border-b-2 border-black z-10">
+                        <tr>
+                          <th className="px-3 py-2.5 border-r border-black w-8 text-center">
+                            <input
+                              type="checkbox"
+                              checked={selectedRowIds.size > 0 && selectedRowIds.size === allTransactions.length}
+                              onChange={() => handleSelectAllRows(allTransactions)}
+                              className="w-3.5 h-3.5 border-2 border-black accent-black rounded-none"
+                            />
+                          </th>
+                          <th className="px-3 py-2.5 border-r border-black whitespace-nowrap">Date</th>
+                          <th className="px-4 py-2.5 border-r border-black w-1/3">Narration (Editable)</th>
+                          <th className="px-3 py-2.5 border-r border-black">Ref / UTR</th>
+                          <th className="px-3 py-2.5 border-r border-black w-1/5">Counter Ledger</th>
+                          <th className="px-3 py-2.5 text-right border-r border-black">Debit (Out)</th>
+                          <th className="px-3 py-2.5 text-right border-r border-black">Credit (In)</th>
+                          <th className="px-3 py-2.5 text-right border-r border-black">Balance</th>
+                          <th className="px-3 py-2.5 text-center border-r border-black">Confidence</th>
+                          <th className="px-3 py-2.5 text-center">Audit</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-black text-xs font-bold text-black">
+                        {allTransactions
+                          .filter((tx, idx) => {
+                            if (filterMode === 'READY' && tx.requires_review) return false;
+                            if (filterMode === 'REVIEW' && !tx.requires_review) return false;
+                            if (filterMode === 'DUPLICATES' && !tx.is_duplicate) return false;
+                            if (filterMode === 'DEBIT' && (!tx.debit || tx.debit <= 0)) return false;
+                            if (filterMode === 'CREDIT' && (!tx.credit || tx.credit <= 0)) return false;
+
+                            if (searchQuery.trim()) {
+                              const q = searchQuery.toLowerCase();
+                              const narr = (editedNarrations[idx] !== undefined ? editedNarrations[idx] : tx.narration || '').toLowerCase();
+                              const ledger = (editedLedgers[idx] !== undefined ? editedLedgers[idx] : tx.assigned_ledger || '').toLowerCase();
+                              const ref = (tx.ref_no || tx.utr || '').toLowerCase();
+                              const amt = `${tx.debit || ''} ${tx.credit || ''} ${tx.balance || ''}`;
+                              if (!narr.includes(q) && !ledger.includes(q) && !ref.includes(q) && !amt.includes(q)) {
+                                return false;
+                              }
+                            }
+                            return true;
+                          })
+                          .map((tx, idx) => (
+                            <tr 
+                              key={tx.id || idx} 
+                              className={`hover:bg-yellow-50/40 transition-colors ${selectedRowIds.has(tx.id) ? 'bg-yellow-50' : ''} ${tx.requires_review ? 'bg-red-50/40' : ''}`}
+                            >
+                              <td className="px-3 py-2 border-r border-black text-center">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedRowIds.has(tx.id)}
+                                  onChange={() => handleToggleRowSelection(tx.id)}
+                                  className="w-3.5 h-3.5 border-2 border-black accent-black rounded-none"
+                                />
+                              </td>
+                              <td className="px-3 py-2 border-r border-black whitespace-nowrap font-mono text-[11px]">
+                                {tx.txn_date}
+                              </td>
+                              <td className="px-3 py-2 border-r border-black">
                                 <input
                                   type="text"
                                   value={editedNarrations[idx] !== undefined ? editedNarrations[idx] : tx.narration}
                                   onChange={(e) => handleNarrationEdit(idx, e.target.value)}
-                                  className="w-full px-2 py-1 border-2 border-black font-mono font-bold text-xs bg-white focus:bg-yellow-50 focus:outline-none rounded-none"
+                                  className="w-full px-2 py-1 border border-black font-mono font-bold text-[11px] bg-white focus:bg-yellow-50 focus:outline-none"
                                 />
                               </td>
-                              <td className="px-4 py-2.5 border-r border-black text-slate-500 font-mono truncate max-w-xs">{tx.ref_no || '-'}</td>
-                              <td className="px-4 py-2.5 border-r border-black text-right text-[#ff4b3f]">
-                                {tx.debit ? `₹${tx.debit.toFixed(2)}` : ''}
+                              <td className="px-3 py-2 border-r border-black text-slate-600 font-mono text-[10px] truncate max-w-[120px]">
+                                <div>{tx.ref_no || tx.utr || '-'}</div>
+                                {tx.category && (
+                                  <span className="text-[8px] bg-slate-100 text-slate-700 px-1 border border-slate-300 uppercase">
+                                    {tx.category}
+                                  </span>
+                                )}
                               </td>
-                              <td className="px-4 py-2.5 border-r border-black text-right text-green-600">
-                                {tx.credit ? `₹${tx.credit.toFixed(2)}` : ''}
+                              <td className="px-3 py-2 border-r border-black">
+                                <input
+                                  type="text"
+                                  value={editedLedgers[idx] !== undefined ? editedLedgers[idx] : (tx.assigned_ledger || counterLedgerName)}
+                                  onChange={(e) => handleLedgerEdit(idx, e.target.value)}
+                                  className="w-full px-2 py-1 border border-black font-bold text-[11px] bg-white focus:bg-yellow-50 focus:outline-none"
+                                />
                               </td>
-                              <td className="px-4 py-2.5 text-right font-mono text-slate-700">
-                                ₹{tx.balance.toFixed(2)}
+                              <td className="px-3 py-2 border-r border-black text-right text-[#ff4b3f] font-mono whitespace-nowrap">
+                                {tx.debit ? `₹${Number(tx.debit).toFixed(2)}` : ''}
+                              </td>
+                              <td className="px-3 py-2 border-r border-black text-right text-emerald-600 font-mono whitespace-nowrap">
+                                {tx.credit ? `₹${Number(tx.credit).toFixed(2)}` : ''}
+                              </td>
+                              <td className="px-3 py-2 border-r border-black text-right font-mono text-slate-800 whitespace-nowrap">
+                                ₹{Number(tx.balance || 0).toFixed(2)}
+                              </td>
+                              <td className="px-2 py-2 border-r border-black text-center whitespace-nowrap">
+                                <span className={`px-1.5 py-0.5 text-[9px] font-black uppercase border border-black ${tx.confidence_grade === 'HIGH' ? 'bg-[#3affaa] text-black' : tx.confidence_grade === 'MEDIUM' ? 'bg-[#ffd615] text-black' : 'bg-[#ff5757] text-white'}`}>
+                                  {Math.round(tx.confidence_score || 95)}%
+                                </span>
+                              </td>
+                              <td className="px-2 py-2 text-center whitespace-nowrap">
+                                {tx.requires_review ? (
+                                  <button
+                                    onClick={() => {
+                                      const issueIdx = allTransactions.filter(t => t.requires_review).findIndex(t => t.id === tx.id);
+                                      setCurrentReviewIdx(issueIdx >= 0 ? issueIdx : 0);
+                                      setReviewModalOpen(true);
+                                    }}
+                                    className="px-2 py-0.5 bg-[#ff5757] text-white text-[9px] font-black uppercase border border-black hover:bg-red-600"
+                                  >
+                                    REVIEW ⚠️
+                                  </button>
+                                ) : tx.is_duplicate ? (
+                                  <span className="px-1.5 py-0.5 bg-amber-300 text-black text-[9px] font-black uppercase border border-black">
+                                    DUP
+                                  </span>
+                                ) : (
+                                  <span className="text-emerald-600 font-black text-xs">✓</span>
+                                )}
                               </td>
                             </tr>
                           ))}
-                        </tbody>
-                      </table>
-                    </div>
+                      </tbody>
+                    </table>
                   </div>
-                )}
+                </div>
 
-                {/* Actions & Settings Panel Grid */}
+                {/* 4. Actions & Tally XML Export Settings */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   
                   {/* Left: Customization Settings */}
                   <div className="bg-white border-4 border-black shadow-[6px_6px_0px_rgba(0,0,0,1)] p-6 space-y-4 lg:col-span-2">
-                    <h4 className="text-md font-black text-black uppercase border-b-2 border-black pb-2">Tally Integration Settings</h4>
+                    <div className="flex justify-between items-center border-b-2 border-black pb-2">
+                      <h4 className="text-md font-black text-black uppercase">Tally Prime / ERP 9 Integration Settings</h4>
+                      <span className="bg-[#3affaa] text-black text-[9px] font-black px-2 py-0.5 border border-black uppercase">
+                        ✓ Tally XML 1.0 Compliant
+                      </span>
+                    </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
@@ -1658,23 +2130,23 @@ export default function App() {
                           placeholder="e.g. State Bank of India"
                           value={tallyLedgerName}
                           onChange={(e) => setTallyLedgerName(e.target.value)}
-                          className="w-full px-3 py-2 border-2 border-black text-sm font-bold bg-white focus:outline-none"
+                          className="w-full px-3 py-2 border-2 border-black text-sm font-bold bg-white focus:outline-none focus:bg-yellow-50"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-black text-black uppercase mb-1">Counter Ledger Name</label>
+                        <label className="block text-xs font-black text-black uppercase mb-1">Default Counter Ledger</label>
                         <input
                           type="text"
                           value={counterLedgerName}
                           onChange={(e) => setCounterLedgerName(e.target.value)}
-                          className="w-full px-3 py-2 border-2 border-black text-sm font-bold bg-white focus:outline-none"
+                          className="w-full px-3 py-2 border-2 border-black text-sm font-bold bg-white focus:outline-none focus:bg-yellow-50"
                         />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                       <div>
-                        <label className="block text-xs font-black text-black uppercase mb-1">Credit Voucher Type</label>
+                        <label className="block text-xs font-black text-black uppercase mb-1">Credit Voucher Type (Money In)</label>
                         <select
                           value={creditVoucherType}
                           onChange={(e) => setCreditVoucherType(e.target.value)}
@@ -1686,7 +2158,7 @@ export default function App() {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-xs font-black text-black uppercase mb-1">Debit Voucher Type</label>
+                        <label className="block text-xs font-black text-black uppercase mb-1">Debit Voucher Type (Money Out)</label>
                         <select
                           value={debitVoucherType}
                           onChange={(e) => setDebitVoucherType(e.target.value)}
@@ -1732,28 +2204,187 @@ export default function App() {
                         onClick={handleDownloadExcel}
                         className="w-full py-2.5 px-4 border-2 border-black font-black text-black bg-[#3fecff] hover:bg-cyan-300 hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[4px_4px_0px_rgba(0,0,0,1)] shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all uppercase text-xs"
                       >
-                        EXCEL EXPORT (FREE)
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setParsedSummary(null);
-                          setTallyLedgerName('');
-                          setSelectedFile(null);
-                          setEditedNarrations({});
-                        }}
-                        className="w-full text-center text-xs font-black text-black underline hover:no-underline pt-1 block"
-                      >
-                        CANCEL & RE-UPLOAD
+                        EXCEL RECONCILIATION EXPORT (FREE)
                       </button>
                     </div>
                   </div>
                 </div>
 
+              </div>
+            )}
+          </div>
+        )}
 
+        {/* --- TAB: LEDGER RULES ENGINE --- */}
+        {activeTab === 'rules' && (
+          <div className="space-y-8 max-w-6xl mx-auto">
+            
+            {/* Header Banner */}
+            <div className="bg-black text-white p-6 border-4 border-black shadow-[6px_6px_0px_rgba(0,0,0,1)] flex items-center justify-between">
+              <div className="flex items-center space-x-3.5">
+                <img src="/symbol_mark.svg" alt="Rules" className="w-10 h-10 border border-[#FFD629] bg-black p-0.5 flex-shrink-0" />
+                <div>
+                  <h3 className="text-xl font-black text-[#FFD629] uppercase tracking-tight">
+                    Smart Ledger Suggestion & Categorization Rules
+                  </h3>
+                  <p className="text-xs font-bold text-slate-300">
+                    Define keyword rules to automatically categorize narrations and assign specific Tally counter-ledgers.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              
+              {/* Left: Create Rule Form */}
+              <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 space-y-4">
+                <h4 className="text-md font-black text-black uppercase border-b-2 border-black pb-2">Add New Rule</h4>
+                <form onSubmit={handleCreateRule} className="space-y-3 text-xs">
+                  <div>
+                    <label className="block font-black text-black uppercase mb-1">Rule Name</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Electricity Bill Rule"
+                      value={ruleNameInput}
+                      onChange={(e) => setRuleNameInput(e.target.value)}
+                      className="w-full px-3 py-2 border-2 border-black font-bold bg-white focus:outline-none focus:bg-yellow-50"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-black text-black uppercase mb-1">Narration Match Pattern / Keyword</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. BESCOM or SALARY or SWIGGY"
+                      value={rulePatternInput}
+                      onChange={(e) => setRulePatternInput(e.target.value)}
+                      className="w-full px-3 py-2 border-2 border-black font-bold bg-white focus:outline-none focus:bg-yellow-50 uppercase"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block font-black text-black uppercase mb-1">Match Type</label>
+                      <select
+                        value={ruleMatchType}
+                        onChange={(e) => setRuleMatchType(e.target.value)}
+                        className="w-full px-2 py-2 border-2 border-black font-bold bg-white focus:outline-none"
+                      >
+                        <option value="CONTAINS">CONTAINS</option>
+                        <option value="STARTS_WITH">STARTS WITH</option>
+                        <option value="ENDS_WITH">ENDS WITH</option>
+                        <option value="EXACT">EXACT</option>
+                        <option value="REGEX">REGEX</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block font-black text-black uppercase mb-1">Voucher Type</label>
+                      <select
+                        value={ruleVoucherType}
+                        onChange={(e) => setRuleVoucherType(e.target.value)}
+                        className="w-full px-2 py-2 border-2 border-black font-bold bg-white focus:outline-none"
+                      >
+                        <option value="Payment">Payment</option>
+                        <option value="Receipt">Receipt</option>
+                        <option value="Contra">Contra</option>
+                        <option value="Journal">Journal</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-black text-black uppercase mb-1">Target Counter Ledger Name</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Electricity Expenses"
+                      value={ruleLedgerInput}
+                      onChange={(e) => setRuleLedgerInput(e.target.value)}
+                      className="w-full px-3 py-2 border-2 border-black font-bold bg-white focus:outline-none focus:bg-yellow-50"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-black text-black uppercase mb-1">Category</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Utilities, Vendor, Salary"
+                      value={ruleCategoryInput}
+                      onChange={(e) => setRuleCategoryInput(e.target.value)}
+                      className="w-full px-3 py-2 border-2 border-black font-bold bg-white focus:outline-none focus:bg-yellow-50"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full py-2.5 px-4 border-2 border-black font-black text-black bg-[#ffd615] hover:bg-yellow-400 uppercase shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-all mt-2"
+                  >
+                    SAVE LEDGER RULE
+                  </button>
+                </form>
+              </div>
+
+              {/* Right: Existing Rules Directory */}
+              <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 space-y-4 lg:col-span-2">
+                <div className="flex justify-between items-center border-b-2 border-black pb-2">
+                  <h4 className="text-md font-black text-black uppercase">Active Rules Directory ({userRules.length})</h4>
+                  <button
+                    onClick={fetchUserRules}
+                    className="text-xs font-black underline hover:no-underline"
+                  >
+                    Refresh
+                  </button>
+                </div>
+
+                {userRules.length === 0 ? (
+                  <div className="py-8 text-center text-slate-500 font-bold text-xs">
+                    No custom ledger rules created yet. Add rules on the left to automate ledger mapping!
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto max-h-[380px]">
+                    <table className="min-w-full divide-y divide-black border-2 border-black text-xs">
+                      <thead className="bg-slate-100 font-black text-black uppercase border-b border-black">
+                        <tr>
+                          <th className="px-3 py-2 text-left border-r border-black">Rule Name</th>
+                          <th className="px-3 py-2 text-left border-r border-black">Pattern</th>
+                          <th className="px-3 py-2 text-center border-r border-black">Type</th>
+                          <th className="px-3 py-2 text-left border-r border-black">Assigned Ledger</th>
+                          <th className="px-3 py-2 text-center border-r border-black">Voucher</th>
+                          <th className="px-3 py-2 text-center">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-black font-bold text-black">
+                        {userRules.map((rule) => (
+                          <tr key={rule.id} className="hover:bg-slate-50">
+                            <td className="px-3 py-2.5 border-r border-black font-black">{rule.rule_name}</td>
+                            <td className="px-3 py-2.5 border-r border-black font-mono uppercase text-slate-800">{rule.pattern}</td>
+                            <td className="px-3 py-2.5 border-r border-black text-center text-[10px]">
+                              <span className="bg-slate-100 px-1 py-0.5 border border-black font-mono">
+                                {rule.match_type}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2.5 border-r border-black text-emerald-700 font-bold">{rule.ledger_name}</td>
+                            <td className="px-3 py-2.5 border-r border-black text-center text-[10px]">{rule.voucher_type}</td>
+                            <td className="px-3 py-2 text-center">
+                              <button
+                                onClick={() => handleDeleteRule(rule.id)}
+                                className="px-2 py-0.5 bg-white hover:bg-[#ff5757] hover:text-white border border-black text-[10px] font-black uppercase transition-colors"
+                              >
+                                DELETE
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
 
             </div>
-          )}
+
           </div>
         )}
 
@@ -2873,6 +3504,178 @@ export default function App() {
                     {profileLoading ? "CHANGING PASSWORD..." : "Update Password"}
                   </button>
                 </form>
+              </div>
+            </div>
+          )}
+
+          {/* --- Review Next Issue Stepper Modal --- */}
+          {reviewModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+              <div className="bg-white border-4 border-black shadow-[10px_10px_0px_rgba(0,0,0,1)] max-w-xl w-full p-6 space-y-5">
+                {(() => {
+                  const reviewList = allTransactions.filter(t => t.requires_review);
+                  const currentItem = reviewList[currentReviewIdx];
+
+                  if (!currentItem) {
+                    return (
+                      <div className="text-center py-6 space-y-4">
+                        <span className="text-4xl">🎉</span>
+                        <h3 className="text-lg font-black uppercase text-black">All Issues Resolved!</h3>
+                        <p className="text-xs font-bold text-slate-600">Every transaction has been reviewed and verified for Tally export.</p>
+                        <button
+                          onClick={() => setReviewModalOpen(false)}
+                          className="px-6 py-2 bg-[#ffd615] border-2 border-black font-black text-xs uppercase shadow-[2px_2px_0px_rgba(0,0,0,1)]"
+                        >
+                          BACK TO STATEMENT
+                        </button>
+                      </div>
+                    );
+                  }
+
+                  const originalIdx = allTransactions.findIndex(t => t.id === currentItem.id);
+
+                  return (
+                    <>
+                      <div className="flex justify-between items-center bg-[#ff5757] text-white p-3 border-2 border-black shadow-[2px_2px_0px_rgba(0,0,0,1)]">
+                        <div>
+                          <span className="text-[10px] font-black uppercase tracking-wider block">DIAGNOSTIC ISSUE RESOLUTION STEPPER</span>
+                          <h3 className="text-sm font-black uppercase">Issue {currentReviewIdx + 1} of {reviewList.length}</h3>
+                        </div>
+                        <button
+                          onClick={() => setReviewModalOpen(false)}
+                          className="text-white font-black text-sm px-2 py-0.5 border border-white hover:bg-white hover:text-black"
+                        >
+                          ✕ ESC
+                        </button>
+                      </div>
+
+                      {/* Issue Explanation */}
+                      <div className="bg-amber-50 border-2 border-black p-3 text-xs font-bold text-amber-950 space-y-1">
+                        <span className="font-black uppercase block text-[10px] text-amber-900">Flagged Reasons:</span>
+                        <ul className="list-disc list-inside space-y-0.5 text-[11px]">
+                          {currentItem.review_reasons && currentItem.review_reasons.length > 0 ? (
+                            currentItem.review_reasons.map((r, rIdx) => (
+                              <li key={rIdx}>{r}</li>
+                            ))
+                          ) : (
+                            <li>Low confidence or potential format anomaly.</li>
+                          )}
+                        </ul>
+                      </div>
+
+                      {/* Transaction Data Card */}
+                      <div className="bg-slate-50 border-2 border-black p-4 space-y-3 text-xs">
+                        <div className="grid grid-cols-2 gap-2 font-mono">
+                          <div>
+                            <span className="text-[9px] font-black text-slate-500 uppercase block">Txn Date</span>
+                            <span className="font-bold text-black">{currentItem.txn_date}</span>
+                          </div>
+                          <div>
+                            <span className="text-[9px] font-black text-slate-500 uppercase block">Amount</span>
+                            <span className={`font-black ${currentItem.debit ? 'text-[#ff4b3f]' : 'text-emerald-600'}`}>
+                              {currentItem.debit ? `Debit: ₹${Number(currentItem.debit).toFixed(2)}` : `Credit: ₹${Number(currentItem.credit).toFixed(2)}`}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-black text-black uppercase mb-1">Edit Narration</label>
+                          <input
+                            type="text"
+                            value={editedNarrations[originalIdx] !== undefined ? editedNarrations[originalIdx] : currentItem.narration}
+                            onChange={(e) => handleNarrationEdit(originalIdx, e.target.value)}
+                            className="w-full px-2.5 py-1.5 border-2 border-black text-xs font-mono font-bold bg-white focus:outline-none focus:bg-yellow-50"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-black text-black uppercase mb-1">Assign Counter Ledger</label>
+                          <input
+                            type="text"
+                            value={editedLedgers[originalIdx] !== undefined ? editedLedgers[originalIdx] : (currentItem.assigned_ledger || counterLedgerName)}
+                            onChange={(e) => handleLedgerEdit(originalIdx, e.target.value)}
+                            className="w-full px-2.5 py-1.5 border-2 border-black text-xs font-bold bg-white focus:outline-none focus:bg-yellow-50"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Stepper Buttons */}
+                      <div className="flex items-center justify-between pt-2">
+                        <div className="flex space-x-2">
+                          <button
+                            disabled={currentReviewIdx === 0}
+                            onClick={() => setCurrentReviewIdx(prev => Math.max(0, prev - 1))}
+                            className="px-3 py-1.5 border-2 border-black font-black text-xs bg-white hover:bg-slate-100 disabled:opacity-40 uppercase"
+                          >
+                            ← PREV
+                          </button>
+                          <button
+                            disabled={currentReviewIdx >= reviewList.length - 1}
+                            onClick={() => setCurrentReviewIdx(prev => Math.min(reviewList.length - 1, prev + 1))}
+                            className="px-3 py-1.5 border-2 border-black font-black text-xs bg-white hover:bg-slate-100 disabled:opacity-40 uppercase"
+                          >
+                            NEXT →
+                          </button>
+                        </div>
+
+                        <button
+                          onClick={() => {
+                            setAllTransactions(prev => prev.map(t => t.id === currentItem.id ? { ...t, requires_review: false } : t));
+                            if (currentReviewIdx >= reviewList.length - 1) {
+                              setCurrentReviewIdx(Math.max(0, reviewList.length - 2));
+                            }
+                          }}
+                          className="px-4 py-2 border-2 border-black font-black text-xs bg-[#3affaa] hover:bg-emerald-400 shadow-[2px_2px_0px_rgba(0,0,0,1)] uppercase"
+                        >
+                          ACCEPT & RESOLVE ✓
+                        </button>
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+            </div>
+          )}
+
+          {/* --- Keyboard Shortcuts Helper Modal --- */}
+          {shortcutsModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+              <div className="bg-white border-4 border-black shadow-[10px_10px_0px_rgba(0,0,0,1)] max-w-md w-full p-6 space-y-4">
+                <div className="flex justify-between items-center bg-[#ffd615] p-3 border-2 border-black shadow-[2px_2px_0px_rgba(0,0,0,1)]">
+                  <h3 className="text-sm font-black uppercase text-black">⌨️ Keyboard Shortcuts</h3>
+                  <button
+                    onClick={() => setShortcutsModalOpen(false)}
+                    className="text-black font-black text-sm px-2 py-0.5 border border-black hover:bg-black hover:text-white"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="divide-y divide-black border-2 border-black text-xs font-bold">
+                  <div className="flex justify-between p-2.5 bg-slate-50">
+                    <span>Search Transactions / History</span>
+                    <kbd className="px-2 py-0.5 bg-white border border-black font-mono font-black text-[11px] shadow-[1px_1px_0px_rgba(0,0,0,1)]">Ctrl + F</kbd>
+                  </div>
+                  <div className="flex justify-between p-2.5 bg-white">
+                    <span>Undo Narration Edit</span>
+                    <kbd className="px-2 py-0.5 bg-white border border-black font-mono font-black text-[11px] shadow-[1px_1px_0px_rgba(0,0,0,1)]">Ctrl + Z</kbd>
+                  </div>
+                  <div className="flex justify-between p-2.5 bg-slate-50">
+                    <span>Close Open Dialog / Modal</span>
+                    <kbd className="px-2 py-0.5 bg-white border border-black font-mono font-black text-[11px] shadow-[1px_1px_0px_rgba(0,0,0,1)]">Esc</kbd>
+                  </div>
+                  <div className="flex justify-between p-2.5 bg-white">
+                    <span>Navigate Between Fields</span>
+                    <kbd className="px-2 py-0.5 bg-white border border-black font-mono font-black text-[11px] shadow-[1px_1px_0px_rgba(0,0,0,1)]">Tab / Shift + Tab</kbd>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setShortcutsModalOpen(false)}
+                  className="w-full py-2 bg-black text-white border-2 border-black font-black text-xs uppercase shadow-[2px_2px_0px_rgba(0,0,0,1)]"
+                >
+                  GOT IT
+                </button>
               </div>
             </div>
           )}

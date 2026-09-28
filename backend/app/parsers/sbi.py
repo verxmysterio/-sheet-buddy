@@ -1,12 +1,12 @@
 import re
-from datetime import datetime
+from datetime import datetime, date
 from pypdf import PdfReader
-from typing import List, Tuple
-from .base import BankParser, StandardTransaction, StatementMetadata
+from typing import List, Tuple, Any
+from .base import BankParser, StandardTransaction, StatementMetadata, reconcile_statement_and_transactions
 
 class SBIParser(BankParser):
-    def parse(self, pdf_path: str) -> Tuple[StatementMetadata, List[StandardTransaction]]:
-        reader = PdfReader(pdf_path)
+    def parse(self, pdf_path_or_bytes: Any) -> Tuple[StatementMetadata, List[StandardTransaction]]:
+        reader = PdfReader(pdf_path_or_bytes)
         pages_count = len(reader.pages)
         
         # 1. Parse Metadata from the first page text
@@ -105,7 +105,8 @@ class SBIParser(BankParser):
                     'amount_val': None,
                     'balance_val': None,
                     'is_debit': False,
-                    'is_credit': False
+                    'is_credit': False,
+                    'page': row_el[0].get('page', 1)
                 }
                 remaining = row_el[2:]
             else:
@@ -162,6 +163,12 @@ class SBIParser(BankParser):
             opening_balance = 0.0
             closing_balance = 0.0
             
+        is_reconciled, discrepancy, transactions = reconcile_statement_and_transactions(
+            opening_balance=opening_balance,
+            transactions=transactions,
+            closing_balance=closing_balance
+        )
+        
         metadata = StatementMetadata(
             bank_name="State Bank of India",
             account_name=account_name,
@@ -171,7 +178,14 @@ class SBIParser(BankParser):
             opening_balance=opening_balance,
             closing_balance=closing_balance,
             pages_count=pages_count,
-            transactions_count=len(transactions)
+            transactions_count=len(transactions),
+            is_reconciled=is_reconciled,
+            reconciliation_discrepancy=discrepancy,
+            detected_bank="State Bank of India",
+            parser_name="SBIParser",
+            review_queue_count=sum(1 for t in transactions if t.requires_review),
+            duplicate_count=sum(1 for t in transactions if t.is_duplicate),
+            high_confidence_count=sum(1 for t in transactions if t.confidence_grade == "HIGH")
         )
         
         return metadata, transactions
@@ -193,7 +207,6 @@ class SBIParser(BankParser):
             except Exception:
                 continue
         else:
-            from datetime import date
             txn_date_obj = date.today()
             
         val_date_str = tx['val_date']
@@ -204,7 +217,6 @@ class SBIParser(BankParser):
             except Exception:
                 continue
         else:
-            from datetime import date
             val_date_obj = date.today()
             
         # Clean amount string safely
@@ -237,5 +249,7 @@ class SBIParser(BankParser):
             debit=debit,
             credit=credit,
             balance=balance,
-            branch_code=tx['branch_code']
+            branch_code=tx['branch_code'],
+            page_number=tx.get('page', 1),
+            parser_name="SBIParser"
         )

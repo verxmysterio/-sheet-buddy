@@ -1,12 +1,17 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from ..models.database import get_db
-from ..models.models import User, WalletTransaction
+from ..models.models import User, WalletTransaction, PromoCode, PromoCodeRedemption
 from ..schemas.schemas import WalletPurchaseRequest, UserResponse, WalletTransactionResponse
 from .deps import get_current_user
 from typing import List
+from datetime import datetime, timezone
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/wallet", tags=["Wallet & Billing"])
+
+def get_utc_now():
+    return datetime.now(timezone.utc)
 
 @router.get("/balance", response_model=dict)
 def get_balance(current_user: User = Depends(get_current_user)):
@@ -26,13 +31,12 @@ def purchase_credits(
             detail="Purchase page count must be greater than zero."
         )
         
-    # Pricing rules: base ₹0.25/page, extra page credits for bulk volume packs
     if purchase_in.pages == 500:
         expected_amount = 125.00
-        credits_to_add = 600  # 500 + 100 free
+        credits_to_add = 600  # 500 + 100 bonus
     elif purchase_in.pages == 1000:
         expected_amount = 250.00
-        credits_to_add = 1250 # 1000 + 250 free
+        credits_to_add = 1250 # 1000 + 250 bonus
     else:
         expected_amount = float(purchase_in.pages) * 0.25
         credits_to_add = purchase_in.pages
@@ -43,11 +47,12 @@ def purchase_credits(
             detail=f"Incorrect payment amount. Base pricing is ₹0.25 per page credit. For {purchase_in.pages} pages, expected amount is ₹{expected_amount:.2f}."
         )
         
-    # Log purchase transaction in PENDING state (admin must approve)
     tx = WalletTransaction(
         user_id=current_user.id,
         amount_in_inr=purchase_in.amount,
         pages_purchased=credits_to_add,
+        balance_before=current_user.page_credits,
+        balance_after=current_user.page_credits, # Stays same until approved
         type="PURCHASE",
         description=f"Purchased {purchase_in.pages} page credits (Bonus: {credits_to_add - purchase_in.pages} extra pages free, Pending Approval)",
         status="PENDING"
@@ -55,7 +60,6 @@ def purchase_credits(
     db.add(tx)
     db.commit()
     db.refresh(tx)
-    
     return tx
 
 @router.get("/transactions", response_model=List[WalletTransactionResponse])
@@ -63,12 +67,9 @@ def get_wallet_transactions(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    txs = db.query(WalletTransaction).filter(
+    return db.query(WalletTransaction).filter(
         WalletTransaction.user_id == current_user.id
     ).order_by(WalletTransaction.created_at.desc()).all()
-    return txs
-
-from pydantic import BaseModel
 
 class RedeemRequest(BaseModel):
     code: str
@@ -79,16 +80,13 @@ def redeem_credit_code(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    from ..models.models import PromoCode
-    from datetime import datetime
-    
     code = payload.code.strip().upper()
     
-    # Handle hardcoded legacy/test codes for backward compatibility
+    # Handle hardcoded legacy/test codes
     if code in ("SHEETBUDDY50", "BUDDY-EASTER-50"):
         existing_tx = db.query(WalletTransaction).filter(
             WalletTransaction.user_id == current_user.id,
-            WalletTransaction.type == "REDEEM"
+            WalletTransaction.type.in_(["REDEEM", "PROMO"])
         ).first()
         
         if existing_tx:
@@ -97,12 +95,17 @@ def redeem_credit_code(
                 detail="You have already redeemed your lifetime promo code!"
             )
             
+        bal_before = current_user.page_credits
         current_user.page_credits += 50
+        bal_after = current_user.page_credits
+        
         tx = WalletTransaction(
             user_id=current_user.id,
             amount_in_inr=0.0,
             pages_purchased=50,
-            type="REDEEM",
+            balance_before=bal_before,
+            balance_after=bal_after,
+            type="PROMO",
             description=f"Redeemed promo code: {code}"
         )
         db.add(tx)
@@ -110,7 +113,6 @@ def redeem_credit_code(
         db.refresh(current_user)
         return current_user
         
-    # Query database for custom promo code
     promo = db.query(PromoCode).filter(
         PromoCode.code == code,
         PromoCode.is_active == True
@@ -122,57 +124,42 @@ def redeem_credit_code(
             detail="Invalid or inactive promo code."
         )
         
-    # Check expiry
     if promo.type == "TIME_BASED" and promo.expires_at:
-        if datetime.utcnow() > promo.expires_at:
+        if get_utc_now() > promo.expires_at.replace(tzinfo=timezone.utc if promo.expires_at.tzinfo is None else None):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="This promo code has expired."
             )
             
-    # Check universal redemption limit
-    if promo.type == "UNIVERSAL_ONCE":
-        global_redeemed = db.query(WalletTransaction).filter(
-            WalletTransaction.type == "REDEEM",
-            WalletTransaction.description == f"Redeemed promo code: {code}"
-        ).first()
-        if global_redeemed:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="This universal promo code has already been redeemed."
-            )
-            
     # Check per-user redemption limit
-    if promo.type == "PER_USER_ONCE":
-        user_redeemed = db.query(WalletTransaction).filter(
-            WalletTransaction.user_id == current_user.id,
-            WalletTransaction.type == "REDEEM",
-            WalletTransaction.description == f"Redeemed promo code: {code}"
-        ).first()
-        if user_redeemed:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="You have already redeemed this promo code!"
-            )
-            
-    # Success: award credits
+    user_redeemed = db.query(WalletTransaction).filter(
+        WalletTransaction.user_id == current_user.id,
+        WalletTransaction.description.like(f"%{code}%")
+    ).first()
+    if user_redeemed:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You have already redeemed this promo code!"
+        )
+        
+    bal_before = current_user.page_credits
     current_user.page_credits += promo.credits
+    bal_after = current_user.page_credits
     
-    # Log redemption
     tx = WalletTransaction(
         user_id=current_user.id,
         amount_in_inr=0.0,
         pages_purchased=promo.credits,
-        type="REDEEM",
+        balance_before=bal_before,
+        balance_after=bal_after,
+        type="PROMO",
         description=f"Redeemed promo code: {code}"
     )
     db.add(tx)
     
-    # Deactivate UNIVERSAL_ONCE promo code so it cannot be used again
     if promo.type == "UNIVERSAL_ONCE":
         promo.is_active = False
         
     db.commit()
     db.refresh(current_user)
-    
     return current_user

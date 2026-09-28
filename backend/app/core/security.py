@@ -1,11 +1,10 @@
 import hashlib
 import os
 import jwt
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Union
 from .config import settings
 
-# 1. PBKDF2 Password Hashing (Standard, secure, and dependency-free fallback)
 def hash_password(password: str) -> str:
     """
     Hashes a password using PBKDF2 with SHA-256.
@@ -17,7 +16,6 @@ def hash_password(password: str) -> str:
     salt_bytes = salt.encode('utf-8')
     
     dk = hashlib.pbkdf2_hmac('sha256', pwd_bytes, salt_bytes, iterations)
-    
     return f"pbkdf2_sha256${iterations}${salt}${dk.hex()}"
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -39,21 +37,20 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         salt_bytes = salt.encode('utf-8')
         
         dk = hashlib.pbkdf2_hmac('sha256', pwd_bytes, salt_bytes, iterations)
-        
         return dk.hex() == original_hash
     except Exception:
         return False
 
-# 2. JWT Tokens
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     """
-    Generates a secure JWT access token.
+    Generates a secure JWT access token with timezone-aware expiration.
     """
     to_encode = data.copy()
+    now = datetime.now(timezone.utc)
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = now + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = now + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
