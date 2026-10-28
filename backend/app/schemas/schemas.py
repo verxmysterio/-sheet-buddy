@@ -184,3 +184,107 @@ class ResetPasswordRequest(BaseModel):
 class ChangePasswordRequest(BaseModel):
     old_password: str
     new_password: str
+
+# --- CSV Template & Mapping Schemas ---
+
+class CsvMappingTemplateCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    date_column: str = "Date"
+    date_format: str = "%d-%m-%Y"
+    voucher_type_column: Optional[str] = "Voucher Type"
+    default_voucher_type: str = "Payment"
+    voucher_number_column: Optional[str] = "Voucher No"
+    debit_ledger_column: Optional[str] = "Debit Ledger"
+    default_debit_ledger: Optional[str] = None
+    credit_ledger_column: Optional[str] = "Credit Ledger"
+    default_credit_ledger: Optional[str] = None
+    amount_column: Optional[str] = "Amount"
+    debit_amount_column: Optional[str] = None
+    credit_amount_column: Optional[str] = None
+    narration_column: Optional[str] = "Narration"
+    default_narration: Optional[str] = None
+    ref_no_column: Optional[str] = "Ref / Cheque No"
+
+class CsvMappingTemplateUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    date_column: Optional[str] = None
+    date_format: Optional[str] = None
+    voucher_type_column: Optional[str] = None
+    default_voucher_type: Optional[str] = None
+    voucher_number_column: Optional[str] = None
+    debit_ledger_column: Optional[str] = None
+    default_debit_ledger: Optional[str] = None
+    credit_ledger_column: Optional[str] = None
+    default_credit_ledger: Optional[str] = None
+    amount_column: Optional[str] = None
+    debit_amount_column: Optional[str] = None
+    credit_amount_column: Optional[str] = None
+    narration_column: Optional[str] = None
+    default_narration: Optional[str] = None
+    ref_no_column: Optional[str] = None
+    is_active: Optional[bool] = None
+
+class CsvMappingTemplateResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
+    id: str
+    user_id: str
+    name: str
+    description: Optional[str] = None
+    date_column: str
+    date_format: str
+    voucher_type_column: Optional[str] = None
+    default_voucher_type: str
+    voucher_number_column: Optional[str] = None
+    debit_ledger_column: Optional[str] = None
+    default_debit_ledger: Optional[str] = None
+    credit_ledger_column: Optional[str] = None
+    default_credit_ledger: Optional[str] = None
+    amount_column: Optional[str] = None
+    debit_amount_column: Optional[str] = None
+    credit_amount_column: Optional[str] = None
+    narration_column: Optional[str] = None
+    default_narration: Optional[str] = None
+    ref_no_column: Optional[str] = None
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+class CsvVoucherRow(BaseModel):
+    row_idx: int
+    date: str
+    voucher_type: str
+    voucher_number: Optional[str] = None
+    debit_ledger: str
+    credit_ledger: str
+    amount: float
+    narration: str
+    ref_no: Optional[str] = None
+    is_valid: bool = True
+    error_reasons: List[str] = Field(default_factory=list)
+
+class CsvInspectResponse(BaseModel):
+    headers: List[str]
+    sample_rows: List[Dict[str, Any]]
+    total_rows: int
+
+class CsvPreviewResponse(BaseModel):
+    mapping_name: str
+    total_vouchers: int
+    payment_count: int
+    receipt_count: int
+    contra_count: int
+    journal_count: int
+    sales_count: int
+    purchase_count: int
+    total_amount: float
+    invalid_rows_count: int
+    vouchers: List[CsvVoucherRow]
+    headers_detected: List[str]
+
+class CsvXmlConversionRequest(BaseModel):
+    mapping_template_id: Optional[str] = None
+    mapping_name: Optional[str] = "Standard CSV Import"
+    vouchers: List[CsvVoucherRow]

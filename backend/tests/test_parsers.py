@@ -1,4 +1,5 @@
 import os
+import pytest
 import xml.etree.ElementTree as ET
 from app.parsers import get_parser, reconcile_statement
 from app.services.xml_generator import generate_tally_xml
@@ -7,6 +8,7 @@ from app.services.excel_exporter import export_transactions_to_excel
 PDF_PATH = r"c:\Users\aakas\OneDrive\Desktop\credentials\01.pdf"
 XML_PATH = r"c:\Users\aakas\OneDrive\Desktop\credentials\01.xml"
 
+@pytest.mark.skipif(not os.path.exists(PDF_PATH), reason="Local sample PDF not present")
 def test_sbi_parser():
     # Verify PDF file exists
     assert os.path.exists(PDF_PATH), f"PDF file not found at {PDF_PATH}"
@@ -43,6 +45,7 @@ def test_sbi_parser():
     for tx in transactions:
         assert (tx.debit is None) != (tx.credit is None)
 
+@pytest.mark.skipif(not os.path.exists(PDF_PATH), reason="Local sample PDF not present")
 def test_xml_generation():
     parser = get_parser("SBI")
     metadata, transactions = parser.parse(PDF_PATH)
@@ -64,6 +67,7 @@ def test_xml_generation():
     assert len(payments) == 6
     assert len(receipts) == 221
 
+@pytest.mark.skipif(not os.path.exists(PDF_PATH), reason="Local sample PDF not present")
 def test_excel_export():
     parser = get_parser("SBI")
     _, transactions = parser.parse(PDF_PATH)

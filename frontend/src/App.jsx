@@ -77,6 +77,42 @@ export default function App() {
   const [ruleVoucherType, setRuleVoucherType] = useState('Payment');
   const [ruleCategoryInput, setRuleCategoryInput] = useState('General');
   
+  // --- CSV Template, Mapping & Conversion States ---
+  const [csvMappings, setCsvMappings] = useState([]);
+  const [selectedCsvMappingId, setSelectedCsvMappingId] = useState('default');
+  const [csvFile, setCsvFile] = useState(null);
+  const [csvUploading, setCsvUploading] = useState(false);
+  const [csvError, setCsvError] = useState('');
+  const [csvPreviewData, setCsvPreviewData] = useState(null);
+  const [csvVouchers, setCsvVouchers] = useState([]);
+  const [csvFilterType, setCsvFilterType] = useState('ALL');
+  const [csvSearchQuery, setCsvSearchQuery] = useState('');
+  const [csvConverting, setCsvConverting] = useState(false);
+  const [csvConvertError, setCsvConvertError] = useState('');
+  
+  // Custom Mapping Modal / Form state
+  const [mappingModalOpen, setMappingModalOpen] = useState(false);
+  const [editingMappingId, setEditingMappingId] = useState(null);
+  const [inspectingCsv, setInspectingCsv] = useState(false);
+  const [detectedHeaders, setDetectedHeaders] = useState([]);
+  const [mapFormName, setMapFormName] = useState('');
+  const [mapFormDesc, setMapFormDesc] = useState('');
+  const [mapFormDateCol, setMapFormDateCol] = useState('Date');
+  const [mapFormDateFmt, setMapFormDateFmt] = useState('%d-%m-%Y');
+  const [mapFormVtypeCol, setMapFormVtypeCol] = useState('Voucher Type');
+  const [mapFormDefVtype, setMapFormDefVtype] = useState('Payment');
+  const [mapFormVnumCol, setMapFormVnumCol] = useState('Voucher No');
+  const [mapFormDrCol, setMapFormDrCol] = useState('Debit Ledger');
+  const [mapFormDefDr, setMapFormDefDr] = useState('');
+  const [mapFormCrCol, setMapFormCrCol] = useState('Credit Ledger');
+  const [mapFormDefCr, setMapFormDefCr] = useState('');
+  const [mapFormAmtCol, setMapFormAmtCol] = useState('Amount');
+  const [mapFormDrAmtCol, setMapFormDrAmtCol] = useState('');
+  const [mapFormCrAmtCol, setMapFormCrAmtCol] = useState('');
+  const [mapFormNarrCol, setMapFormNarrCol] = useState('Narration');
+  const [mapFormDefNarr, setMapFormDefNarr] = useState('');
+  const [mapFormRefCol, setMapFormRefCol] = useState('Ref / Cheque No');
+
   const [executeLoading, setExecuteLoading] = useState(false);
   const [executeError, setExecuteError] = useState('');
 
@@ -161,6 +197,7 @@ export default function App() {
       fetchWalletTxs();
       fetchSupportedBanks();
       fetchUserRules();
+      fetchCsvMappings();
     } else {
       localStorage.removeItem('token');
       setUser(null);
@@ -197,6 +234,7 @@ export default function App() {
       if (e.key === 'Escape') {
         setReviewModalOpen(false);
         setShortcutsModalOpen(false);
+        setMappingModalOpen(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -333,6 +371,412 @@ export default function App() {
       }
     } catch (e) {
       console.error("Wallet transactions fetch error", e);
+    }
+  };
+
+  // --- CSV Template & Mapping API Functions ---
+  const fetchCsvMappings = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch('/api/csv/mappings', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCsvMappings(data);
+      }
+    } catch (e) {
+      console.error("CSV mappings fetch error", e);
+    }
+  };
+
+  const handleDownloadBlankCsv = async () => {
+    try {
+      const res = await fetch('/api/csv/templates/blank');
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = "Sheet_Buddy_Blank_Template.csv";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+      } else {
+        alert("Failed to download blank CSV template.");
+      }
+    } catch (err) {
+      console.error("Blank template download error", err);
+      alert("Network error downloading template.");
+    }
+  };
+
+  const handleDownloadSampleCsv = async () => {
+    try {
+      const res = await fetch('/api/csv/templates/sample');
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = "Sheet_Buddy_Sample_Vouchers.csv";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+      } else {
+        alert("Failed to download sample CSV template.");
+      }
+    } catch (err) {
+      console.error("Sample template download error", err);
+      alert("Network error downloading template.");
+    }
+  };
+
+  const handleInspectCsv = async (file) => {
+    if (!file) return;
+    setInspectingCsv(true);
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const res = await fetch('/api/csv/inspect', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const headers = data.headers || [];
+        setDetectedHeaders(headers);
+        if (headers.length > 0) {
+          headers.forEach(h => {
+            const hl = h.toLowerCase().trim();
+            if (hl.includes('date')) setMapFormDateCol(h);
+            else if (hl.includes('voucher type') || hl.includes('entry type') || hl === 'type') setMapFormVtypeCol(h);
+            else if (hl.includes('voucher no') || hl.includes('vch no') || hl.includes('invoice') || hl.includes('inv no')) setMapFormVnumCol(h);
+            else if ((hl.includes('debit') && hl.includes('ledger')) || hl.includes('dr ledger') || hl.includes('dr account')) setMapFormDrCol(h);
+            else if ((hl.includes('credit') && hl.includes('ledger')) || hl.includes('cr ledger') || hl.includes('cr account')) setMapFormCrCol(h);
+            else if (hl === 'amount' || hl.includes('total')) setMapFormAmtCol(h);
+            else if ((hl.includes('debit') && hl.includes('amt')) || hl.includes('dr amt')) setMapFormDrAmtCol(h);
+            else if ((hl.includes('credit') && hl.includes('amt')) || hl.includes('cr amt')) setMapFormCrAmtCol(h);
+            else if (hl.includes('narr') || hl.includes('desc') || hl.includes('particulars')) setMapFormNarrCol(h);
+            else if (hl.includes('ref') || hl.includes('cheque') || hl.includes('chq') || hl.includes('utr')) setMapFormRefCol(h);
+          });
+        }
+      } else {
+        const err = await res.json();
+        alert(err.detail || "Failed to inspect CSV headers.");
+      }
+    } catch (e) {
+      console.error("Inspect error", e);
+      alert("Error inspecting CSV headers.");
+    } finally {
+      setInspectingCsv(false);
+    }
+  };
+
+  const handleOpenCreateMapping = () => {
+    setEditingMappingId(null);
+    setMapFormName('');
+    setMapFormDesc('');
+    setMapFormDateCol('Date');
+    setMapFormDateFmt('%d-%m-%Y');
+    setMapFormVtypeCol('Voucher Type');
+    setMapFormDefVtype('Payment');
+    setMapFormVnumCol('Voucher No');
+    setMapFormDrCol('Debit Ledger');
+    setMapFormDefDr('');
+    setMapFormCrCol('Credit Ledger');
+    setMapFormDefCr('');
+    setMapFormAmtCol('Amount');
+    setMapFormDrAmtCol('');
+    setMapFormCrAmtCol('');
+    setMapFormNarrCol('Narration');
+    setMapFormDefNarr('');
+    setMapFormRefCol('Ref / Cheque No');
+    setDetectedHeaders([]);
+    setMappingModalOpen(true);
+  };
+
+  const handleOpenEditMapping = (tmpl) => {
+    setEditingMappingId(tmpl.id);
+    setMapFormName(tmpl.name);
+    setMapFormDesc(tmpl.description || '');
+    setMapFormDateCol(tmpl.date_column || 'Date');
+    setMapFormDateFmt(tmpl.date_format || '%d-%m-%Y');
+    setMapFormVtypeCol(tmpl.voucher_type_column || '');
+    setMapFormDefVtype(tmpl.default_voucher_type || 'Payment');
+    setMapFormVnumCol(tmpl.voucher_number_column || '');
+    setMapFormDrCol(tmpl.debit_ledger_column || '');
+    setMapFormDefDr(tmpl.default_debit_ledger || '');
+    setMapFormCrCol(tmpl.credit_ledger_column || '');
+    setMapFormDefCr(tmpl.default_credit_ledger || '');
+    setMapFormAmtCol(tmpl.amount_column || '');
+    setMapFormDrAmtCol(tmpl.debit_amount_column || '');
+    setMapFormCrAmtCol(tmpl.credit_amount_column || '');
+    setMapFormNarrCol(tmpl.narration_column || '');
+    setMapFormDefNarr(tmpl.default_narration || '');
+    setMapFormRefCol(tmpl.ref_no_column || '');
+    setDetectedHeaders([]);
+    setMappingModalOpen(true);
+  };
+
+  const handleSaveMapping = async (e) => {
+    e.preventDefault();
+    if (!mapFormName.trim()) {
+      alert("Please provide a template name.");
+      return;
+    }
+    const payload = {
+      name: mapFormName.trim(),
+      description: mapFormDesc.trim() || null,
+      date_column: mapFormDateCol || 'Date',
+      date_format: mapFormDateFmt || '%d-%m-%Y',
+      voucher_type_column: mapFormVtypeCol || null,
+      default_voucher_type: mapFormDefVtype || 'Payment',
+      voucher_number_column: mapFormVnumCol || null,
+      debit_ledger_column: mapFormDrCol || null,
+      default_debit_ledger: mapFormDefDr || null,
+      credit_ledger_column: mapFormCrCol || null,
+      default_credit_ledger: mapFormDefCr || null,
+      amount_column: mapFormAmtCol || null,
+      debit_amount_column: mapFormDrAmtCol || null,
+      credit_amount_column: mapFormCrAmtCol || null,
+      narration_column: mapFormNarrCol || null,
+      default_narration: mapFormDefNarr || null,
+      ref_no_column: mapFormRefCol || null
+    };
+
+    try {
+      let res;
+      if (editingMappingId) {
+        res = await fetch(`/api/csv/mappings/${editingMappingId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(payload)
+        });
+      } else {
+        res = await fetch('/api/csv/mappings', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(payload)
+        });
+      }
+
+      if (res.ok) {
+        const saved = await res.json();
+        await fetchCsvMappings();
+        setSelectedCsvMappingId(String(saved.id));
+        setMappingModalOpen(false);
+        setEditingMappingId(null);
+      } else {
+        const err = await res.json();
+        alert(err.detail || "Failed to save mapping template.");
+      }
+    } catch (e) {
+      console.error("Save mapping error", e);
+      alert("Network error while saving mapping template.");
+    }
+  };
+
+  const handleDeleteMapping = async (templateId) => {
+    if (!confirm("Are you sure you want to delete this mapping template?")) return;
+    try {
+      const res = await fetch(`/api/csv/mappings/${templateId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        if (selectedCsvMappingId === String(templateId)) {
+          setSelectedCsvMappingId('default');
+        }
+        await fetchCsvMappings();
+      } else {
+        const err = await res.json();
+        alert(err.detail || "Failed to delete mapping template.");
+      }
+    } catch (e) {
+      console.error("Delete mapping error", e);
+      alert("Network error deleting template.");
+    }
+  };
+
+  const handleUploadAndPreviewCsv = async (e) => {
+    if (e) e.preventDefault();
+    if (!csvFile) {
+      setCsvError("Please select a CSV file to upload.");
+      return;
+    }
+    setCsvUploading(true);
+    setCsvError('');
+    setCsvConvertError('');
+    const formData = new FormData();
+    formData.append('file', csvFile);
+    if (selectedCsvMappingId && selectedCsvMappingId !== 'default') {
+      formData.append('mapping_template_id', selectedCsvMappingId);
+    }
+    try {
+      const res = await fetch('/api/csv/preview', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCsvPreviewData(data);
+        setCsvVouchers(data.vouchers || []);
+      } else {
+        const err = await res.json();
+        setCsvError(err.detail || "Failed to process CSV file.");
+      }
+    } catch (err) {
+      console.error("CSV preview error", err);
+      setCsvError("Network error while processing CSV.");
+    } finally {
+      setCsvUploading(false);
+    }
+  };
+
+  const handleUpdateVoucherCell = (index, field, value) => {
+    setCsvVouchers(prev => {
+      const copy = [...prev];
+      const target = { ...copy[index] };
+      if (field === 'amount') {
+        const num = parseFloat(value) || 0;
+        target.amount = num;
+        target.is_valid = num > 0 && !!target.date && !!target.voucher_type && !!target.debit_ledger && !!target.credit_ledger;
+      } else {
+        target[field] = value;
+        target.is_valid = (target.amount > 0) && !!target.date && !!target.voucher_type && !!target.debit_ledger && !!target.credit_ledger;
+      }
+      copy[index] = target;
+      return copy;
+    });
+  };
+
+  const handleDeleteVoucherRow = (index) => {
+    setCsvVouchers(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleAddVoucherRow = () => {
+    const today = new Date().toISOString().split('T')[0];
+    const newRow = {
+      row_index: csvVouchers.length + 1,
+      date: today,
+      voucher_type: 'Payment',
+      voucher_number: '',
+      debit_ledger: '',
+      credit_ledger: '',
+      amount: 0,
+      narration: '',
+      ref_no: '',
+      is_valid: false,
+      validation_error: 'Please fill in ledgers and amount'
+    };
+    setCsvVouchers(prev => [...prev, newRow]);
+  };
+
+  const handleConvertCsvToXml = async () => {
+    if (!csvVouchers || csvVouchers.length === 0) {
+      setCsvConvertError("No vouchers available to convert.");
+      return;
+    }
+    const invalidCount = csvVouchers.filter(v => !v.is_valid).length;
+    if (invalidCount > 0) {
+      if (!confirm(`Warning: ${invalidCount} voucher(s) have missing ledgers, invalid date, or zero amount. Do you want to proceed anyway?`)) {
+        return;
+      }
+    }
+
+    setCsvConverting(true);
+    setCsvConvertError('');
+    try {
+      const activeMapping = csvMappings.find(m => String(m.id) === String(selectedCsvMappingId));
+      const mappingName = activeMapping ? activeMapping.name : "Sheet Buddy Standard CSV";
+      
+      const res = await fetch('/api/csv/convert-to-xml', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          vouchers: csvVouchers,
+          mapping_name: mappingName
+        })
+      });
+
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const outName = csvFile ? csvFile.name.replace(/\.[^/.]+$/, "") + "_Tally_Import.xml" : "Tally_Vouchers_Import.xml";
+        a.download = outName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+
+        await fetchUserProfile();
+        await fetchHistory();
+        alert("Success! 100% Compliant Tally Prime XML has been generated and downloaded.");
+      } else {
+        const err = await res.json();
+        setCsvConvertError(err.detail || "Failed to convert CSV to Tally XML.");
+      }
+    } catch (err) {
+      console.error("Convert to XML error", err);
+      setCsvConvertError("Network error while generating Tally XML.");
+    } finally {
+      setCsvConverting(false);
+    }
+  };
+
+  const handleExportCsvToExcel = async () => {
+    if (!csvVouchers || csvVouchers.length === 0) {
+      alert("No vouchers to export.");
+      return;
+    }
+    try {
+      const activeMapping = csvMappings.find(m => String(m.id) === String(selectedCsvMappingId));
+      const mappingName = activeMapping ? activeMapping.name : "CSV_Vouchers";
+
+      const res = await fetch('/api/csv/export-excel', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          vouchers: csvVouchers,
+          mapping_name: mappingName
+        })
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const outName = csvFile ? csvFile.name.replace(/\.[^/.]+$/, "") + "_Exported.xlsx" : "Vouchers_Export.xlsx";
+        a.download = outName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+      } else {
+        alert("Failed to export Excel spreadsheet.");
+      }
+    } catch (e) {
+      console.error("Export Excel error", e);
+      alert("Network error exporting Excel.");
     }
   };
 
@@ -1467,6 +1911,12 @@ export default function App() {
               IMPORT TRANSACTION
             </button>
             <button
+              onClick={() => { setActiveTab('csv'); setExecuteError(''); setMobileMenuOpen(false); }}
+              className={`flex items-center justify-center px-4 py-2 text-xs font-black border-2 border-black transition-all ${activeTab === 'csv' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-slate-50'}`}
+            >
+              CSV TO TALLY
+            </button>
+            <button
               onClick={() => { setActiveTab('rules'); setExecuteError(''); setMobileMenuOpen(false); }}
               className={`flex items-center justify-center px-4 py-2 text-xs font-black border-2 border-black transition-all ${activeTab === 'rules' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-slate-50'}`}
             >
@@ -2212,6 +2662,543 @@ export default function App() {
 
               </div>
             )}
+          </div>
+        )}
+
+        {/* --- TAB: CSV TO TALLY MULTI-VOUCHER CONVERTER --- */}
+        {activeTab === 'csv' && (
+          <div className="space-y-8 max-w-7xl mx-auto">
+            {/* Top Neo-Brutalist Banner */}
+            <div className="bg-black text-white p-6 border-4 border-black shadow-[6px_6px_0px_rgba(0,0,0,1)] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div className="flex items-center space-x-3.5">
+                <img src="/symbol_mark.svg" alt="CSV to Tally" className="w-10 h-10 border border-[#FFD629] bg-black p-0.5 flex-shrink-0" />
+                <div>
+                  <h3 className="text-xl font-black text-[#FFD629] uppercase tracking-tight">
+                    CSV To Tally Prime Multi-Voucher Converter
+                  </h3>
+                  <p className="text-xs font-bold text-slate-300">
+                    Import Payment, Receipt, Contra, Journal, Sales & Purchase entries from any CSV. Map columns, edit inline, and generate Tally XML.
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={handleDownloadBlankCsv}
+                  className="px-3 py-2 bg-white text-black font-black text-xs uppercase border-2 border-white shadow-[2px_2px_0px_rgba(255,255,255,1)] hover:bg-yellow-100 transition-all flex items-center space-x-1.5"
+                  title="Download clean blank CSV template"
+                >
+                  <span>⬇ Blank CSV</span>
+                </button>
+                <button
+                  onClick={handleDownloadSampleCsv}
+                  className="px-3 py-2 bg-[#ffd615] text-black font-black text-xs uppercase border-2 border-black shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all flex items-center space-x-1.5"
+                  title="Download CSV pre-filled with Payment, Receipt, Contra & Journal examples"
+                >
+                  <span>★ Sample CSV</span>
+                </button>
+                <button
+                  onClick={handleOpenCreateMapping}
+                  className="px-3 py-2 bg-[#3affaa] text-black font-black text-xs uppercase border-2 border-black shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all flex items-center space-x-1.5"
+                >
+                  <span>+ New Mapping</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Upload & Mapping Card */}
+            <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 space-y-6">
+              <div className="flex items-center justify-between border-b-2 border-black pb-3">
+                <h4 className="text-sm font-black text-black uppercase flex items-center space-x-2">
+                  <span className="w-3 h-3 bg-[#ffd615] border border-black inline-block"></span>
+                  <span>1. Upload CSV & Choose Column Mapping Template</span>
+                </h4>
+                <div className="text-[11px] font-bold text-slate-500">
+                  Step 1 of 2
+                </div>
+              </div>
+
+              <form onSubmit={handleUploadAndPreviewCsv} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                {/* File input */}
+                <div className="md:col-span-5">
+                  <label className="block text-xs font-black uppercase text-black mb-1">
+                    Select CSV File
+                  </label>
+                  <input
+                    type="file"
+                    accept=".csv,text/csv"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        setCsvFile(e.target.files[0]);
+                        setCsvError('');
+                      }
+                    }}
+                    className="w-full text-xs font-bold p-2 border-2 border-black bg-slate-50 file:mr-3 file:py-1.5 file:px-3 file:border-2 file:border-black file:text-xs file:font-black file:bg-[#ffd615] file:uppercase file:cursor-pointer hover:file:bg-yellow-400 cursor-pointer"
+                  />
+                  {csvFile && (
+                    <div className="text-[11px] font-bold text-green-700 mt-1 flex items-center space-x-1">
+                      <span>✓ Ready: {csvFile.name} ({(csvFile.size / 1024).toFixed(1)} KB)</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Mapping Selector */}
+                <div className="md:col-span-4">
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="text-xs font-black uppercase text-black">
+                      Mapping Template
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleOpenCreateMapping}
+                      className="text-[10px] font-black text-black underline uppercase hover:text-blue-700"
+                    >
+                      + Create Custom
+                    </button>
+                  </div>
+                  <select
+                    value={selectedCsvMappingId}
+                    onChange={(e) => setSelectedCsvMappingId(e.target.value)}
+                    className="w-full p-2.5 text-xs font-bold border-2 border-black bg-white focus:outline-none focus:bg-yellow-50"
+                  >
+                    <option value="default">Standard Sheet Buddy CSV (Default)</option>
+                    {csvMappings.map(tmpl => (
+                      <option key={tmpl.id} value={tmpl.id}>
+                        {tmpl.name} {tmpl.description ? `(${tmpl.description})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Submit button */}
+                <div className="md:col-span-3 flex space-x-2">
+                  <button
+                    type="submit"
+                    disabled={csvUploading || !csvFile}
+                    className="flex-1 py-2.5 px-4 bg-[#ffd615] text-black border-2 border-black font-black text-xs uppercase shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  >
+                    {csvUploading ? 'Processing...' : 'Process & Preview'}
+                  </button>
+
+                  {selectedCsvMappingId !== 'default' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const targetTmpl = csvMappings.find(m => String(m.id) === String(selectedCsvMappingId));
+                        if (targetTmpl) handleOpenEditMapping(targetTmpl);
+                      }}
+                      title="Edit this template"
+                      className="px-3 py-2.5 bg-white border-2 border-black font-black text-xs hover:bg-slate-100 shadow-[2px_2px_0px_rgba(0,0,0,1)]"
+                    >
+                      ✎
+                    </button>
+                  )}
+                </div>
+              </form>
+
+              {csvError && (
+                <div className="p-3 bg-red-100 border-2 border-[#ff5757] text-[#ff5757] font-black text-xs flex items-center justify-between">
+                  <span>⚠ {csvError}</span>
+                  <button onClick={() => setCsvError('')} className="font-bold underline text-[11px]">DISMISS</button>
+                </div>
+              )}
+            </div>
+
+            {/* Vouchers Preview & Interactive Spreadsheet */}
+            {csvVouchers.length > 0 && (
+              <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 space-y-6">
+                {/* Header Metrics */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between border-b-2 border-black pb-4 gap-4">
+                  <div>
+                    <h4 className="text-sm font-black text-black uppercase flex items-center space-x-2">
+                      <span className="w-3 h-3 bg-[#3affaa] border border-black inline-block"></span>
+                      <span>2. Interactive Vouchers Review & Multi-Voucher Grid</span>
+                    </h4>
+                    <p className="text-xs font-bold text-slate-500 mt-0.5">
+                      Double-check dates, ledger accounts, and voucher types. Edit inline before converting to Tally Prime.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      onClick={handleAddVoucherRow}
+                      className="px-3 py-1.5 bg-slate-100 text-black border-2 border-black font-black text-xs uppercase hover:bg-slate-200 shadow-[2px_2px_0px_rgba(0,0,0,1)]"
+                    >
+                      + Add Row
+                    </button>
+                    <button
+                      onClick={handleExportCsvToExcel}
+                      className="px-3 py-1.5 bg-[#3fecff] text-black border-2 border-black font-black text-xs uppercase hover:bg-cyan-300 shadow-[2px_2px_0px_rgba(0,0,0,1)]"
+                    >
+                      Export Excel (.xlsx)
+                    </button>
+                    <button
+                      onClick={handleConvertCsvToXml}
+                      disabled={csvConverting}
+                      className="px-4 py-1.5 bg-[#ffd615] text-black border-2 border-black font-black text-xs uppercase hover:bg-yellow-400 shadow-[2px_2px_0px_rgba(0,0,0,1)] disabled:opacity-50 flex items-center space-x-1.5"
+                    >
+                      <span>{csvConverting ? 'Generating XML...' : 'Convert to Tally XML'}</span>
+                      <span className="text-[10px] bg-black text-white px-1.5 py-0.2 font-black rounded-none">1 Credit</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Metric Summary Badges */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2.5">
+                  <div className="p-2.5 bg-slate-100 border-2 border-black text-center">
+                    <div className="text-[10px] font-black uppercase text-slate-600">Total Vouchers</div>
+                    <div className="text-lg font-black text-black">{csvVouchers.length}</div>
+                  </div>
+                  <div className="p-2.5 bg-green-50 border-2 border-black text-center">
+                    <div className="text-[10px] font-black uppercase text-green-800">Valid Entries</div>
+                    <div className="text-lg font-black text-green-700">
+                      {csvVouchers.filter(v => v.is_valid).length}
+                    </div>
+                  </div>
+                  <div className={`p-2.5 border-2 border-black text-center ${csvVouchers.filter(v => !v.is_valid).length > 0 ? 'bg-red-100 text-red-700' : 'bg-slate-50 text-slate-400'}`}>
+                    <div className="text-[10px] font-black uppercase">Validation Errors</div>
+                    <div className="text-lg font-black">
+                      {csvVouchers.filter(v => !v.is_valid).length}
+                    </div>
+                  </div>
+                  <div className="p-2.5 bg-blue-50 border-2 border-black text-center">
+                    <div className="text-[10px] font-black uppercase text-blue-800">Payments</div>
+                    <div className="text-lg font-black text-blue-700">
+                      {csvVouchers.filter(v => v.voucher_type === 'Payment').length}
+                    </div>
+                  </div>
+                  <div className="p-2.5 bg-emerald-50 border-2 border-black text-center">
+                    <div className="text-[10px] font-black uppercase text-emerald-800">Receipts</div>
+                    <div className="text-lg font-black text-emerald-700">
+                      {csvVouchers.filter(v => v.voucher_type === 'Receipt').length}
+                    </div>
+                  </div>
+                  <div className="p-2.5 bg-purple-50 border-2 border-black text-center">
+                    <div className="text-[10px] font-black uppercase text-purple-800">Contra / Journal</div>
+                    <div className="text-lg font-black text-purple-700">
+                      {csvVouchers.filter(v => ['Contra', 'Journal'].includes(v.voucher_type)).length}
+                    </div>
+                  </div>
+                  <div className="p-2.5 bg-yellow-100 border-2 border-black text-center">
+                    <div className="text-[10px] font-black uppercase text-black">Total ₹</div>
+                    <div className="text-sm font-black text-black truncate" title={`₹${csvVouchers.reduce((acc, v) => acc + (parseFloat(v.amount) || 0), 0).toLocaleString('en-IN')}`}>
+                      ₹{csvVouchers.reduce((acc, v) => acc + (parseFloat(v.amount) || 0), 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                    </div>
+                  </div>
+                </div>
+
+                {csvConvertError && (
+                  <div className="p-3 bg-red-100 border-2 border-[#ff5757] text-[#ff5757] font-black text-xs">
+                    ⚠ {csvConvertError}
+                  </div>
+                )}
+
+                {/* Filters & Search Toolbar */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2">
+                  <div className="flex flex-wrap items-center gap-1">
+                    {['ALL', 'Payment', 'Receipt', 'Contra', 'Journal', 'Sales', 'Purchase'].map(vt => (
+                      <button
+                        key={vt}
+                        onClick={() => setCsvFilterType(vt)}
+                        className={`px-2.5 py-1 text-xs font-black border border-black uppercase transition-all ${csvFilterType === vt ? 'bg-black text-white shadow-[1px_1px_0px_rgba(0,0,0,1)]' : 'bg-white hover:bg-slate-100'}`}
+                      >
+                        {vt}
+                      </button>
+                    ))}
+                    {csvVouchers.some(v => !v.is_valid) && (
+                      <button
+                        onClick={() => setCsvFilterType('INVALID')}
+                        className={`px-2.5 py-1 text-xs font-black border border-black uppercase transition-all ${csvFilterType === 'INVALID' ? 'bg-[#ff5757] text-white shadow-[1px_1px_0px_rgba(0,0,0,1)]' : 'bg-red-50 text-red-600 hover:bg-red-100'}`}
+                      >
+                        ⚠ Issues Only ({csvVouchers.filter(v => !v.is_valid).length})
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="relative w-full sm:w-64">
+                    <input
+                      type="text"
+                      placeholder="Search ledgers, narration, voucher..."
+                      value={csvSearchQuery}
+                      onChange={(e) => setCsvSearchQuery(e.target.value)}
+                      className="w-full px-3 py-1.5 text-xs font-bold border-2 border-black focus:outline-none focus:bg-yellow-50"
+                    />
+                    {csvSearchQuery && (
+                      <button
+                        onClick={() => setCsvSearchQuery('')}
+                        className="absolute right-2 top-1.5 text-xs font-bold text-slate-400 hover:text-black"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Spreadsheet Table */}
+                <div className="overflow-x-auto border-2 border-black max-h-[500px]">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead className="bg-black text-white sticky top-0 z-10 select-none">
+                      <tr>
+                        <th className="p-2 border border-slate-700 w-10 text-center font-black">#</th>
+                        <th className="p-2 border border-slate-700 w-28 font-black">Date</th>
+                        <th className="p-2 border border-slate-700 w-28 font-black">Voucher Type</th>
+                        <th className="p-2 border border-slate-700 w-28 font-black">Voucher No</th>
+                        <th className="p-2 border border-slate-700 font-black">
+                          <span className="bg-red-600 text-white px-1 py-0.5 text-[9px] mr-1">Dr</span>
+                          Debit Ledger
+                        </th>
+                        <th className="p-2 border border-slate-700 font-black">
+                          <span className="bg-green-600 text-white px-1 py-0.5 text-[9px] mr-1">Cr</span>
+                          Credit Ledger
+                        </th>
+                        <th className="p-2 border border-slate-700 w-28 text-right font-black">Amount (₹)</th>
+                        <th className="p-2 border border-slate-700 font-black">Narration</th>
+                        <th className="p-2 border border-slate-700 w-24 font-black">Ref / Cheque</th>
+                        <th className="p-2 border border-slate-700 w-16 text-center font-black">Status</th>
+                        <th className="p-2 border border-slate-700 w-10 text-center font-black">✕</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-black font-bold">
+                      {csvVouchers
+                        .map((vch, originalIdx) => ({ vch, originalIdx }))
+                        .filter(({ vch }) => {
+                          if (csvFilterType === 'INVALID') {
+                            if (vch.is_valid) return false;
+                          } else if (csvFilterType !== 'ALL') {
+                            if (vch.voucher_type !== csvFilterType) return false;
+                          }
+                          if (csvSearchQuery) {
+                            const q = csvSearchQuery.toLowerCase();
+                            const match = (
+                              (vch.narration && vch.narration.toLowerCase().includes(q)) ||
+                              (vch.debit_ledger && vch.debit_ledger.toLowerCase().includes(q)) ||
+                              (vch.credit_ledger && vch.credit_ledger.toLowerCase().includes(q)) ||
+                              (vch.voucher_number && vch.voucher_number.toLowerCase().includes(q)) ||
+                              (vch.ref_no && vch.ref_no.toLowerCase().includes(q))
+                            );
+                            if (!match) return false;
+                          }
+                          return true;
+                        })
+                        .map(({ vch, originalIdx }) => (
+                          <tr key={originalIdx} className={`hover:bg-yellow-50/70 transition-colors ${!vch.is_valid ? 'bg-red-50/70' : originalIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}`}>
+                            <td className="p-1.5 border border-slate-300 text-center text-slate-500 font-mono text-[11px]">
+                              {originalIdx + 1}
+                            </td>
+                            <td className="p-1 border border-slate-300">
+                              <input
+                                type="text"
+                                value={vch.date || ''}
+                                onChange={(e) => handleUpdateVoucherCell(originalIdx, 'date', e.target.value)}
+                                className="w-full px-1.5 py-1 text-xs border border-transparent hover:border-black focus:border-black bg-transparent focus:bg-white focus:outline-none"
+                                placeholder="YYYY-MM-DD"
+                              />
+                            </td>
+                            <td className="p-1 border border-slate-300">
+                              <select
+                                value={vch.voucher_type || 'Payment'}
+                                onChange={(e) => handleUpdateVoucherCell(originalIdx, 'voucher_type', e.target.value)}
+                                className="w-full px-1 py-1 text-xs font-black border border-transparent hover:border-black focus:border-black bg-transparent focus:bg-white focus:outline-none"
+                              >
+                                <option value="Payment">Payment</option>
+                                <option value="Receipt">Receipt</option>
+                                <option value="Contra">Contra</option>
+                                <option value="Journal">Journal</option>
+                                <option value="Sales">Sales</option>
+                                <option value="Purchase">Purchase</option>
+                              </select>
+                            </td>
+                            <td className="p-1 border border-slate-300">
+                              <input
+                                type="text"
+                                value={vch.voucher_number || ''}
+                                onChange={(e) => handleUpdateVoucherCell(originalIdx, 'voucher_number', e.target.value)}
+                                className="w-full px-1.5 py-1 text-xs border border-transparent hover:border-black focus:border-black bg-transparent focus:bg-white focus:outline-none"
+                                placeholder="Auto / No"
+                              />
+                            </td>
+                            <td className="p-1 border border-slate-300">
+                              <input
+                                type="text"
+                                value={vch.debit_ledger || ''}
+                                onChange={(e) => handleUpdateVoucherCell(originalIdx, 'debit_ledger', e.target.value)}
+                                className={`w-full px-1.5 py-1 text-xs font-bold border ${!vch.debit_ledger ? 'border-red-400 bg-red-50' : 'border-transparent hover:border-black focus:border-black bg-transparent focus:bg-white'} focus:outline-none`}
+                                placeholder="Debit Ledger Name"
+                              />
+                            </td>
+                            <td className="p-1 border border-slate-300">
+                              <input
+                                type="text"
+                                value={vch.credit_ledger || ''}
+                                onChange={(e) => handleUpdateVoucherCell(originalIdx, 'credit_ledger', e.target.value)}
+                                className={`w-full px-1.5 py-1 text-xs font-bold border ${!vch.credit_ledger ? 'border-red-400 bg-red-50' : 'border-transparent hover:border-black focus:border-black bg-transparent focus:bg-white'} focus:outline-none`}
+                                placeholder="Credit Ledger Name"
+                              />
+                            </td>
+                            <td className="p-1 border border-slate-300">
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={vch.amount}
+                                onChange={(e) => handleUpdateVoucherCell(originalIdx, 'amount', e.target.value)}
+                                className={`w-full px-1.5 py-1 text-xs text-right font-black border ${!vch.amount || vch.amount <= 0 ? 'border-red-400 bg-red-50 text-red-600' : 'border-transparent hover:border-black focus:border-black bg-transparent focus:bg-white'} focus:outline-none`}
+                              />
+                            </td>
+                            <td className="p-1 border border-slate-300">
+                              <input
+                                type="text"
+                                value={vch.narration || ''}
+                                onChange={(e) => handleUpdateVoucherCell(originalIdx, 'narration', e.target.value)}
+                                className="w-full px-1.5 py-1 text-xs border border-transparent hover:border-black focus:border-black bg-transparent focus:bg-white focus:outline-none"
+                                placeholder="Narration description"
+                              />
+                            </td>
+                            <td className="p-1 border border-slate-300">
+                              <input
+                                type="text"
+                                value={vch.ref_no || ''}
+                                onChange={(e) => handleUpdateVoucherCell(originalIdx, 'ref_no', e.target.value)}
+                                className="w-full px-1.5 py-1 text-xs border border-transparent hover:border-black focus:border-black bg-transparent focus:bg-white focus:outline-none"
+                                placeholder="Ref/Chq"
+                              />
+                            </td>
+                            <td className="p-1 border border-slate-300 text-center">
+                              {vch.is_valid ? (
+                                <span className="text-[10px] bg-green-200 text-green-900 px-1 py-0.5 font-black uppercase">
+                                  OK
+                                </span>
+                              ) : (
+                                <span
+                                  className="text-[10px] bg-red-200 text-red-900 px-1 py-0.5 font-black uppercase cursor-help"
+                                  title={(vch.error_reasons && vch.error_reasons.length > 0) ? vch.error_reasons.join(', ') : (vch.validation_error || 'Missing required ledger, date or amount')}
+                                >
+                                  ERR
+                                </span>
+                              )}
+                            </td>
+                            <td className="p-1 border border-slate-300 text-center">
+                              <button
+                                onClick={() => handleDeleteVoucherRow(originalIdx)}
+                                className="text-slate-400 hover:text-red-600 font-black text-xs px-1"
+                                title="Remove row"
+                              >
+                                ✕
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Bottom Conversion Call to Action */}
+                <div className="flex flex-col sm:flex-row items-center justify-between p-4 bg-[#ffd615]/30 border-2 border-black gap-3">
+                  <div className="text-xs font-bold text-black">
+                    Ready to post to Tally? Click below to generate XML for your company data.
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <button
+                      onClick={handleExportCsvToExcel}
+                      className="px-4 py-2 bg-white text-black border-2 border-black font-black text-xs uppercase shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:bg-slate-50"
+                    >
+                      Export Excel
+                    </button>
+                    <button
+                      onClick={handleConvertCsvToXml}
+                      disabled={csvConverting}
+                      className="px-6 py-2 bg-black text-white border-2 border-black font-black text-xs uppercase shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:bg-slate-800 disabled:opacity-50 flex items-center space-x-2"
+                    >
+                      <span>{csvConverting ? 'Generating...' : 'CONVERT TO TALLY PRIME XML'}</span>
+                      <span className="text-[10px] bg-[#ffd615] text-black px-1.5 py-0.5 font-black">1 Credit</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Saved Mapping Templates Section */}
+            <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 space-y-4">
+              <div className="flex items-center justify-between border-b-2 border-black pb-3">
+                <h4 className="text-sm font-black text-black uppercase">
+                  Saved CSV Column Mapping Templates ({csvMappings.length})
+                </h4>
+                <button
+                  onClick={handleOpenCreateMapping}
+                  className="px-3 py-1.5 bg-[#ffd615] text-black border-2 border-black font-black text-xs uppercase shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:bg-yellow-400"
+                >
+                  + Add Template
+                </button>
+              </div>
+
+              {csvMappings.length === 0 ? (
+                <div className="text-center py-6 text-xs font-bold text-slate-500">
+                  No custom mapping templates saved yet. You can use the standard Sheet Buddy template or click "+ Add Template" to map your custom ERP/bank CSV columns.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {csvMappings.map((tmpl) => (
+                    <div key={tmpl.id} className="border-2 border-black p-4 bg-slate-50 shadow-[3px_3px_0px_rgba(0,0,0,1)] space-y-2.5">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="font-black text-xs uppercase text-black">{tmpl.name}</div>
+                          {tmpl.description && (
+                            <div className="text-[11px] text-slate-600 font-bold">{tmpl.description}</div>
+                          )}
+                        </div>
+                        <div className="flex items-center space-x-1.5">
+                          <button
+                            onClick={() => handleOpenEditMapping(tmpl)}
+                            className="p-1 border border-black bg-white hover:bg-yellow-100 text-[10px] font-black"
+                            title="Edit template"
+                          >
+                            ✎
+                          </button>
+                          <button
+                            onClick={() => handleDeleteMapping(tmpl.id)}
+                            className="p-1 border border-black bg-white hover:bg-red-100 text-[10px] font-black text-red-600"
+                            title="Delete template"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="text-[11px] font-bold space-y-1 divide-y divide-slate-200">
+                        <div className="flex justify-between pt-1">
+                          <span className="text-slate-500">Date Column:</span>
+                          <span className="font-mono font-black">{tmpl.date_column} ({tmpl.date_format})</span>
+                        </div>
+                        <div className="flex justify-between pt-1">
+                          <span className="text-slate-500">Voucher Type:</span>
+                          <span>{tmpl.voucher_type_column || tmpl.default_voucher_type}</span>
+                        </div>
+                        <div className="flex justify-between pt-1">
+                          <span className="text-slate-500">Dr Ledger:</span>
+                          <span className="truncate max-w-[150px]">{tmpl.debit_ledger_column || tmpl.default_debit_ledger || 'Unassigned'}</span>
+                        </div>
+                        <div className="flex justify-between pt-1">
+                          <span className="text-slate-500">Cr Ledger:</span>
+                          <span className="truncate max-w-[150px]">{tmpl.credit_ledger_column || tmpl.default_credit_ledger || 'Unassigned'}</span>
+                        </div>
+                        <div className="flex justify-between pt-1">
+                          <span className="text-slate-500">Amount Column:</span>
+                          <span>{tmpl.amount_column || `${tmpl.debit_amount_column || ''} / ${tmpl.credit_amount_column || ''}`}</span>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          setSelectedCsvMappingId(String(tmpl.id));
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        className={`w-full py-1 text-center text-xs font-black uppercase border border-black transition-all ${selectedCsvMappingId === String(tmpl.id) ? 'bg-black text-white' : 'bg-white hover:bg-yellow-200'}`}
+                      >
+                        {selectedCsvMappingId === String(tmpl.id) ? '✓ Currently Selected' : 'Use This Template'}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -3633,6 +4620,317 @@ export default function App() {
                     </>
                   );
                 })()}
+              </div>
+            </div>
+          )}
+
+          {/* --- Custom CSV Column Mapping Modal --- */}
+          {mappingModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 overflow-y-auto">
+              <div className="bg-white border-4 border-black shadow-[10px_10px_0px_rgba(0,0,0,1)] max-w-2xl w-full p-6 space-y-5 my-8">
+                {/* Modal Header */}
+                <div className="flex justify-between items-center bg-[#ffd615] p-3 border-2 border-black shadow-[2px_2px_0px_rgba(0,0,0,1)]">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-base font-black">⚙</span>
+                    <h3 className="text-xs font-black uppercase text-black">
+                      {editingMappingId ? 'Edit CSV Column Mapping Template' : 'New Custom CSV Column Mapping Template'}
+                    </h3>
+                  </div>
+                  <button
+                    onClick={() => setMappingModalOpen(false)}
+                    className="text-black font-black text-sm px-2 py-0.5 border border-black hover:bg-black hover:text-white"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {/* Auto-Detect Helper */}
+                <div className="p-3 bg-slate-100 border-2 border-black space-y-2">
+                  <div className="text-xs font-black uppercase text-black">
+                    Auto-Detect Headers From Sample CSV (Optional)
+                  </div>
+                  <div className="text-[11px] font-bold text-slate-600">
+                    Upload an export CSV file to automatically inspect column names and populate the dropdowns below.
+                  </div>
+                  <input
+                    type="file"
+                    accept=".csv,text/csv"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        handleInspectCsv(e.target.files[0]);
+                      }
+                    }}
+                    disabled={inspectingCsv}
+                    className="w-full text-xs font-bold border border-black bg-white p-1"
+                  />
+                  {detectedHeaders.length > 0 && (
+                    <div className="text-[11px] font-black text-green-700">
+                      ✓ Detected {detectedHeaders.length} columns: {detectedHeaders.slice(0, 8).join(', ')}{detectedHeaders.length > 8 ? '...' : ''}
+                    </div>
+                  )}
+                </div>
+
+                {/* Form */}
+                <form onSubmit={handleSaveMapping} className="space-y-4 text-xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-black text-black uppercase mb-1">
+                        Template Name *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. HDFC Bank Statement CSV"
+                        value={mapFormName}
+                        onChange={(e) => setMapFormName(e.target.value)}
+                        className="w-full px-3 py-2 border-2 border-black font-bold focus:outline-none focus:bg-yellow-50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-black text-black uppercase mb-1">
+                        Description / Notes
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Columns for SAP/Zoho/Tally"
+                        value={mapFormDesc}
+                        onChange={(e) => setMapFormDesc(e.target.value)}
+                        className="w-full px-3 py-2 border-2 border-black font-bold focus:outline-none focus:bg-yellow-50"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="border-t-2 border-black pt-3">
+                    <div className="font-black uppercase text-black mb-2 text-xs">Date & Voucher Details</div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block font-bold text-slate-700 uppercase mb-1 text-[11px]">
+                          Date Column Name
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={mapFormDateCol}
+                          onChange={(e) => setMapFormDateCol(e.target.value)}
+                          list="detected-headers-list"
+                          placeholder="Date"
+                          className="w-full px-2.5 py-1.5 border-2 border-black font-bold"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-bold text-slate-700 uppercase mb-1 text-[11px]">
+                          Date Format
+                        </label>
+                        <select
+                          value={mapFormDateFmt}
+                          onChange={(e) => setMapFormDateFmt(e.target.value)}
+                          className="w-full px-2 py-1.5 border-2 border-black font-bold bg-white"
+                        >
+                          <option value="%d-%m-%Y">DD-MM-YYYY (e.g. 15-04-2026)</option>
+                          <option value="%Y-%m-%d">YYYY-MM-DD (e.g. 2026-04-15)</option>
+                          <option value="%d/%m/%Y">DD/MM/YYYY (e.g. 15/04/2026)</option>
+                          <option value="%m/%d/%Y">MM/DD/YYYY (e.g. 04/15/2026)</option>
+                          <option value="%d.%m.%Y">DD.MM.YYYY (e.g. 15.04.2026)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block font-bold text-slate-700 uppercase mb-1 text-[11px]">
+                          Voucher No Column
+                        </label>
+                        <input
+                          type="text"
+                          value={mapFormVnumCol}
+                          onChange={(e) => setMapFormVnumCol(e.target.value)}
+                          list="detected-headers-list"
+                          placeholder="Voucher No (optional)"
+                          className="w-full px-2.5 py-1.5 border-2 border-black font-bold"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                      <div>
+                        <label className="block font-bold text-slate-700 uppercase mb-1 text-[11px]">
+                          Voucher Type Column (optional)
+                        </label>
+                        <input
+                          type="text"
+                          value={mapFormVtypeCol}
+                          onChange={(e) => setMapFormVtypeCol(e.target.value)}
+                          list="detected-headers-list"
+                          placeholder="e.g. Voucher Type"
+                          className="w-full px-2.5 py-1.5 border-2 border-black font-bold"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-bold text-slate-700 uppercase mb-1 text-[11px]">
+                          Default Voucher Type (fallback)
+                        </label>
+                        <select
+                          value={mapFormDefVtype}
+                          onChange={(e) => setMapFormDefVtype(e.target.value)}
+                          className="w-full px-2 py-1.5 border-2 border-black font-bold bg-white"
+                        >
+                          <option value="Payment">Payment</option>
+                          <option value="Receipt">Receipt</option>
+                          <option value="Contra">Contra</option>
+                          <option value="Journal">Journal</option>
+                          <option value="Sales">Sales</option>
+                          <option value="Purchase">Purchase</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-t-2 border-black pt-3">
+                    <div className="font-black uppercase text-black mb-2 text-xs">Double-Entry Ledgers</div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="p-2.5 bg-red-50 border border-black space-y-2">
+                        <label className="block font-black text-red-900 uppercase text-[11px]">
+                          Debit Ledger Column
+                        </label>
+                        <input
+                          type="text"
+                          value={mapFormDrCol}
+                          onChange={(e) => setMapFormDrCol(e.target.value)}
+                          list="detected-headers-list"
+                          placeholder="e.g. Debit Ledger / Expense"
+                          className="w-full px-2.5 py-1.5 border-2 border-black font-bold bg-white"
+                        />
+                        <label className="block font-bold text-slate-600 uppercase text-[10px]">
+                          Fallback Debit Ledger Name (if empty)
+                        </label>
+                        <input
+                          type="text"
+                          value={mapFormDefDr}
+                          onChange={(e) => setMapFormDefDr(e.target.value)}
+                          placeholder="e.g. General Expenses"
+                          className="w-full px-2 py-1 border border-black font-bold bg-white"
+                        />
+                      </div>
+
+                      <div className="p-2.5 bg-green-50 border border-black space-y-2">
+                        <label className="block font-black text-green-900 uppercase text-[11px]">
+                          Credit Ledger Column
+                        </label>
+                        <input
+                          type="text"
+                          value={mapFormCrCol}
+                          onChange={(e) => setMapFormCrCol(e.target.value)}
+                          list="detected-headers-list"
+                          placeholder="e.g. Credit Ledger / Bank"
+                          className="w-full px-2.5 py-1.5 border-2 border-black font-bold bg-white"
+                        />
+                        <label className="block font-bold text-slate-600 uppercase text-[10px]">
+                          Fallback Credit Ledger Name (if empty)
+                        </label>
+                        <input
+                          type="text"
+                          value={mapFormDefCr}
+                          onChange={(e) => setMapFormDefCr(e.target.value)}
+                          placeholder="e.g. HDFC Bank Account"
+                          className="w-full px-2 py-1 border border-black font-bold bg-white"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-t-2 border-black pt-3">
+                    <div className="font-black uppercase text-black mb-2 text-xs">Amount & Narration Mapping</div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block font-bold text-slate-700 uppercase mb-1 text-[11px]">
+                          Amount Column (single)
+                        </label>
+                        <input
+                          type="text"
+                          value={mapFormAmtCol}
+                          onChange={(e) => setMapFormAmtCol(e.target.value)}
+                          list="detected-headers-list"
+                          placeholder="Amount"
+                          className="w-full px-2.5 py-1.5 border-2 border-black font-bold"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-bold text-slate-700 uppercase mb-1 text-[11px]">
+                          Debit Amount (or separate)
+                        </label>
+                        <input
+                          type="text"
+                          value={mapFormDrAmtCol}
+                          onChange={(e) => setMapFormDrAmtCol(e.target.value)}
+                          list="detected-headers-list"
+                          placeholder="Debit / Withdrawal"
+                          className="w-full px-2.5 py-1.5 border-2 border-black font-bold"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-bold text-slate-700 uppercase mb-1 text-[11px]">
+                          Credit Amount (or separate)
+                        </label>
+                        <input
+                          type="text"
+                          value={mapFormCrAmtCol}
+                          onChange={(e) => setMapFormCrAmtCol(e.target.value)}
+                          list="detected-headers-list"
+                          placeholder="Credit / Deposit"
+                          className="w-full px-2.5 py-1.5 border-2 border-black font-bold"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                      <div>
+                        <label className="block font-bold text-slate-700 uppercase mb-1 text-[11px]">
+                          Narration Column
+                        </label>
+                        <input
+                          type="text"
+                          value={mapFormNarrCol}
+                          onChange={(e) => setMapFormNarrCol(e.target.value)}
+                          list="detected-headers-list"
+                          placeholder="Narration / Description"
+                          className="w-full px-2.5 py-1.5 border-2 border-black font-bold"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-bold text-slate-700 uppercase mb-1 text-[11px]">
+                          Ref / Cheque No Column
+                        </label>
+                        <input
+                          type="text"
+                          value={mapFormRefCol}
+                          onChange={(e) => setMapFormRefCol(e.target.value)}
+                          list="detected-headers-list"
+                          placeholder="Ref / Cheque No / UTR"
+                          className="w-full px-2.5 py-1.5 border-2 border-black font-bold"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <datalist id="detected-headers-list">
+                    {detectedHeaders.map((h, i) => (
+                      <option key={i} value={h} />
+                    ))}
+                  </datalist>
+
+                  <div className="flex items-center justify-end space-x-3 pt-3 border-t-2 border-black">
+                    <button
+                      type="button"
+                      onClick={() => setMappingModalOpen(false)}
+                      className="px-4 py-2 border-2 border-black font-black uppercase text-xs hover:bg-slate-100"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-6 py-2 bg-[#ffd615] text-black border-2 border-black font-black uppercase text-xs shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:bg-yellow-400"
+                    >
+                      {editingMappingId ? 'Update Mapping Template' : 'Save Mapping Template'}
+                    </button>
+                  </div>
+                </form>
               </div>
             </div>
           )}

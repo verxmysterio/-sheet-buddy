@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .core.config import settings
 from .models.database import engine, Base, SessionLocal
-from .api import auth, convert, wallet, admin, support
+from .api import auth, convert, wallet, admin, support, csv_templates
 from sqlalchemy import text
 
 logger = logging.getLogger("sheetbuddy.main")
@@ -32,7 +32,8 @@ async def lifespan(app: FastAPI):
             "ALTER TABLE conversions ADD COLUMN is_reconciled BOOLEAN DEFAULT TRUE NOT NULL",
             "ALTER TABLE conversions ADD COLUMN opening_balance FLOAT DEFAULT 0.0 NOT NULL",
             "ALTER TABLE conversions ADD COLUMN closing_balance FLOAT DEFAULT 0.0 NOT NULL",
-            "ALTER TABLE conversions ADD COLUMN cached_xml TEXT"
+            "ALTER TABLE conversions ADD COLUMN cached_xml TEXT",
+            "ALTER TABLE support_queries ADD COLUMN status VARCHAR(50) DEFAULT 'OPEN' NOT NULL"
         ]
         for query in migration_queries:
             try:
@@ -111,6 +112,7 @@ app.add_middleware(
 # Standard API Routes
 app.include_router(auth.router, prefix="/api")
 app.include_router(convert.router, prefix="/api")
+app.include_router(csv_templates.router, prefix="/api")
 app.include_router(wallet.router, prefix="/api")
 app.include_router(admin.router, prefix="/api")
 app.include_router(support.router, prefix="/api")
@@ -118,12 +120,14 @@ app.include_router(support.router, prefix="/api")
 # Versioned /api/v1 and /api/v2 aliases
 app.include_router(auth.router, prefix="/api/v1")
 app.include_router(convert.router, prefix="/api/v1")
+app.include_router(csv_templates.router, prefix="/api/v1")
 app.include_router(wallet.router, prefix="/api/v1")
 app.include_router(admin.router, prefix="/api/v1")
 app.include_router(support.router, prefix="/api/v1")
 
 app.include_router(auth.router, prefix="/api/v2")
 app.include_router(convert.router, prefix="/api/v2")
+app.include_router(csv_templates.router, prefix="/api/v2")
 app.include_router(wallet.router, prefix="/api/v2")
 app.include_router(admin.router, prefix="/api/v2")
 app.include_router(support.router, prefix="/api/v2")

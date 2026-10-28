@@ -26,6 +26,7 @@ class User(Base):
     wallet_transactions = relationship("WalletTransaction", back_populates="user", cascade="all, delete-orphan")
     ledger_rules = relationship("LedgerRule", back_populates="user", cascade="all, delete-orphan")
     refresh_tokens = relationship("RefreshToken", back_populates="user", cascade="all, delete-orphan")
+    csv_mapping_templates = relationship("CsvMappingTemplate", back_populates="user", cascade="all, delete-orphan")
 
 class Organization(Base):
     __tablename__ = "organizations"
@@ -210,3 +211,34 @@ class UserOTP(Base):
     purpose = Column(String(50), nullable=False)  # VERIFICATION, RECOVERY
     expires_at = Column(DateTime, nullable=False)
     created_at = Column(DateTime, default=get_utc_now)
+
+class CsvMappingTemplate(Base):
+    __tablename__ = "csv_mapping_templates"
+    
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    user_id = Column(String(36), ForeignKey("users.id"), nullable=False)
+    name = Column(String(150), nullable=False)
+    description = Column(String(255), nullable=True)
+    
+    # Column mapping definitions
+    date_column = Column(String(100), nullable=False, default="Date")
+    date_format = Column(String(50), nullable=False, default="%d-%m-%Y")
+    voucher_type_column = Column(String(100), nullable=True, default="Voucher Type")
+    default_voucher_type = Column(String(50), nullable=False, default="Payment")
+    voucher_number_column = Column(String(100), nullable=True, default="Voucher No")
+    debit_ledger_column = Column(String(100), nullable=True, default="Debit Ledger")
+    default_debit_ledger = Column(String(150), nullable=True)
+    credit_ledger_column = Column(String(100), nullable=True, default="Credit Ledger")
+    default_credit_ledger = Column(String(150), nullable=True)
+    amount_column = Column(String(100), nullable=True, default="Amount")
+    debit_amount_column = Column(String(100), nullable=True)
+    credit_amount_column = Column(String(100), nullable=True)
+    narration_column = Column(String(100), nullable=True, default="Narration")
+    default_narration = Column(String(200), nullable=True)
+    ref_no_column = Column(String(100), nullable=True, default="Ref / Cheque No")
+    
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=get_utc_now)
+    updated_at = Column(DateTime, default=get_utc_now, onupdate=get_utc_now)
+    
+    user = relationship("User", back_populates="csv_mapping_templates")

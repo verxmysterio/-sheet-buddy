@@ -1,5 +1,6 @@
 import os
 import shutil
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -58,6 +59,8 @@ def create_test_user(email: str, password: str, page_credits: int = 100, is_admi
         db.close()
 
 def setup_module(module):
+    # Override db
+    app.dependency_overrides[get_db] = override_get_db
     # Create tables
     Base.metadata.create_all(bind=engine)
     
@@ -113,6 +116,7 @@ def teardown_module(module):
     if os.path.exists("./test_saas.db"):
         os.remove("./test_saas.db")
 
+@pytest.mark.skipif(not os.path.exists(PDF_PATH), reason="Local sample PDF not present")
 def test_full_saas_workflow():
     # 1. Pre-seed User directly
     create_test_user("test@example.com", "testpassword", page_credits=100)
@@ -239,6 +243,7 @@ def test_full_saas_workflow():
     assert tx_data[1]["pages_purchased"] == -15 # debit
     assert tx_data[2]["pages_purchased"] == 100 # onboarding
 
+@pytest.mark.skipif(not os.path.exists(r"c:\Users\aakas\OneDrive\Desktop\credentials\3.pdf"), reason="Local sample PDF not present")
 def test_conversion_overrides_and_simulators():
     import uuid
     email = f"override_tester_{uuid.uuid4()}@example.com"
