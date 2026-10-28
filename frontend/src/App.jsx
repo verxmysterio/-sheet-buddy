@@ -11,6 +11,151 @@ window.fetch = function (url, options) {
   return originalFetch(finalUrl, options);
 };
 
+// --- Native Client-Side CSV & Tally XML Engines ---
+const BLANK_CSV_CONTENT = `Date,Voucher Type,Voucher No,Debit Ledger,Credit Ledger,Amount,Narration,Ref / Cheque No
+# HINT: Date format DD-MM-YYYY (e.g. 15-04-2026). Voucher Type: Payment | Receipt | Contra | Journal | Sales | Purchase,,,,,,,
+`;
+
+const SAMPLE_CSV_CONTENT = `Date,Voucher Type,Voucher No,Debit Ledger,Credit Ledger,Amount,Narration,Ref / Cheque No
+15-04-2026,Payment,PV-001,Office Rent Expenses,HDFC Bank Current A/c,25000.00,April 2026 Office Rent,CHQ-100234
+16-04-2026,Payment,PV-002,Electricity Expenses,Cash,4250.00,BESCOM Electricity Bill April 2026,
+17-04-2026,Receipt,RV-001,HDFC Bank Current A/c,Acme Technologies Ltd,150000.00,Advance for Software Consultancy,NEFT-998822
+18-04-2026,Receipt,RV-002,Cash,Cash Sales A/c,12500.00,Counter cash collection,
+19-04-2026,Contra,CV-001,HDFC Bank Current A/c,Cash,20000.00,Cash deposit into HDFC bank,DEP-01
+20-04-2026,Contra,CV-002,Cash,HDFC Bank Current A/c,15000.00,Self cash withdrawal for office petty cash,ATM-55
+21-04-2026,Journal,JV-001,Depreciation A/c,Office Computers A/c,8500.00,Monthly depreciation on computer hardware,
+22-04-2026,Sales,SV-001,Bharat Enterprises,Sales Account,85000.00,Sale of IT hardware goods,INV-2026-04
+23-04-2026,Purchase,PUR-001,Purchase Account,Global Tech Distributors,62000.00,Purchase of inventory stock,BILL-8891
+`;
+
+function parseCsvRows(text) {
+  const lines = [];
+  let row = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    const nextChar = text[i + 1];
+    if (char === '"' || char === "'") {
+      if (inQuotes && nextChar === char) {
+        current += char;
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      row.push(current.trim());
+      current = '';
+    } else if ((char === '\r' || char === '\n') && !inQuotes) {
+      if (char === '\r' && nextChar === '\n') i++;
+      row.push(current.trim());
+      if (row.some(c => c !== '')) lines.push(row);
+      row = [];
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  if (current || row.length > 0) {
+    row.push(current.trim());
+    if (row.some(c => c !== '')) lines.push(row);
+  }
+  return lines;
+}
+
+function generateClientTallyXml(vouchers, mappingName = "Sheet Buddy Import") {
+  const escapeXml = (unsafe) => {
+    if (!unsafe) return "";
+    return String(unsafe)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&apos;');
+  };
+
+  const formatTallyDate = (dateStr) => {
+    if (!dateStr) return "20260401";
+    const cleaned = String(dateStr).replace(/[^0-9]/g, '');
+    if (cleaned.length === 8) {
+      if (parseInt(cleaned.slice(0, 4)) > 1900) return cleaned;
+      return cleaned.slice(4, 8) + cleaned.slice(2, 4) + cleaned.slice(0, 2);
+    }
+    const d = new Date(dateStr);
+    if (!isNaN(d.getTime())) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}${m}${day}`;
+    }
+    return "20260401";
+  };
+
+  let xml = `<ENVELOPE>\n  <HEADER>\n    <TALLYREQUEST>Import Data</TALLYREQUEST>\n  </HEADER>\n  <BODY>\n    <EXPORTDATA>\n      <REQUESTDESC>\n        <REPORTNAME>All Masters</REPORTNAME>\n        <STATICVARIABLES>\n          <SVCURRENTCOMPANY>${escapeXml(mappingName)}</SVCURRENTCOMPANY>\n        </STATICVARIABLES>\n      </REQUESTDESC>\n      <REQUESTDATA>\n`;
+
+  for (let idx = 0; idx < vouchers.length; idx++) {
+    const vch = vouchers[idx];
+    const vtype = vch.voucher_type || "Payment";
+    const vdate = formatTallyDate(vch.date);
+    const amt = parseFloat(vch.amount) || 0.0;
+    const narr = vch.narration || "";
+    const vno = vch.voucher_number || `VCH-${idx + 1}`;
+    const drLedger = vch.debit_ledger || "Suspense";
+    const crLedger = vch.credit_ledger || "Cash";
+    const refNo = vch.ref_no || "";
+
+    const isPayment = vtype.toLowerCase() === "payment";
+    const isReceipt = vtype.toLowerCase() === "receipt";
+    const isContra = vtype.toLowerCase() === "contra";
+
+    xml += `        <TALLYMESSAGE xmlns:UDF="TallyUDF">\n`;
+    xml += `          <VOUCHER VCHTYPE="${escapeXml(vtype)}" ACTION="Create" OBJVIEW="Accounting Voucher View">\n`;
+    xml += `            <DATE>${vdate}</DATE>\n`;
+    xml += `            <GUID>SB-CSV-${idx + 1}-${Date.now()}</GUID>\n`;
+    xml += `            <VOUCHERTYPENAME>${escapeXml(vtype)}</VOUCHERTYPENAME>\n`;
+    xml += `            <VOUCHERNUMBER>${escapeXml(vno)}</VOUCHERNUMBER>\n`;
+    xml += `            <PARTYLEDGERNAME>${escapeXml(isPayment ? crLedger : (isReceipt ? crLedger : drLedger))}</PARTYLEDGERNAME>\n`;
+    xml += `            <NARRATION>${escapeXml(narr)}</NARRATION>\n`;
+
+    // Debit Ledger (Negative amount in Tally Prime double-entry)
+    xml += `            <ALLLEDGERENTRIES.LIST>\n`;
+    xml += `              <LEDGERNAME>${escapeXml(drLedger)}</LEDGERNAME>\n`;
+    xml += `              <ISDEEMEDPOSITIVE>Yes</ISDEEMEDPOSITIVE>\n`;
+    xml += `              <AMOUNT>-${amt.toFixed(2)}</AMOUNT>\n`;
+    if (isReceipt && refNo) {
+      xml += `              <BANKALLOCATIONS.LIST>\n`;
+      xml += `                <DATE>${vdate}</DATE>\n`;
+      xml += `                <INSTRUMENTNUMBER>${escapeXml(refNo)}</INSTRUMENTNUMBER>\n`;
+      xml += `                <TRANSACTIONTYPE>Cheque/DD</TRANSACTIONTYPE>\n`;
+      xml += `                <AMOUNT>-${amt.toFixed(2)}</AMOUNT>\n`;
+      xml += `              </BANKALLOCATIONS.LIST>\n`;
+    }
+    xml += `            </ALLLEDGERENTRIES.LIST>\n`;
+
+    // Credit Ledger (Positive amount in Tally Prime double-entry)
+    xml += `            <ALLLEDGERENTRIES.LIST>\n`;
+    xml += `              <LEDGERNAME>${escapeXml(crLedger)}</LEDGERNAME>\n`;
+    xml += `              <ISDEEMEDPOSITIVE>No</ISDEEMEDPOSITIVE>\n`;
+    xml += `              <ISPARTYLEDGER>Yes</ISPARTYLEDGER>\n`;
+    xml += `              <AMOUNT>${amt.toFixed(2)}</AMOUNT>\n`;
+    if ((isPayment || isContra) && refNo) {
+      xml += `              <BANKALLOCATIONS.LIST>\n`;
+      xml += `                <DATE>${vdate}</DATE>\n`;
+      xml += `                <INSTRUMENTNUMBER>${escapeXml(refNo)}</INSTRUMENTNUMBER>\n`;
+      xml += `                <TRANSACTIONTYPE>Cheque/DD</TRANSACTIONTYPE>\n`;
+      xml += `                <AMOUNT>${amt.toFixed(2)}</AMOUNT>\n`;
+      xml += `              </BANKALLOCATIONS.LIST>\n`;
+    }
+    xml += `            </ALLLEDGERENTRIES.LIST>\n`;
+
+    xml += `          </VOUCHER>\n`;
+    xml += `        </TALLYMESSAGE>\n`;
+  }
+
+  xml += `      </REQUESTDATA>\n    </EXPORTDATA>\n  </BODY>\n</ENVELOPE>`;
+  return xml;
+}
+
 export default function App() {
   // --- Auth State ---
   const [token, setToken] = useState(localStorage.getItem('token') || '');
@@ -78,7 +223,14 @@ export default function App() {
   const [ruleCategoryInput, setRuleCategoryInput] = useState('General');
   
   // --- CSV Template, Mapping & Conversion States ---
-  const [csvMappings, setCsvMappings] = useState([]);
+  const [csvMappings, setCsvMappings] = useState(() => {
+    try {
+      const saved = localStorage.getItem('sheetbuddy_csv_mappings');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
   const [selectedCsvMappingId, setSelectedCsvMappingId] = useState('default');
   const [csvFile, setCsvFile] = useState(null);
   const [csvUploading, setCsvUploading] = useState(false);
@@ -374,8 +526,15 @@ export default function App() {
     }
   };
 
-  // --- CSV Template & Mapping API Functions ---
+  // --- CSV Template & Mapping Functions (Dual Client & API Mode) ---
   const fetchCsvMappings = async () => {
+    try {
+      const saved = localStorage.getItem('sheetbuddy_csv_mappings');
+      if (saved) {
+        setCsvMappings(JSON.parse(saved));
+      }
+    } catch (e) {}
+
     if (!token) return;
     try {
       const res = await fetch('/api/csv/mappings', {
@@ -383,97 +542,91 @@ export default function App() {
       });
       if (res.ok) {
         const data = await res.json();
-        setCsvMappings(data);
+        if (data && data.length > 0) {
+          setCsvMappings(data);
+          try {
+            localStorage.setItem('sheetbuddy_csv_mappings', JSON.stringify(data));
+          } catch (err) {}
+        }
       }
     } catch (e) {
-      console.error("CSV mappings fetch error", e);
+      console.log("Using local offline CSV mappings");
     }
   };
 
-  const handleDownloadBlankCsv = async () => {
+  const handleDownloadBlankCsv = () => {
     try {
-      const res = await fetch('/api/csv/templates/blank');
-      if (res.ok) {
-        const blob = await res.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = "Sheet_Buddy_Blank_Template.csv";
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        window.URL.revokeObjectURL(url);
-      } else {
-        alert("Failed to download blank CSV template.");
-      }
+      const blob = new Blob([BLANK_CSV_CONTENT], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = "Sheet_Buddy_Blank_Template.csv";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error("Blank template download error", err);
-      alert("Network error downloading template.");
+      alert("Failed to download blank CSV template.");
     }
   };
 
-  const handleDownloadSampleCsv = async () => {
+  const handleDownloadSampleCsv = () => {
     try {
-      const res = await fetch('/api/csv/templates/sample');
-      if (res.ok) {
-        const blob = await res.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = "Sheet_Buddy_Sample_Vouchers.csv";
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        window.URL.revokeObjectURL(url);
-      } else {
-        alert("Failed to download sample CSV template.");
-      }
+      const blob = new Blob([SAMPLE_CSV_CONTENT], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = "Sheet_Buddy_Sample_Vouchers.csv";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error("Sample template download error", err);
-      alert("Network error downloading template.");
+      alert("Failed to download sample CSV template.");
     }
   };
 
-  const handleInspectCsv = async (file) => {
+  const handleInspectCsv = (file) => {
     if (!file) return;
     setInspectingCsv(true);
-    const formData = new FormData();
-    formData.append('file', file);
-    try {
-      const res = await fetch('/api/csv/inspect', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-        body: formData
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const headers = data.headers || [];
-        setDetectedHeaders(headers);
-        if (headers.length > 0) {
-          headers.forEach(h => {
-            const hl = h.toLowerCase().trim();
-            if (hl.includes('date')) setMapFormDateCol(h);
-            else if (hl.includes('voucher type') || hl.includes('entry type') || hl === 'type') setMapFormVtypeCol(h);
-            else if (hl.includes('voucher no') || hl.includes('vch no') || hl.includes('invoice') || hl.includes('inv no')) setMapFormVnumCol(h);
-            else if ((hl.includes('debit') && hl.includes('ledger')) || hl.includes('dr ledger') || hl.includes('dr account')) setMapFormDrCol(h);
-            else if ((hl.includes('credit') && hl.includes('ledger')) || hl.includes('cr ledger') || hl.includes('cr account')) setMapFormCrCol(h);
-            else if (hl === 'amount' || hl.includes('total')) setMapFormAmtCol(h);
-            else if ((hl.includes('debit') && hl.includes('amt')) || hl.includes('dr amt')) setMapFormDrAmtCol(h);
-            else if ((hl.includes('credit') && hl.includes('amt')) || hl.includes('cr amt')) setMapFormCrAmtCol(h);
-            else if (hl.includes('narr') || hl.includes('desc') || hl.includes('particulars')) setMapFormNarrCol(h);
-            else if (hl.includes('ref') || hl.includes('cheque') || hl.includes('chq') || hl.includes('utr')) setMapFormRefCol(h);
-          });
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const text = e.target.result;
+        const parsed = parseCsvRows(text);
+        if (parsed.length > 0) {
+          const headers = parsed[0].filter(h => !!h && !h.startsWith('#'));
+          setDetectedHeaders(headers);
+          if (headers.length > 0) {
+            headers.forEach(h => {
+              const hl = h.toLowerCase().trim();
+              if (hl.includes('date')) setMapFormDateCol(h);
+              else if (hl.includes('voucher type') || hl.includes('entry type') || hl === 'type') setMapFormVtypeCol(h);
+              else if (hl.includes('voucher no') || hl.includes('vch no') || hl.includes('invoice') || hl.includes('inv no') || hl.includes('doc no')) setMapFormVnumCol(h);
+              else if ((hl.includes('debit') && hl.includes('ledger')) || hl.includes('dr ledger') || hl.includes('dr account') || hl.includes('dr')) setMapFormDrCol(h);
+              else if ((hl.includes('credit') && hl.includes('ledger')) || hl.includes('cr ledger') || hl.includes('cr account') || hl.includes('cr')) setMapFormCrCol(h);
+              else if (hl === 'amount' || hl.includes('total') || hl.includes('net total')) setMapFormAmtCol(h);
+              else if ((hl.includes('debit') && hl.includes('amt')) || hl.includes('dr amt')) setMapFormDrAmtCol(h);
+              else if ((hl.includes('credit') && hl.includes('amt')) || hl.includes('cr amt')) setMapFormCrAmtCol(h);
+              else if (hl.includes('narr') || hl.includes('desc') || hl.includes('particulars') || hl.includes('remarks')) setMapFormNarrCol(h);
+              else if (hl.includes('ref') || hl.includes('cheque') || hl.includes('chq') || hl.includes('utr') || hl.includes('instrument')) setMapFormRefCol(h);
+            });
+          }
         }
-      } else {
-        const err = await res.json();
-        alert(err.detail || "Failed to inspect CSV headers.");
+      } catch (err) {
+        console.error("Inspect error", err);
+        alert("Failed to inspect CSV headers.");
+      } finally {
+        setInspectingCsv(false);
       }
-    } catch (e) {
-      console.error("Inspect error", e);
-      alert("Error inspecting CSV headers.");
-    } finally {
+    };
+    reader.onerror = () => {
       setInspectingCsv(false);
-    }
+      alert("Error reading CSV file.");
+    };
+    reader.readAsText(file);
   };
 
   const handleOpenCreateMapping = () => {
@@ -528,9 +681,10 @@ export default function App() {
       alert("Please provide a template name.");
       return;
     }
-    const payload = {
+    const newTemplate = {
+      id: editingMappingId || 'map_' + Date.now(),
       name: mapFormName.trim(),
-      description: mapFormDesc.trim() || null,
+      description: mapFormDesc.trim() || '',
       date_column: mapFormDateCol || 'Date',
       date_format: mapFormDateFmt || '%d-%m-%Y',
       voucher_type_column: mapFormVtypeCol || null,
@@ -548,63 +702,55 @@ export default function App() {
       ref_no_column: mapFormRefCol || null
     };
 
-    try {
-      let res;
-      if (editingMappingId) {
-        res = await fetch(`/api/csv/mappings/${editingMappingId}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify(payload)
-        });
-      } else {
-        res = await fetch('/api/csv/mappings', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify(payload)
-        });
-      }
+    setCsvMappings(prev => {
+      const filtered = prev.filter(m => m.id !== newTemplate.id);
+      const updated = [newTemplate, ...filtered];
+      try {
+        localStorage.setItem('sheetbuddy_csv_mappings', JSON.stringify(updated));
+      } catch (err) {}
+      return updated;
+    });
 
-      if (res.ok) {
-        const saved = await res.json();
-        await fetchCsvMappings();
-        setSelectedCsvMappingId(String(saved.id));
-        setMappingModalOpen(false);
-        setEditingMappingId(null);
-      } else {
-        const err = await res.json();
-        alert(err.detail || "Failed to save mapping template.");
-      }
-    } catch (e) {
-      console.error("Save mapping error", e);
-      alert("Network error while saving mapping template.");
+    setSelectedCsvMappingId(String(newTemplate.id));
+    setMappingModalOpen(false);
+    setEditingMappingId(null);
+
+    // Sync to backend if logged in and online
+    if (token) {
+      try {
+        const method = editingMappingId ? 'PUT' : 'POST';
+        const url = editingMappingId ? `/api/csv/mappings/${editingMappingId}` : '/api/csv/mappings';
+        await fetch(url, {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(newTemplate)
+        });
+      } catch (err) {}
     }
   };
 
   const handleDeleteMapping = async (templateId) => {
     if (!confirm("Are you sure you want to delete this mapping template?")) return;
-    try {
-      const res = await fetch(`/api/csv/mappings/${templateId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        if (selectedCsvMappingId === String(templateId)) {
-          setSelectedCsvMappingId('default');
-        }
-        await fetchCsvMappings();
-      } else {
-        const err = await res.json();
-        alert(err.detail || "Failed to delete mapping template.");
-      }
-    } catch (e) {
-      console.error("Delete mapping error", e);
-      alert("Network error deleting template.");
+    setCsvMappings(prev => {
+      const updated = prev.filter(m => m.id !== templateId);
+      try {
+        localStorage.setItem('sheetbuddy_csv_mappings', JSON.stringify(updated));
+      } catch (err) {}
+      return updated;
+    });
+    if (selectedCsvMappingId === String(templateId)) {
+      setSelectedCsvMappingId('default');
+    }
+    if (token) {
+      try {
+        await fetch(`/api/csv/mappings/${templateId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+      } catch (err) {}
     }
   };
 
@@ -617,31 +763,136 @@ export default function App() {
     setCsvUploading(true);
     setCsvError('');
     setCsvConvertError('');
-    const formData = new FormData();
-    formData.append('file', csvFile);
-    if (selectedCsvMappingId && selectedCsvMappingId !== 'default') {
-      formData.append('mapping_template_id', selectedCsvMappingId);
-    }
-    try {
-      const res = await fetch('/api/csv/preview', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-        body: formData
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setCsvPreviewData(data);
-        setCsvVouchers(data.vouchers || []);
-      } else {
-        const err = await res.json();
-        setCsvError(err.detail || "Failed to process CSV file.");
+
+    const activeMapping = csvMappings.find(m => String(m.id) === String(selectedCsvMappingId)) || {
+      name: "Standard Sheet Buddy CSV",
+      date_column: "Date",
+      date_format: "%d-%m-%Y",
+      voucher_type_column: "Voucher Type",
+      default_voucher_type: "Payment",
+      voucher_number_column: "Voucher No",
+      debit_ledger_column: "Debit Ledger",
+      credit_ledger_column: "Credit Ledger",
+      amount_column: "Amount",
+      narration_column: "Narration",
+      ref_no_column: "Ref / Cheque No"
+    };
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const text = evt.target.result;
+        const rows = parseCsvRows(text);
+        if (rows.length < 2) {
+          setCsvError("CSV file is empty or contains only headers.");
+          setCsvUploading(false);
+          return;
+        }
+
+        const headers = rows[0].map(h => h.trim());
+        const headerMap = {};
+        headers.forEach((h, idx) => {
+          headerMap[h.toLowerCase()] = idx;
+        });
+
+        const getColIdx = (colName) => {
+          if (!colName) return -1;
+          const lower = colName.toLowerCase().trim();
+          return headerMap[lower] !== undefined ? headerMap[lower] : -1;
+        };
+
+        const dateIdx = getColIdx(activeMapping.date_column);
+        const vtypeIdx = getColIdx(activeMapping.voucher_type_column);
+        const vnumIdx = getColIdx(activeMapping.voucher_number_column);
+        const drIdx = getColIdx(activeMapping.debit_ledger_column);
+        const crIdx = getColIdx(activeMapping.credit_ledger_column);
+        const amtIdx = getColIdx(activeMapping.amount_column);
+        const drAmtIdx = getColIdx(activeMapping.debit_amount_column);
+        const crAmtIdx = getColIdx(activeMapping.credit_amount_column);
+        const narrIdx = getColIdx(activeMapping.narration_column);
+        const refIdx = getColIdx(activeMapping.ref_no_column);
+
+        const vouchers = [];
+        for (let i = 1; i < rows.length; i++) {
+          const r = rows[i];
+          if (!r || r.length === 0 || (r.length === 1 && !r[0]) || (r[0] && r[0].startsWith('#'))) {
+            continue;
+          }
+
+          let dateVal = dateIdx >= 0 && r[dateIdx] ? r[dateIdx].trim() : '';
+          let vtypeVal = vtypeIdx >= 0 && r[vtypeIdx] ? r[vtypeIdx].trim() : (activeMapping.default_voucher_type || 'Payment');
+          
+          const vtLower = vtypeVal.toLowerCase();
+          if (vtLower.includes('pay') || vtLower === 'dr') vtypeVal = 'Payment';
+          else if (vtLower.includes('rec') || vtLower === 'cr') vtypeVal = 'Receipt';
+          else if (vtLower.includes('contra')) vtypeVal = 'Contra';
+          else if (vtLower.includes('journal') || vtLower === 'jv') vtypeVal = 'Journal';
+          else if (vtLower.includes('sale')) vtypeVal = 'Sales';
+          else if (vtLower.includes('purch')) vtypeVal = 'Purchase';
+          else vtypeVal = activeMapping.default_voucher_type || 'Payment';
+
+          let vnumVal = vnumIdx >= 0 && r[vnumIdx] ? r[vnumIdx].trim() : '';
+          let drVal = drIdx >= 0 && r[drIdx] ? r[drIdx].trim() : (activeMapping.default_debit_ledger || '');
+          let crVal = crIdx >= 0 && r[crIdx] ? r[crIdx].trim() : (activeMapping.default_credit_ledger || '');
+
+          let amtVal = 0.0;
+          if (amtIdx >= 0 && r[amtIdx]) {
+            amtVal = Math.abs(parseFloat(r[amtIdx].replace(/[^0-9.-]/g, '')) || 0.0);
+          } else {
+            const drA = drAmtIdx >= 0 && r[drAmtIdx] ? Math.abs(parseFloat(r[drAmtIdx].replace(/[^0-9.-]/g, '')) || 0) : 0;
+            const crA = crAmtIdx >= 0 && r[crAmtIdx] ? Math.abs(parseFloat(r[crAmtIdx].replace(/[^0-9.-]/g, '')) || 0) : 0;
+            amtVal = drA || crA;
+          }
+
+          let narrVal = narrIdx >= 0 && r[narrIdx] ? r[narrIdx].trim() : (activeMapping.default_narration || '');
+          let refVal = refIdx >= 0 && r[refIdx] ? r[refIdx].trim() : '';
+
+          const isValid = amtVal > 0 && !!dateVal && !!drVal && !!crVal;
+          const reasons = [];
+          if (amtVal <= 0) reasons.push("Amount must be greater than 0");
+          if (!dateVal) reasons.push("Date is missing");
+          if (!drVal) reasons.push("Debit ledger is missing");
+          if (!crVal) reasons.push("Credit ledger is missing");
+
+          vouchers.push({
+            row_idx: i,
+            date: dateVal,
+            voucher_type: vtypeVal,
+            voucher_number: vnumVal,
+            debit_ledger: drVal,
+            credit_ledger: crVal,
+            amount: amtVal,
+            narration: narrVal,
+            ref_no: refVal,
+            is_valid: isValid,
+            error_reasons: reasons
+          });
+        }
+
+        if (vouchers.length === 0) {
+          setCsvError("No valid voucher rows found in this CSV file.");
+          setCsvUploading(false);
+          return;
+        }
+
+        setCsvVouchers(vouchers);
+        setCsvPreviewData({
+          mapping_name: activeMapping.name,
+          total_vouchers: vouchers.length,
+          vouchers: vouchers
+        });
+        setCsvUploading(false);
+      } catch (err) {
+        console.error("Client parse error", err);
+        setCsvError("Failed to parse CSV file: " + err.message);
+        setCsvUploading(false);
       }
-    } catch (err) {
-      console.error("CSV preview error", err);
-      setCsvError("Network error while processing CSV.");
-    } finally {
+    };
+    reader.onerror = () => {
+      setCsvError("Error reading the selected CSV file.");
       setCsvUploading(false);
-    }
+    };
+    reader.readAsText(csvFile);
   };
 
   const handleUpdateVoucherCell = (index, field, value) => {
@@ -668,7 +919,7 @@ export default function App() {
   const handleAddVoucherRow = () => {
     const today = new Date().toISOString().split('T')[0];
     const newRow = {
-      row_index: csvVouchers.length + 1,
+      row_idx: csvVouchers.length + 1,
       date: today,
       voucher_type: 'Payment',
       voucher_number: '',
@@ -678,7 +929,7 @@ export default function App() {
       narration: '',
       ref_no: '',
       is_valid: false,
-      validation_error: 'Please fill in ledgers and amount'
+      error_reasons: ['Please fill in ledgers and amount']
     };
     setCsvVouchers(prev => [...prev, newRow]);
   };
@@ -701,82 +952,73 @@ export default function App() {
       const activeMapping = csvMappings.find(m => String(m.id) === String(selectedCsvMappingId));
       const mappingName = activeMapping ? activeMapping.name : "Sheet Buddy Standard CSV";
       
-      const res = await fetch('/api/csv/convert-to-xml', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          vouchers: csvVouchers,
-          mapping_name: mappingName
-        })
-      });
+      const xmlString = generateClientTallyXml(csvVouchers, mappingName);
+      const blob = new Blob([xmlString], { type: 'application/xml;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const outName = csvFile ? csvFile.name.replace(/\.[^/.]+$/, "") + "_Tally_Import.xml" : "Tally_Vouchers_Import.xml";
+      a.download = outName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
 
-      if (res.ok) {
-        const blob = await res.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        const outName = csvFile ? csvFile.name.replace(/\.[^/.]+$/, "") + "_Tally_Import.xml" : "Tally_Vouchers_Import.xml";
-        a.download = outName;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        window.URL.revokeObjectURL(url);
-
-        await fetchUserProfile();
-        await fetchHistory();
-        alert("Success! 100% Compliant Tally Prime XML has been generated and downloaded.");
-      } else {
-        const err = await res.json();
-        setCsvConvertError(err.detail || "Failed to convert CSV to Tally XML.");
+      if (token) {
+        try {
+          await fetch('/api/csv/convert-to-xml', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ vouchers: csvVouchers, mapping_name: mappingName })
+          });
+          fetchUserProfile();
+          fetchHistory();
+        } catch (e) {}
       }
+
+      alert("Success! 100% Compliant Tally Prime XML has been generated and downloaded.");
     } catch (err) {
       console.error("Convert to XML error", err);
-      setCsvConvertError("Network error while generating Tally XML.");
+      setCsvConvertError("Error while generating Tally XML: " + err.message);
     } finally {
       setCsvConverting(false);
     }
   };
 
-  const handleExportCsvToExcel = async () => {
+  const handleExportCsvToExcel = () => {
     if (!csvVouchers || csvVouchers.length === 0) {
       alert("No vouchers to export.");
       return;
     }
     try {
-      const activeMapping = csvMappings.find(m => String(m.id) === String(selectedCsvMappingId));
-      const mappingName = activeMapping ? activeMapping.name : "CSV_Vouchers";
-
-      const res = await fetch('/api/csv/export-excel', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          vouchers: csvVouchers,
-          mapping_name: mappingName
-        })
+      let csvContent = "Date,Voucher Type,Voucher No,Debit Ledger,Credit Ledger,Amount,Narration,Ref / Cheque No\n";
+      csvVouchers.forEach(v => {
+        const row = [
+          `"${(v.date || '').replace(/"/g, '""')}"`,
+          `"${(v.voucher_type || '').replace(/"/g, '""')}"`,
+          `"${(v.voucher_number || '').replace(/"/g, '""')}"`,
+          `"${(v.debit_ledger || '').replace(/"/g, '""')}"`,
+          `"${(v.credit_ledger || '').replace(/"/g, '""')}"`,
+          parseFloat(v.amount) || 0,
+          `"${(v.narration || '').replace(/"/g, '""')}"`,
+          `"${(v.ref_no || '').replace(/"/g, '""')}"`
+        ];
+        csvContent += row.join(",") + "\n";
       });
-      if (res.ok) {
-        const blob = await res.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        const outName = csvFile ? csvFile.name.replace(/\.[^/.]+$/, "") + "_Exported.xlsx" : "Vouchers_Export.xlsx";
-        a.download = outName;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        window.URL.revokeObjectURL(url);
-      } else {
-        alert("Failed to export Excel spreadsheet.");
-      }
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const outName = csvFile ? csvFile.name.replace(/\.[^/.]+$/, "") + "_Exported.csv" : "Vouchers_Export.csv";
+      a.download = outName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
     } catch (e) {
-      console.error("Export Excel error", e);
-      alert("Network error exporting Excel.");
+      console.error("Export error", e);
+      alert("Failed to export.");
     }
   };
 
@@ -1872,113 +2114,112 @@ export default function App() {
     <div className="min-h-screen flex flex-col bg-[#f4f2ed]">
       
       {/* Top Header containing Navigation Menu, Logo, and User stats */}
-      <header className="bg-white border-b-4 border-black flex flex-col md:flex-row items-stretch md:items-center justify-between shadow-[0px_4px_0px_rgba(0,0,0,0.05)] sticky top-0 z-50">
-        
-        {/* Left: Brand Logo & Mobile hamburger toggle */}
-        <div className="h-16 flex items-center justify-between px-5 border-b-4 md:border-b-0 md:border-r-4 border-black bg-[#ffd615] flex-shrink-0">
-          <div className="flex items-center space-x-2.5 cursor-pointer" onClick={() => { setActiveTab('convert'); setExecuteError(''); }}>
-            <img src="/symbol_mark.svg" alt="Sheet Buddy Logo" className="w-8 h-8 border-2 border-black rounded-none shadow-[2px_2px_0px_rgba(0,0,0,1)] bg-black flex-shrink-0" />
-            <div>
-              <span className="font-black text-black text-lg tracking-tight uppercase block leading-none">Sheet Buddy</span>
-              <span className="text-[8px] font-black text-black opacity-75 uppercase tracking-wider block mt-0.5">Tally Companion • 2026</span>
-            </div>
-          </div>
-
-          {/* Hamburger Icon button for mobile screen */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-1 border-2 border-black bg-white hover:bg-slate-100 text-black focus:outline-none"
-            aria-label="Toggle navigation"
-          >
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              {mobileMenuOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-              )}
-            </svg>
-          </button>
-        </div>
-
-        {/* Collapsible Area: active on mobile screen when mobileMenuOpen is true */}
-        <div className={`${mobileMenuOpen ? 'flex' : 'hidden'} md:flex flex-col md:flex-row flex-1 items-stretch md:items-center justify-between`}>
-          {/* Center: Navigation Menu inside Header */}
-          <nav className="flex flex-col md:flex-row items-stretch md:items-center px-6 py-4 md:py-0 md:space-x-3 space-y-2 md:space-y-0 flex-1 justify-start md:justify-center border-b-2 md:border-b-0 border-black">
-            <button
-              onClick={() => { setActiveTab('convert'); setExecuteError(''); setMobileMenuOpen(false); }}
-              className={`flex items-center justify-center px-4 py-2 text-xs font-black border-2 border-black transition-all ${activeTab === 'convert' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-slate-50'}`}
-            >
-              IMPORT TRANSACTION
-            </button>
-            <button
-              onClick={() => { setActiveTab('csv'); setExecuteError(''); setMobileMenuOpen(false); }}
-              className={`flex items-center justify-center px-4 py-2 text-xs font-black border-2 border-black transition-all ${activeTab === 'csv' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-slate-50'}`}
-            >
-              CSV TO TALLY
-            </button>
-            <button
-              onClick={() => { setActiveTab('rules'); setExecuteError(''); setMobileMenuOpen(false); }}
-              className={`flex items-center justify-center px-4 py-2 text-xs font-black border-2 border-black transition-all ${activeTab === 'rules' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-slate-50'}`}
-            >
-              LEDGER RULES
-            </button>
-            <button
-              onClick={() => { setActiveTab('history'); setExecuteError(''); setMobileMenuOpen(false); }}
-              className={`flex items-center justify-center px-4 py-2 text-xs font-black border-2 border-black transition-all ${activeTab === 'history' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-slate-50'}`}
-            >
-              HISTORY ARCHIVE
-            </button>
-            <button
-              onClick={() => { setActiveTab('wallet'); setExecuteError(''); setMobileMenuOpen(false); }}
-              className={`flex items-center justify-center px-4 py-2 text-xs font-black border-2 border-black transition-all ${activeTab === 'wallet' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-slate-50'}`}
-            >
-              BUY CREDITS
-            </button>
-            <button
-              onClick={() => { setActiveTab('support'); setExecuteError(''); setMobileMenuOpen(false); }}
-              className={`flex items-center justify-center px-4 py-2 text-xs font-black border-2 border-black transition-all ${activeTab === 'support' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-slate-50'}`}
-            >
-              CONTACT SUPPORT
-            </button>
-            <button
-              onClick={() => { 
-                setActiveTab('settings'); 
-                setExecuteError(''); 
-                setMobileMenuOpen(false);
-                setCurrentPassword('');
-                setProfileNewPassword('');
-                setProfileConfirmNewPassword('');
-                setProfileSuccessMsg('');
-                setProfileErrorMsg('');
-              }}
-              className={`flex items-center justify-center px-4 py-2 text-xs font-black border-2 border-black transition-all ${activeTab === 'settings' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-slate-50'}`}
-            >
-              PROFILE SECURITY
-            </button>
-            {user.is_admin && (
-              <button
-                onClick={() => { setActiveTab('admin'); setExecuteError(''); setMobileMenuOpen(false); }}
-                className={`flex items-center justify-center px-4 py-2 text-xs font-black border-2 border-black transition-all ${activeTab === 'admin' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-slate-50'}`}
-              >
-                ADMIN CONSOLE
-              </button>
-            )}
-          </nav>
-
-          {/* Right: User Credits status and logout in header */}
-          <div className="flex items-center justify-between md:justify-end px-6 py-4 md:py-0 space-x-4 border-t-2 md:border-t-0 md:border-l-4 border-black bg-slate-50 flex-shrink-0">
-            <div className="text-left md:text-right py-1">
-              <div className="flex items-center space-x-1.5 justify-start md:justify-end">
-                <span className="text-sm font-black text-black">{user.page_credits}</span>
-                <span className="text-[10px] font-bold text-slate-600">Credits</span>
+      <header className="bg-white border-b-4 border-black sticky top-0 z-50 shadow-[0px_4px_0px_rgba(0,0,0,0.05)] w-full max-w-full">
+        <div className="flex flex-col xl:flex-row items-stretch xl:items-center justify-between w-full max-w-full">
+          
+          {/* Left: Brand Logo & Mobile hamburger toggle */}
+          <div className="h-16 flex items-center justify-between px-5 border-b-2 xl:border-b-0 xl:border-r-4 border-black bg-[#ffd615] flex-shrink-0">
+            <div className="flex items-center space-x-2.5 cursor-pointer" onClick={() => { setActiveTab('convert'); setExecuteError(''); }}>
+              <img src="/symbol_mark.svg" alt="Sheet Buddy Logo" className="w-8 h-8 border-2 border-black rounded-none shadow-[2px_2px_0px_rgba(0,0,0,1)] bg-black flex-shrink-0" />
+              <div>
+                <span className="font-black text-black text-lg tracking-tight uppercase block leading-none">Sheet Buddy</span>
+                <span className="text-[8px] font-black text-black opacity-75 uppercase tracking-wider block mt-0.5">Tally Companion • 2026</span>
               </div>
             </div>
+
+            {/* Hamburger Icon button for mobile screen */}
             <button
-              onClick={handleLogout}
-              className="px-3 py-1.5 border-2 border-black font-black text-xs text-black bg-white hover:bg-[#ff5757] hover:text-white transition-colors"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="xl:hidden p-1.5 border-2 border-black bg-white hover:bg-slate-100 text-black focus:outline-none shadow-[2px_2px_0px_rgba(0,0,0,1)]"
+              aria-label="Toggle navigation"
             >
-              LOGOUT
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                {mobileMenuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
             </button>
+          </div>
+
+          {/* Center Navigation: Responsive flex-wrap with uniform button sizing */}
+          <div className={`${mobileMenuOpen ? 'flex' : 'hidden'} xl:flex flex-col xl:flex-row flex-1 items-stretch xl:items-center justify-between max-w-full`}>
+            <nav className="flex flex-wrap items-center justify-center p-2.5 gap-2 flex-1 border-b-2 xl:border-b-0 border-black">
+              <button
+                onClick={() => { setActiveTab('convert'); setExecuteError(''); setMobileMenuOpen(false); }}
+                className={`min-w-[130px] px-3.5 py-2 text-xs font-black border-2 border-black uppercase tracking-wider transition-all whitespace-nowrap text-center ${activeTab === 'convert' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-yellow-50 text-black'}`}
+              >
+                IMPORT TRANSACTION
+              </button>
+              <button
+                onClick={() => { setActiveTab('csv'); setExecuteError(''); setMobileMenuOpen(false); }}
+                className={`min-w-[130px] px-3.5 py-2 text-xs font-black border-2 border-black uppercase tracking-wider transition-all whitespace-nowrap text-center ${activeTab === 'csv' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-yellow-50 text-black'}`}
+              >
+                CSV TO TALLY
+              </button>
+              <button
+                onClick={() => { setActiveTab('rules'); setExecuteError(''); setMobileMenuOpen(false); }}
+                className={`min-w-[130px] px-3.5 py-2 text-xs font-black border-2 border-black uppercase tracking-wider transition-all whitespace-nowrap text-center ${activeTab === 'rules' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-yellow-50 text-black'}`}
+              >
+                LEDGER RULES
+              </button>
+              <button
+                onClick={() => { setActiveTab('history'); setExecuteError(''); setMobileMenuOpen(false); }}
+                className={`min-w-[130px] px-3.5 py-2 text-xs font-black border-2 border-black uppercase tracking-wider transition-all whitespace-nowrap text-center ${activeTab === 'history' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-yellow-50 text-black'}`}
+              >
+                HISTORY ARCHIVE
+              </button>
+              <button
+                onClick={() => { setActiveTab('wallet'); setExecuteError(''); setMobileMenuOpen(false); }}
+                className={`min-w-[130px] px-3.5 py-2 text-xs font-black border-2 border-black uppercase tracking-wider transition-all whitespace-nowrap text-center ${activeTab === 'wallet' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-yellow-50 text-black'}`}
+              >
+                BUY CREDITS
+              </button>
+              <button
+                onClick={() => { setActiveTab('support'); setExecuteError(''); setMobileMenuOpen(false); }}
+                className={`min-w-[130px] px-3.5 py-2 text-xs font-black border-2 border-black uppercase tracking-wider transition-all whitespace-nowrap text-center ${activeTab === 'support' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-yellow-50 text-black'}`}
+              >
+                CONTACT SUPPORT
+              </button>
+              <button
+                onClick={() => { 
+                  setActiveTab('settings'); 
+                  setExecuteError(''); 
+                  setMobileMenuOpen(false);
+                  setCurrentPassword('');
+                  setProfileNewPassword('');
+                  setProfileConfirmNewPassword('');
+                  setProfileSuccessMsg('');
+                  setProfileErrorMsg('');
+                }}
+                className={`min-w-[130px] px-3.5 py-2 text-xs font-black border-2 border-black uppercase tracking-wider transition-all whitespace-nowrap text-center ${activeTab === 'settings' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-yellow-50 text-black'}`}
+              >
+                PROFILE SECURITY
+              </button>
+              {user.is_admin && (
+                <button
+                  onClick={() => { setActiveTab('admin'); setExecuteError(''); setMobileMenuOpen(false); }}
+                  className={`min-w-[130px] px-3.5 py-2 text-xs font-black border-2 border-black uppercase tracking-wider transition-all whitespace-nowrap text-center ${activeTab === 'admin' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-yellow-50 text-black'}`}
+                >
+                  ADMIN CONSOLE
+                </button>
+              )}
+            </nav>
+
+            {/* Right: User Credits status and logout - strictly contained within page border */}
+            <div className="flex items-center justify-between sm:justify-end px-5 py-2.5 space-x-3 border-t-2 xl:border-t-0 xl:border-l-4 border-black bg-slate-50 flex-shrink-0 self-stretch xl:self-center">
+              <div className="flex items-center space-x-1.5 bg-white px-3 py-1.5 border-2 border-black shadow-[2px_2px_0px_rgba(0,0,0,1)]">
+                <span className="text-xs font-black text-black">{user.page_credits}</span>
+                <span className="text-[10px] font-black uppercase text-slate-600">Credits</span>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="px-3.5 py-1.5 border-2 border-black font-black text-xs uppercase text-black bg-white hover:bg-[#ff5757] hover:text-white shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all"
+              >
+                LOGOUT
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -2717,9 +2958,9 @@ export default function App() {
                 </div>
               </div>
 
-              <form onSubmit={handleUploadAndPreviewCsv} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+              <form onSubmit={handleUploadAndPreviewCsv} className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
                 {/* File input */}
-                <div className="md:col-span-5">
+                <div className="lg:col-span-5">
                   <label className="block text-xs font-black uppercase text-black mb-1">
                     Select CSV File
                   </label>
@@ -2742,7 +2983,7 @@ export default function App() {
                 </div>
 
                 {/* Mapping Selector */}
-                <div className="md:col-span-4">
+                <div className="lg:col-span-4">
                   <div className="flex justify-between items-center mb-1">
                     <label className="text-xs font-black uppercase text-black">
                       Mapping Template
@@ -2770,7 +3011,7 @@ export default function App() {
                 </div>
 
                 {/* Submit button */}
-                <div className="md:col-span-3 flex space-x-2">
+                <div className="lg:col-span-3 flex space-x-2">
                   <button
                     type="submit"
                     disabled={csvUploading || !csvFile}
@@ -2843,7 +3084,7 @@ export default function App() {
                 </div>
 
                 {/* Metric Summary Badges */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2.5">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-7 gap-2.5">
                   <div className="p-2.5 bg-slate-100 border-2 border-black text-center">
                     <div className="text-[10px] font-black uppercase text-slate-600">Total Vouchers</div>
                     <div className="text-lg font-black text-black">{csvVouchers.length}</div>
@@ -2935,7 +3176,7 @@ export default function App() {
 
                 {/* Spreadsheet Table */}
                 <div className="overflow-x-auto border-2 border-black max-h-[500px]">
-                  <table className="w-full text-left text-xs border-collapse">
+                  <table className="min-w-[1050px] w-full text-left text-xs border-collapse">
                     <thead className="bg-black text-white sticky top-0 z-10 select-none">
                       <tr>
                         <th className="p-2 border border-slate-700 w-10 text-center font-black">#</th>
