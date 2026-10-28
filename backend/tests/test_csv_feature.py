@@ -257,3 +257,23 @@ def test_export_vouchers_to_excel():
     assert res.status_code == 200
     assert "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" in res.headers["Content-Type"]
     assert len(res.content) > 0
+
+def test_credit_pricing_and_date_variations():
+    from app.api.csv_templates import calculate_csv_credits
+    from app.services.csv_tally_engine import parse_date_safely
+    
+    # Pricing test: 1 credit per 10 transactions with bulk discount
+    assert calculate_csv_credits(5) == (1, 0, 1)
+    assert calculate_csv_credits(10) == (1, 0, 1)
+    assert calculate_csv_credits(15) == (2, 0, 2)
+    assert calculate_csv_credits(70) == (7, 1, 6)
+    assert calculate_csv_credits(150) == (15, 3, 12)
+    assert calculate_csv_credits(500) == (50, 12, 38)
+
+    # Date parsing test:
+    assert parse_date_safely("15-04-2026 12:30:00") == "2026-04-15"
+    assert parse_date_safely("15/04/2026") == "2026-04-15"
+    assert parse_date_safely("2026/04/15") == "2026-04-15"
+    assert parse_date_safely("15-Apr-2026") == "2026-04-15"
+    assert parse_date_safely("15.04.2026") == "2026-04-15"
+    assert parse_date_safely("15-04-26") == "2026-04-15"

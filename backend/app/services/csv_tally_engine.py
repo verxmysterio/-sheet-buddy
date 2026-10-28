@@ -133,10 +133,19 @@ def detect_csv_headers_and_samples(file_bytes: bytes) -> Tuple[List[str], List[D
 def parse_date_safely(date_val: str, preferred_format: str = "%d-%m-%Y") -> Optional[str]:
     """
     Attempts to parse arbitrary date string and returns formatted 'YYYY-MM-DD'.
+    Handles timestamps, slashes, dashes, dots, month names, and two-digit years.
     """
     if not date_val:
         return None
-    cleaned = date_val.strip()
+    cleaned = str(date_val).strip()
+    # Strip timestamp if attached: "15-04-2026 14:32:00" -> "15-04-2026"
+    if " " in cleaned:
+        cleaned = cleaned.split(" ")[0].strip()
+    if "T" in cleaned:
+        cleaned = cleaned.split("T")[0].strip()
+    cleaned = cleaned.strip('"\'`')
+    if not cleaned:
+        return None
     
     # Try user's preferred format first
     if preferred_format:
@@ -146,11 +155,12 @@ def parse_date_safely(date_val: str, preferred_format: str = "%d-%m-%Y") -> Opti
         except ValueError:
             pass
             
-    # Fallback common formats in Indian accounting and international ERPs
+    # Common accounting formats
     common_formats = [
         "%d-%m-%Y", "%d/%m/%Y", "%Y-%m-%d", "%Y/%m/%d",
         "%d.%m.%Y", "%d-%b-%Y", "%d-%B-%Y", "%d %b %Y",
-        "%d %B %Y", "%m/%d/%Y", "%m-%d-%Y", "%Y%m%d", "%d%m%Y"
+        "%d %B %Y", "%m/%d/%Y", "%m-%d-%Y", "%Y%m%d", "%d%m%Y",
+        "%d-%m-%y", "%d/%m/%y", "%d.%m.%y", "%d-%b-%y", "%d-%B-%y"
     ]
     for fmt in common_formats:
         try:
@@ -159,6 +169,24 @@ def parse_date_safely(date_val: str, preferred_format: str = "%d-%m-%Y") -> Opti
         except ValueError:
             continue
             
+    # Regex fallback for DD-Mon-YYYY with case-insensitive month
+    month_map = {
+        "jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6,
+        "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12
+    }
+    m = re.match(r"^(\d{1,2})[-/\s]([A-Za-z]{3,9})[-/\s](\d{2,4})$", cleaned)
+    if m:
+        try:
+            day = int(m.group(1))
+            m_str = m.group(2)[:3].lower()
+            mon = month_map.get(m_str, 1)
+            yr = int(m.group(3))
+            if yr < 100:
+                yr += 2000
+            return f"{yr:04d}-{mon:02d}-{day:02d}"
+        except Exception:
+            pass
+
     return None
 
 def normalize_voucher_type(vtype_str: str, default: str = "Payment") -> str:
@@ -254,6 +282,24 @@ def parse_csv_with_mapping(file_bytes: bytes, mapping: Dict[str, Any]) -> Dict[s
     narr_col = (mapping.get("narration_column") or "Narration").strip()
     default_narr = mapping.get("default_narration") or "Voucher Entry"
     ref_col = (mapping.get("ref_no_column") or "Ref / Cheque No").strip()
+
+    # Smart case-insensitive column resolver helper
+    def resolve_col_name(headers_list: List[str], target: str, aliases: List[str] = None) -> Optional[str]:
+        h_map = {h.lower().strip().replace('"', '').replace("'", ""): h for h in headers_list}
+        t_clean = target.lower().strip().replace('"', '').replace("'", "")
+        if t_clean in h_map:
+            return h_map[t_clean]
+        if aliases:
+            for al in aliases:
+                al_clean = al.lower().strip()
+                if al_clean in h_map:
+                    return h_map[al_clean]
+            for al in aliases:
+                al_clean = al.lower().strip()
+                for hk, orig in h_map.items():
+                    if al_clean in hk:
+                        return orig
+        return None
     
     payment_count = 0
     receipt_count = 0
@@ -284,12 +330,20 @@ def parse_csv_with_mapping(file_bytes: bytes, mapping: Dict[str, Any]) -> Dict[s
             
         errors = []
         
-        # 1. Date
-        raw_date = row_dict.get(date_col, "")
+        # 1. Date (with smart auto-detection and carry-forward)
+        actual_date_col = resolve_col_name(headers, date_col, ["date", "txn date", "txndate", "tran date", "transaction date", "value date", "val date", "post date", "posting date", "entry date"])
+        raw_date = row_dict.get(actual_date_col or date_col, "")
         parsed_date = parse_date_safely(raw_date, date_fmt)
         if not parsed_date:
-            parsed_date = date.today().strftime("%Y-%m-%d")
-            errors.append(f"Invalid or missing date '{raw_date}'")
+            # Carry forward previous date or default to statement date
+            if vouchers and vouchers[-1].get("date"):
+                parsed_date = vouchers[-1]["date"]
+            else:
+                parsed_date = date.today().strftime("%Y-%m-%d")
+            if not raw_date:
+                errors.append("Date is missing")
+            else:
+                errors.append(f"Invalid date format '{raw_date}'")
             
         # 2. Voucher Type
         raw_vtype = row_dict.get(vtype_col, "")
@@ -433,13 +487,14 @@ def generate_multi_voucher_tally_xml(vouchers: List[Dict[str, Any]]) -> str:
         
         # Date string formatting: YYYYMMDD
         raw_date = vch.get("date", "")
-        try:
-            if "-" in raw_date:
-                dt = datetime.strptime(raw_date, "%Y-%m-%d")
-            else:
-                dt = datetime.strptime(raw_date, "%d/%m/%Y")
-            date_str = dt.strftime("%Y%m%d")
-        except Exception:
+        parsed = parse_date_safely(raw_date)
+        if parsed:
+            try:
+                dt = datetime.strptime(parsed, "%Y-%m-%d")
+                date_str = dt.strftime("%Y%m%d")
+            except Exception:
+                date_str = datetime.now().strftime("%Y%m%d")
+        else:
             date_str = datetime.now().strftime("%Y%m%d")
             
         voucher = ET.SubElement(

@@ -5,7 +5,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status, Response, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Tuple
 from datetime import datetime, timezone
 
 from ..models.database import get_db
@@ -265,6 +265,36 @@ async def preview_mapped_csv(
     
     return preview_result
 
+
+def calculate_csv_credits(transaction_count: int) -> Tuple[int, int, int]:
+    """
+    Charges 1 credit for every 10 transactions.
+    Gives volume discount / roundoff:
+    - 1-20 txns: standard (1-10: 1 credit, 11-20: 2 credits)
+    - 21-50 txns: 10% roundoff discount
+    - 51-100 txns: 15% roundoff discount
+    - 101-250 txns: 20% roundoff discount
+    - 251+ txns: 25% bulk discount
+    Returns (raw_credits, discount_credits, final_credits)
+    """
+    if transaction_count <= 0:
+        return 0, 0, 0
+    raw = (transaction_count + 9) // 10
+    if transaction_count > 250:
+        percent = 25
+    elif transaction_count > 100:
+        percent = 20
+    elif transaction_count > 50:
+        percent = 15
+    elif transaction_count > 20:
+        percent = 10
+    else:
+        percent = 0
+        
+    discount = (raw * percent) // 100 if percent > 0 else 0
+    final = max(1, raw - discount)
+    return raw, discount, final
+
 @router.post("/convert-to-xml")
 async def convert_vouchers_to_tally_xml(
     request: Request,
@@ -282,12 +312,12 @@ async def convert_vouchers_to_tally_xml(
     if not vouchers_raw:
         raise HTTPException(status_code=400, detail="No vouchers provided for conversion.")
         
-    # Verify user credits
-    required_credits = 1  # 1 credit per CSV batch
+    # Verify user credits: 1 credit per 10 transactions with bulk roundoff discount
+    raw_credits, discount_credits, required_credits = calculate_csv_credits(len(vouchers_raw))
     if not current_user.is_admin and current_user.page_credits < required_credits:
         raise HTTPException(
             status_code=status.HTTP_402_PAYMENT_REQUIRED,
-            detail=f"Insufficient credits. You need {required_credits} credit to convert this CSV file. Your current balance is {current_user.page_credits}."
+            detail=f"Insufficient credits. You need {required_credits} credits to convert {len(vouchers_raw)} vouchers (rate: 1 credit per 10 transactions with {discount_credits} credit discount). Your balance is {current_user.page_credits}."
         )
         
     # Generate XML
@@ -333,7 +363,7 @@ async def convert_vouchers_to_tally_xml(
         type="CONVERSION",
         reference_type="CONVERSION_ID",
         reference_id=conversion.id,
-        description=f"CSV Voucher Import: {mapping_name} ({len(vouchers_raw)} vouchers)"
+        description=f"CSV Voucher Import: {mapping_name} ({len(vouchers_raw)} vouchers, {required_credits} credits charged with {discount_credits} roundoff discount)"
     )
     db.add(wallet_tx)
     db.commit()

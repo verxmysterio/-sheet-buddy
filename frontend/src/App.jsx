@@ -13,7 +13,6 @@ window.fetch = function (url, options) {
 
 // --- Native Client-Side CSV & Tally XML Engines ---
 const BLANK_CSV_CONTENT = `Date,Voucher Type,Voucher No,Debit Ledger,Credit Ledger,Amount,Narration,Ref / Cheque No
-# HINT: Date format DD-MM-YYYY (e.g. 15-04-2026). Voucher Type: Payment | Receipt | Contra | Journal | Sales | Purchase,,,,,,,
 `;
 
 const SAMPLE_CSV_CONTENT = `Date,Voucher Type,Voucher No,Debit Ledger,Credit Ledger,Amount,Narration,Ref / Cheque No
@@ -28,14 +27,108 @@ const SAMPLE_CSV_CONTENT = `Date,Voucher Type,Voucher No,Debit Ledger,Credit Led
 23-04-2026,Purchase,PUR-001,Purchase Account,Global Tech Distributors,62000.00,Purchase of inventory stock,BILL-8891
 `;
 
+export const normalizeDateString = (raw) => {
+  if (!raw) return '';
+  let str = String(raw).trim().replace(/[\ufeff"']/g, '');
+  if (!str) return '';
+  // Strip timestamps if attached, e.g. "15-04-2026 14:32:00" or "2026-04-15T10:00:00"
+  if (str.includes(' ')) str = str.split(' ')[0].trim();
+  if (str.includes('T')) str = str.split('T')[0].trim();
+  str = str.replace(/[,;]/g, '').trim();
+
+  // YYYY-MM-DD or YYYY/MM/DD or YYYY.MM.DD
+  let match = str.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/);
+  if (match) {
+    const y = match[1];
+    const m = match[2].padStart(2, '0');
+    const d = match[3].padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+  // DD-MM-YYYY or DD/MM/YYYY or DD.MM.YYYY
+  match = str.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})$/);
+  if (match) {
+    const d = match[1].padStart(2, '0');
+    const m = match[2].padStart(2, '0');
+    let y = match[3];
+    if (y.length === 2) y = (parseInt(y, 10) > 50 ? '19' : '20') + y;
+    return `${y}-${m}-${d}`;
+  }
+  // DD-MMM-YYYY (e.g. 15-Apr-2026, 15 April 2026)
+  const monthMap = {
+    jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06',
+    jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12'
+  };
+  match = str.match(/^(\d{1,2})[-/\s]([A-Za-z]{3,9})[-/\s](\d{2,4})$/);
+  if (match) {
+    const d = match[1].padStart(2, '0');
+    const mon = match[2].substring(0, 3).toLowerCase();
+    const m = monthMap[mon] || '01';
+    let y = match[3];
+    if (y.length === 2) y = (parseInt(y, 10) > 50 ? '19' : '20') + y;
+    return `${y}-${m}-${d}`;
+  }
+  // JavaScript Date fallback
+  const parsed = new Date(str);
+  if (!isNaN(parsed.getTime())) {
+    try {
+      return parsed.toISOString().split('T')[0];
+    } catch (e) {}
+  }
+  return str;
+};
+
+export const getCsvCreditPricing = (count) => {
+  if (!count || count <= 0) return { raw: 0, discount: 0, final: 0, percent: 0 };
+  const raw = Math.ceil(count / 10);
+  let percent = 0;
+  if (count > 250) percent = 25;
+  else if (count > 100) percent = 20;
+  else if (count > 50) percent = 15;
+  else if (count > 20) percent = 10;
+  
+  const discount = percent > 0 ? Math.floor((raw * percent) / 100) : 0;
+  const final = Math.max(1, raw - discount);
+  return { raw, discount, final, percent };
+};
+
+const findColumnIndex = (headers, colName, aliases = []) => {
+  if (!headers || !headers.length) return -1;
+  const clean = (s) => (s || '').toLowerCase().replace(/[\ufeff"']/g, '').trim();
+  const target = clean(colName);
+  
+  if (target) {
+    for (let i = 0; i < headers.length; i++) {
+      if (clean(headers[i]) === target) return i;
+    }
+  }
+  if (aliases && aliases.length > 0) {
+    for (const alias of aliases) {
+      const aClean = clean(alias);
+      for (let i = 0; i < headers.length; i++) {
+        if (clean(headers[i]) === aClean) return i;
+      }
+    }
+    for (const alias of aliases) {
+      const aClean = clean(alias);
+      for (let i = 0; i < headers.length; i++) {
+        if (clean(headers[i]).includes(aClean)) return i;
+      }
+    }
+  }
+  return -1;
+};
+
 function parseCsvRows(text) {
+  if (!text) return [];
+  // Strip UTF-8 BOM if present at start
+  const cleanText = String(text).replace(/^\ufeff/, '');
   const lines = [];
   let row = [];
   let current = '';
   let inQuotes = false;
-  for (let i = 0; i < text.length; i++) {
-    const char = text[i];
-    const nextChar = text[i + 1];
+  for (let i = 0; i < cleanText.length; i++) {
+    const char = cleanText[i];
+    const nextChar = cleanText[i + 1];
     if (char === '"' || char === "'") {
       if (inQuotes && nextChar === char) {
         current += char;
@@ -44,11 +137,11 @@ function parseCsvRows(text) {
         inQuotes = !inQuotes;
       }
     } else if (char === ',' && !inQuotes) {
-      row.push(current.trim());
+      row.push(current.trim().replace(/^[\ufeff"']|[\ufeff"']$/g, ''));
       current = '';
     } else if ((char === '\r' || char === '\n') && !inQuotes) {
       if (char === '\r' && nextChar === '\n') i++;
-      row.push(current.trim());
+      row.push(current.trim().replace(/^[\ufeff"']|[\ufeff"']$/g, ''));
       if (row.some(c => c !== '')) lines.push(row);
       row = [];
       current = '';
@@ -57,7 +150,7 @@ function parseCsvRows(text) {
     }
   }
   if (current || row.length > 0) {
-    row.push(current.trim());
+    row.push(current.trim().replace(/^[\ufeff"']|[\ufeff"']$/g, ''));
     if (row.some(c => c !== '')) lines.push(row);
   }
   return lines;
@@ -75,20 +168,20 @@ function generateClientTallyXml(vouchers, mappingName = "Sheet Buddy Import") {
   };
 
   const formatTallyDate = (dateStr) => {
-    if (!dateStr) return "20260401";
+    if (!dateStr) return new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const normalized = normalizeDateString(dateStr);
+    if (normalized && normalized.includes('-')) {
+      const parts = normalized.split('-');
+      if (parts.length === 3) {
+        return `${parts[0]}${parts[1]}${parts[2]}`;
+      }
+    }
     const cleaned = String(dateStr).replace(/[^0-9]/g, '');
     if (cleaned.length === 8) {
       if (parseInt(cleaned.slice(0, 4)) > 1900) return cleaned;
       return cleaned.slice(4, 8) + cleaned.slice(2, 4) + cleaned.slice(0, 2);
     }
-    const d = new Date(dateStr);
-    if (!isNaN(d.getTime())) {
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${y}${m}${day}`;
-    }
-    return "20260401";
+    return new Date().toISOString().slice(0, 10).replace(/-/g, '');
   };
 
   let xml = `<ENVELOPE>\n  <HEADER>\n    <TALLYREQUEST>Import Data</TALLYREQUEST>\n  </HEADER>\n  <BODY>\n    <EXPORTDATA>\n      <REQUESTDESC>\n        <REPORTNAME>All Masters</REPORTNAME>\n        <STATICVARIABLES>\n          <SVCURRENTCOMPANY>${escapeXml(mappingName)}</SVCURRENTCOMPANY>\n        </STATICVARIABLES>\n      </REQUESTDESC>\n      <REQUESTDATA>\n`;
@@ -681,8 +774,7 @@ export default function App() {
       alert("Please provide a template name.");
       return;
     }
-    const newTemplate = {
-      id: editingMappingId || 'map_' + Date.now(),
+    const templatePayload = {
       name: mapFormName.trim(),
       description: mapFormDesc.trim() || '',
       date_column: mapFormDateCol || 'Date',
@@ -702,34 +794,47 @@ export default function App() {
       ref_no_column: mapFormRefCol || null
     };
 
+    let savedTemplate = {
+      ...templatePayload,
+      id: editingMappingId || 'map_' + Date.now()
+    };
+
+    if (token) {
+      try {
+        const isNumericId = editingMappingId && !String(editingMappingId).startsWith('map_');
+        const method = isNumericId ? 'PUT' : 'POST';
+        const url = isNumericId ? `/api/csv/mappings/${editingMappingId}` : '/api/csv/mappings';
+        const res = await fetch(url, {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(templatePayload)
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.id) {
+            savedTemplate = data;
+          }
+        }
+      } catch (err) {
+        console.error("Backend sync failed for mapping", err);
+      }
+    }
+
     setCsvMappings(prev => {
-      const filtered = prev.filter(m => m.id !== newTemplate.id);
-      const updated = [newTemplate, ...filtered];
+      const filtered = prev.filter(m => String(m.id) !== String(savedTemplate.id) && String(m.id) !== String(editingMappingId));
+      const updated = [savedTemplate, ...filtered];
       try {
         localStorage.setItem('sheetbuddy_csv_mappings', JSON.stringify(updated));
       } catch (err) {}
       return updated;
     });
 
-    setSelectedCsvMappingId(String(newTemplate.id));
+    setSelectedCsvMappingId(String(savedTemplate.id));
     setMappingModalOpen(false);
     setEditingMappingId(null);
-
-    // Sync to backend if logged in and online
-    if (token) {
-      try {
-        const method = editingMappingId ? 'PUT' : 'POST';
-        const url = editingMappingId ? `/api/csv/mappings/${editingMappingId}` : '/api/csv/mappings';
-        await fetch(url, {
-          method,
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify(newTemplate)
-        });
-      } catch (err) {}
-    }
   };
 
   const handleDeleteMapping = async (templateId) => {
@@ -789,29 +894,31 @@ export default function App() {
           return;
         }
 
-        const headers = rows[0].map(h => h.trim());
-        const headerMap = {};
-        headers.forEach((h, idx) => {
-          headerMap[h.toLowerCase()] = idx;
-        });
+        const headers = rows[0].map(h => (h || '').replace(/[\ufeff"']/g, '').trim());
 
-        const getColIdx = (colName) => {
-          if (!colName) return -1;
-          const lower = colName.toLowerCase().trim();
-          return headerMap[lower] !== undefined ? headerMap[lower] : -1;
-        };
+        const dateAliases = ['date', 'txn date', 'txndate', 'tran date', 'transaction date', 'value date', 'val date', 'post date', 'posting date', 'entry date', 'booking date'];
+        const vtypeAliases = ['voucher type', 'vch type', 'type', 'trans type', 'transaction type'];
+        const vnumAliases = ['voucher no', 'vch no', 'voucher number', 'trans no', 'cheque no', 'chk no', 'ref no'];
+        const drAliases = ['debit ledger', 'dr ledger', 'debit account', 'dr account', 'party name', 'particulars'];
+        const crAliases = ['credit ledger', 'cr ledger', 'credit account', 'cr account', 'bank account', 'bank', 'cash'];
+        const amtAliases = ['amount', 'txn amount', 'transaction amount', 'total amount', 'net amount'];
+        const drAmtAliases = ['debit amount', 'debit', 'dr amount', 'dr', 'withdrawal', 'withdrawals'];
+        const crAmtAliases = ['credit amount', 'credit', 'cr amount', 'cr', 'deposit', 'deposits'];
+        const narrAliases = ['narration', 'description', 'remarks', 'particulars', 'narr'];
+        const refAliases = ['ref / cheque no', 'ref no', 'reference', 'cheque no', 'utr', 'instrument no'];
 
-        const dateIdx = getColIdx(activeMapping.date_column);
-        const vtypeIdx = getColIdx(activeMapping.voucher_type_column);
-        const vnumIdx = getColIdx(activeMapping.voucher_number_column);
-        const drIdx = getColIdx(activeMapping.debit_ledger_column);
-        const crIdx = getColIdx(activeMapping.credit_ledger_column);
-        const amtIdx = getColIdx(activeMapping.amount_column);
-        const drAmtIdx = getColIdx(activeMapping.debit_amount_column);
-        const crAmtIdx = getColIdx(activeMapping.credit_amount_column);
-        const narrIdx = getColIdx(activeMapping.narration_column);
-        const refIdx = getColIdx(activeMapping.ref_no_column);
+        const dateIdx = findColumnIndex(headers, activeMapping.date_column, dateAliases);
+        const vtypeIdx = findColumnIndex(headers, activeMapping.voucher_type_column, vtypeAliases);
+        const vnumIdx = findColumnIndex(headers, activeMapping.voucher_number_column, vnumAliases);
+        const drIdx = findColumnIndex(headers, activeMapping.debit_ledger_column, drAliases);
+        const crIdx = findColumnIndex(headers, activeMapping.credit_ledger_column, crAliases);
+        const amtIdx = findColumnIndex(headers, activeMapping.amount_column, amtAliases);
+        const drAmtIdx = findColumnIndex(headers, activeMapping.debit_amount_column, drAmtAliases);
+        const crAmtIdx = findColumnIndex(headers, activeMapping.credit_amount_column, crAmtAliases);
+        const narrIdx = findColumnIndex(headers, activeMapping.narration_column, narrAliases);
+        const refIdx = findColumnIndex(headers, activeMapping.ref_no_column, refAliases);
 
+        let lastValidDate = '';
         const vouchers = [];
         for (let i = 1; i < rows.length; i++) {
           const r = rows[i];
@@ -819,7 +926,16 @@ export default function App() {
             continue;
           }
 
-          let dateVal = dateIdx >= 0 && r[dateIdx] ? r[dateIdx].trim() : '';
+          let rawDateVal = dateIdx >= 0 && r[dateIdx] ? r[dateIdx].trim() : '';
+          let dateVal = normalizeDateString(rawDateVal);
+          if (dateVal) {
+            lastValidDate = dateVal;
+          } else if (lastValidDate) {
+            dateVal = lastValidDate;
+          } else {
+            dateVal = new Date().toISOString().split('T')[0];
+          }
+
           let vtypeVal = vtypeIdx >= 0 && r[vtypeIdx] ? r[vtypeIdx].trim() : (activeMapping.default_voucher_type || 'Payment');
           
           const vtLower = vtypeVal.toLowerCase();
@@ -850,7 +966,7 @@ export default function App() {
           const isValid = amtVal > 0 && !!dateVal && !!drVal && !!crVal;
           const reasons = [];
           if (amtVal <= 0) reasons.push("Amount must be greater than 0");
-          if (!dateVal) reasons.push("Date is missing");
+          if (!dateVal && !rawDateVal) reasons.push("Date is missing");
           if (!drVal) reasons.push("Debit ledger is missing");
           if (!crVal) reasons.push("Credit ledger is missing");
 
@@ -946,6 +1062,12 @@ export default function App() {
       }
     }
 
+    const pricing = getCsvCreditPricing(csvVouchers.length);
+    if (user && !user.is_admin && user.page_credits < pricing.final) {
+      setCsvConvertError(`Insufficient credits. You need ${pricing.final} credits for ${csvVouchers.length} transactions (rate: 1 credit / 10 txns with discount). Your current balance is ${user.page_credits}.`);
+      return;
+    }
+
     setCsvConverting(true);
     setCsvConvertError('');
     try {
@@ -966,7 +1088,7 @@ export default function App() {
 
       if (token) {
         try {
-          await fetch('/api/csv/convert-to-xml', {
+          const convertRes = await fetch('/api/csv/convert-to-xml', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
             body: JSON.stringify({ vouchers: csvVouchers, mapping_name: mappingName })
@@ -976,7 +1098,7 @@ export default function App() {
         } catch (e) {}
       }
 
-      alert("Success! 100% Compliant Tally Prime XML has been generated and downloaded.");
+      alert(`Success! 100% Compliant Tally Prime XML generated for ${csvVouchers.length} vouchers (${pricing.final} credits used${pricing.discount > 0 ? `, saved ${pricing.discount} credits with roundoff discount` : ''}).`);
     } catch (err) {
       console.error("Convert to XML error", err);
       setCsvConvertError("Error while generating Tally XML: " + err.message);
@@ -2115,10 +2237,10 @@ export default function App() {
       
       {/* Top Header containing Navigation Menu, Logo, and User stats */}
       <header className="bg-white border-b-4 border-black sticky top-0 z-50 shadow-[0px_4px_0px_rgba(0,0,0,0.05)] w-full max-w-full">
-        <div className="flex flex-col xl:flex-row items-stretch xl:items-center justify-between w-full max-w-full">
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between w-full max-w-full">
           
           {/* Left: Brand Logo & Mobile hamburger toggle */}
-          <div className="h-16 flex items-center justify-between px-5 border-b-2 xl:border-b-0 xl:border-r-4 border-black bg-[#ffd615] flex-shrink-0">
+          <div className="h-16 flex items-center justify-between px-5 border-b-2 lg:border-b-0 lg:border-r-4 border-black bg-[#ffd615] flex-shrink-0">
             <div className="flex items-center space-x-2.5 cursor-pointer" onClick={() => { setActiveTab('convert'); setExecuteError(''); }}>
               <img src="/symbol_mark.svg" alt="Sheet Buddy Logo" className="w-8 h-8 border-2 border-black rounded-none shadow-[2px_2px_0px_rgba(0,0,0,1)] bg-black flex-shrink-0" />
               <div>
@@ -2130,7 +2252,7 @@ export default function App() {
             {/* Hamburger Icon button for mobile screen */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="xl:hidden p-1.5 border-2 border-black bg-white hover:bg-slate-100 text-black focus:outline-none shadow-[2px_2px_0px_rgba(0,0,0,1)]"
+              className="lg:hidden p-1.5 border-2 border-black bg-white hover:bg-slate-100 text-black focus:outline-none shadow-[2px_2px_0px_rgba(0,0,0,1)]"
               aria-label="Toggle navigation"
             >
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -2143,42 +2265,42 @@ export default function App() {
             </button>
           </div>
 
-          {/* Center Navigation: Responsive flex-wrap with uniform button sizing */}
-          <div className={`${mobileMenuOpen ? 'flex' : 'hidden'} xl:flex flex-col xl:flex-row flex-1 items-stretch xl:items-center justify-between max-w-full`}>
-            <nav className="flex flex-wrap items-center justify-center p-2.5 gap-2 flex-1 border-b-2 xl:border-b-0 border-black">
+          {/* Center Navigation: Single row desktop with horizontal scrollbar if needed */}
+          <div className={`${mobileMenuOpen ? 'flex' : 'hidden'} lg:flex flex-col lg:flex-row flex-1 items-stretch lg:items-center justify-between min-w-0 overflow-hidden`}>
+            <nav className="flex flex-col lg:flex-row lg:flex-nowrap items-stretch lg:items-center p-2 gap-2 flex-1 min-w-0 overflow-x-auto border-b-2 lg:border-b-0 border-black scrollbar-thin">
               <button
                 onClick={() => { setActiveTab('convert'); setExecuteError(''); setMobileMenuOpen(false); }}
-                className={`min-w-[130px] px-3.5 py-2 text-xs font-black border-2 border-black uppercase tracking-wider transition-all whitespace-nowrap text-center ${activeTab === 'convert' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-yellow-50 text-black'}`}
+                className={`min-w-[130px] px-3.5 py-2 text-xs font-black border-2 border-black uppercase tracking-wider transition-all whitespace-nowrap text-center flex-shrink-0 ${activeTab === 'convert' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-yellow-50 text-black'}`}
               >
                 IMPORT TRANSACTION
               </button>
               <button
                 onClick={() => { setActiveTab('csv'); setExecuteError(''); setMobileMenuOpen(false); }}
-                className={`min-w-[130px] px-3.5 py-2 text-xs font-black border-2 border-black uppercase tracking-wider transition-all whitespace-nowrap text-center ${activeTab === 'csv' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-yellow-50 text-black'}`}
+                className={`min-w-[130px] px-3.5 py-2 text-xs font-black border-2 border-black uppercase tracking-wider transition-all whitespace-nowrap text-center flex-shrink-0 ${activeTab === 'csv' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-yellow-50 text-black'}`}
               >
                 CSV TO TALLY
               </button>
               <button
                 onClick={() => { setActiveTab('rules'); setExecuteError(''); setMobileMenuOpen(false); }}
-                className={`min-w-[130px] px-3.5 py-2 text-xs font-black border-2 border-black uppercase tracking-wider transition-all whitespace-nowrap text-center ${activeTab === 'rules' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-yellow-50 text-black'}`}
+                className={`min-w-[130px] px-3.5 py-2 text-xs font-black border-2 border-black uppercase tracking-wider transition-all whitespace-nowrap text-center flex-shrink-0 ${activeTab === 'rules' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-yellow-50 text-black'}`}
               >
                 LEDGER RULES
               </button>
               <button
                 onClick={() => { setActiveTab('history'); setExecuteError(''); setMobileMenuOpen(false); }}
-                className={`min-w-[130px] px-3.5 py-2 text-xs font-black border-2 border-black uppercase tracking-wider transition-all whitespace-nowrap text-center ${activeTab === 'history' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-yellow-50 text-black'}`}
+                className={`min-w-[130px] px-3.5 py-2 text-xs font-black border-2 border-black uppercase tracking-wider transition-all whitespace-nowrap text-center flex-shrink-0 ${activeTab === 'history' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-yellow-50 text-black'}`}
               >
                 HISTORY ARCHIVE
               </button>
               <button
                 onClick={() => { setActiveTab('wallet'); setExecuteError(''); setMobileMenuOpen(false); }}
-                className={`min-w-[130px] px-3.5 py-2 text-xs font-black border-2 border-black uppercase tracking-wider transition-all whitespace-nowrap text-center ${activeTab === 'wallet' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-yellow-50 text-black'}`}
+                className={`min-w-[130px] px-3.5 py-2 text-xs font-black border-2 border-black uppercase tracking-wider transition-all whitespace-nowrap text-center flex-shrink-0 ${activeTab === 'wallet' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-yellow-50 text-black'}`}
               >
                 BUY CREDITS
               </button>
               <button
                 onClick={() => { setActiveTab('support'); setExecuteError(''); setMobileMenuOpen(false); }}
-                className={`min-w-[130px] px-3.5 py-2 text-xs font-black border-2 border-black uppercase tracking-wider transition-all whitespace-nowrap text-center ${activeTab === 'support' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-yellow-50 text-black'}`}
+                className={`min-w-[130px] px-3.5 py-2 text-xs font-black border-2 border-black uppercase tracking-wider transition-all whitespace-nowrap text-center flex-shrink-0 ${activeTab === 'support' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-yellow-50 text-black'}`}
               >
                 CONTACT SUPPORT
               </button>
@@ -2193,14 +2315,14 @@ export default function App() {
                   setProfileSuccessMsg('');
                   setProfileErrorMsg('');
                 }}
-                className={`min-w-[130px] px-3.5 py-2 text-xs font-black border-2 border-black uppercase tracking-wider transition-all whitespace-nowrap text-center ${activeTab === 'settings' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-yellow-50 text-black'}`}
+                className={`min-w-[130px] px-3.5 py-2 text-xs font-black border-2 border-black uppercase tracking-wider transition-all whitespace-nowrap text-center flex-shrink-0 ${activeTab === 'settings' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-yellow-50 text-black'}`}
               >
                 PROFILE SECURITY
               </button>
               {user.is_admin && (
                 <button
                   onClick={() => { setActiveTab('admin'); setExecuteError(''); setMobileMenuOpen(false); }}
-                  className={`min-w-[130px] px-3.5 py-2 text-xs font-black border-2 border-black uppercase tracking-wider transition-all whitespace-nowrap text-center ${activeTab === 'admin' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-yellow-50 text-black'}`}
+                  className={`min-w-[130px] px-3.5 py-2 text-xs font-black border-2 border-black uppercase tracking-wider transition-all whitespace-nowrap text-center flex-shrink-0 ${activeTab === 'admin' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-yellow-50 text-black'}`}
                 >
                   ADMIN CONSOLE
                 </button>
@@ -2208,14 +2330,14 @@ export default function App() {
             </nav>
 
             {/* Right: User Credits status and logout - strictly contained within page border */}
-            <div className="flex items-center justify-between sm:justify-end px-5 py-2.5 space-x-3 border-t-2 xl:border-t-0 xl:border-l-4 border-black bg-slate-50 flex-shrink-0 self-stretch xl:self-center">
-              <div className="flex items-center space-x-1.5 bg-white px-3 py-1.5 border-2 border-black shadow-[2px_2px_0px_rgba(0,0,0,1)]">
+            <div className="flex items-center justify-between sm:justify-end px-5 py-2.5 space-x-3 border-t-2 lg:border-t-0 lg:border-l-4 border-black bg-slate-50 flex-shrink-0 self-stretch lg:self-center">
+              <div className="flex items-center space-x-1.5 bg-white px-3 py-1.5 border-2 border-black shadow-[2px_2px_0px_rgba(0,0,0,1)] flex-shrink-0">
                 <span className="text-xs font-black text-black">{user.page_credits}</span>
                 <span className="text-[10px] font-black uppercase text-slate-600">Credits</span>
               </div>
               <button
                 onClick={handleLogout}
-                className="px-3.5 py-1.5 border-2 border-black font-black text-xs uppercase text-black bg-white hover:bg-[#ff5757] hover:text-white shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all"
+                className="px-3.5 py-1.5 border-2 border-black font-black text-xs uppercase text-black bg-white hover:bg-[#ff5757] hover:text-white shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all flex-shrink-0"
               >
                 LOGOUT
               </button>
@@ -3078,7 +3200,15 @@ export default function App() {
                       className="px-4 py-1.5 bg-[#ffd615] text-black border-2 border-black font-black text-xs uppercase hover:bg-yellow-400 shadow-[2px_2px_0px_rgba(0,0,0,1)] disabled:opacity-50 flex items-center space-x-1.5"
                     >
                       <span>{csvConverting ? 'Generating XML...' : 'Convert to Tally XML'}</span>
-                      <span className="text-[10px] bg-black text-white px-1.5 py-0.2 font-black rounded-none">1 Credit</span>
+                      {(() => {
+                        const pricing = getCsvCreditPricing(csvVouchers.length);
+                        return (
+                          <span className="text-[10px] bg-black text-white px-1.5 py-0.5 font-black rounded-none">
+                            {pricing.final} {pricing.final === 1 ? 'Credit' : 'Credits'}
+                            {pricing.discount > 0 && <span className="text-[#3affaa] ml-1">(-{pricing.discount} OFF)</span>}
+                          </span>
+                        );
+                      })()}
                     </button>
                   </div>
                 </div>
@@ -3349,7 +3479,15 @@ export default function App() {
                       className="px-6 py-2 bg-black text-white border-2 border-black font-black text-xs uppercase shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:bg-slate-800 disabled:opacity-50 flex items-center space-x-2"
                     >
                       <span>{csvConverting ? 'Generating...' : 'CONVERT TO TALLY PRIME XML'}</span>
-                      <span className="text-[10px] bg-[#ffd615] text-black px-1.5 py-0.5 font-black">1 Credit</span>
+                      {(() => {
+                        const pricing = getCsvCreditPricing(csvVouchers.length);
+                        return (
+                          <span className="text-[10px] bg-[#ffd615] text-black px-1.5 py-0.5 font-black">
+                            {pricing.final} {pricing.final === 1 ? 'Credit' : 'Credits'}
+                            {pricing.discount > 0 && <span className="text-black font-extrabold ml-1">(-{pricing.discount} OFF)</span>}
+                          </span>
+                        );
+                      })()}
                     </button>
                   </div>
                 </div>
