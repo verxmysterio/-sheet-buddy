@@ -100,6 +100,26 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+
+# Global validation error handler: ensures error details are ALWAYS strings, never unparsed objects
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc: RequestValidationError):
+    error_messages = []
+    for err in exc.errors():
+        loc = ".".join(str(l) for l in err.get("loc", []) if l != "body")
+        msg = err.get("msg", "Invalid value")
+        if loc:
+            error_messages.append(f"{loc}: {msg}")
+        else:
+            error_messages.append(msg)
+    clean_detail = "; ".join(error_messages) or "Validation error"
+    return JSONResponse(
+        status_code=422,
+        content={"detail": clean_detail, "validation_errors": exc.errors()}
+    )
+
 # Set up CORS
 app.add_middleware(
     CORSMiddleware,

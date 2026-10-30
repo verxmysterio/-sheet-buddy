@@ -82,6 +82,25 @@ export const getCsvCreditPricing = (count) => {
   return Math.max(1, Math.ceil(count / 10));
 };
 
+export const extractErrorMessage = (detail, fallback = "An error occurred.") => {
+  if (!detail) return fallback;
+  if (typeof detail === 'string') return detail;
+  if (Array.isArray(detail)) {
+    return detail.map(d => {
+      if (typeof d === 'string') return d;
+      if (d && typeof d === 'object') {
+        const field = Array.isArray(d.loc) ? d.loc.filter(x => x !== 'body').join('.') : '';
+        return (field ? `${field}: ` : '') + (d.msg || d.message || JSON.stringify(d));
+      }
+      return String(d);
+    }).join('; ') || fallback;
+  }
+  if (typeof detail === 'object') {
+    return detail.msg || detail.message || JSON.stringify(detail);
+  }
+  return String(detail);
+};
+
 const findColumnIndex = (headers, colName, aliases = []) => {
   if (!headers || !headers.length) return -1;
   const clean = (s) => (s || '').toLowerCase().replace(/[\ufeff"']/g, '').trim();
@@ -551,7 +570,7 @@ export default function App() {
         alert("Ledger rule saved successfully!");
       } else {
         const err = await res.json();
-        alert(err.detail || "Failed to save rule.");
+        alert(extractErrorMessage(err.detail, "Failed to save rule."));
       }
     } catch (err) {
       alert("Network error. Failed to save rule.");
@@ -1170,7 +1189,7 @@ export default function App() {
           setAuthMode('verify');
           setStatusMessage("Your account is not verified yet. An OTP verification code has been sent to your email. Enter it below to complete verification.");
         } else {
-          setAuthError(data.detail || 'An error occurred during authentication.');
+          setAuthError(extractErrorMessage(data.detail, 'An error occurred during authentication.'));
         }
       } else {
         if (isReg) {
@@ -1201,7 +1220,7 @@ export default function App() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setAuthError(data.detail || 'Invalid or expired OTP.');
+        setAuthError(extractErrorMessage(data.detail, 'Invalid or expired OTP.'));
       } else {
         setToken(data.access_token);
         setAuthMode('login');
@@ -1226,7 +1245,7 @@ export default function App() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setAuthError(data.detail || 'Failed to resend OTP.');
+        setAuthError(extractErrorMessage(data.detail, 'Failed to resend OTP.'));
       } else {
         setStatusMessage('A new verification code has been sent to your email.');
       }
@@ -1248,7 +1267,7 @@ export default function App() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setAuthError(data.detail || 'Failed to request password recovery.');
+        setAuthError(extractErrorMessage(data.detail, 'Failed to request password recovery.'));
       } else {
         setAuthMode('reset');
         setStatusMessage('If the account exists, a recovery code has been sent to your email.');
@@ -1281,7 +1300,7 @@ export default function App() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setAuthError(data.detail || 'Invalid or expired OTP.');
+        setAuthError(extractErrorMessage(data.detail, 'Invalid or expired OTP.'));
       } else {
         setAuthMode('login');
         setIsRegistering(false);
@@ -1322,7 +1341,7 @@ export default function App() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setProfileErrorMsg(data.detail || "Failed to change password.");
+        setProfileErrorMsg(extractErrorMessage(data.detail, "Failed to change password."));
       } else {
         setProfileSuccessMsg("Password changed successfully!");
         setCurrentPassword('');
@@ -1391,7 +1410,7 @@ export default function App() {
 
       const data = await res.json();
       if (!res.ok) {
-        setUploadError(data.detail || 'Failed to parse statement.');
+        setUploadError(extractErrorMessage(data.detail, 'Failed to parse statement.'));
       } else {
         setParsedSummary(data);
         const txList = data.all_transactions || data.transactions_preview || [];
@@ -1511,7 +1530,7 @@ export default function App() {
 
       if (!res.ok) {
         const data = await res.json();
-        setExecuteError(data.detail || 'Conversion execution failed.');
+        setExecuteError(extractErrorMessage(data.detail, 'Conversion execution failed.'));
       } else {
         const blob = await res.blob();
         const url = window.URL.createObjectURL(blob);
@@ -1581,7 +1600,7 @@ export default function App() {
       });
       if (!res.ok) {
         const data = await res.json();
-        alert(data.detail || "The XML file is no longer available in the cache.");
+        alert(extractErrorMessage(data.detail, "The XML file is no longer available in the cache."));
         return;
       }
       const blob = await res.blob();
@@ -1616,7 +1635,7 @@ export default function App() {
         setPurchaseMessage(`Successfully purchased ${pages} page credits!`);
         fetchWalletTxs();
       } else {
-        setPurchaseMessage(data.detail || 'Purchase failed.');
+        setPurchaseMessage(extractErrorMessage(data.detail, 'Purchase failed.'));
       }
     } catch (err) {
       setPurchaseMessage('Failed to connect to gateway payment server.');
@@ -1650,7 +1669,7 @@ export default function App() {
         setCheckoutSession(null);
         fetchWalletTxs();
       } else {
-        setCheckoutError(data.detail || 'Failed to register payment ticket.');
+        setCheckoutError(extractErrorMessage(data.detail, 'Failed to register payment ticket.'));
       }
     } catch (err) {
       setCheckoutError('Connection failed. Please check your internet connection.');
@@ -1696,7 +1715,7 @@ export default function App() {
         setPromoFormExpiresAt('');
         fetchAdminData();
       } else {
-        setPromoFormError(data.detail || "Failed to create promo code.");
+        setPromoFormError(extractErrorMessage(data.detail, "Failed to create promo code."));
       }
     } catch (err) {
       setPromoFormError("Connection failed.");
@@ -1715,7 +1734,7 @@ export default function App() {
         fetchAdminData();
       } else {
         const data = await res.json();
-        alert(`Failed to toggle: ${data.detail}`);
+        alert(`Failed to toggle: ${extractErrorMessage(data.detail)}`);
       }
     } catch (e) {
       alert("Connection failed.");
@@ -1745,7 +1764,7 @@ export default function App() {
         setSupportDescription('');
         setSupportWhatsapp('');
       } else {
-        alert(data.detail || "Failed to submit query.");
+        alert(extractErrorMessage(data.detail, "Failed to submit query."));
       }
     } catch (err) {
       alert("Connection failed.");
@@ -1767,7 +1786,7 @@ export default function App() {
         fetchAdminData();
       } else {
         const data = await res.json();
-        alert(`Approval failed: ${data.detail}`);
+        alert(`Approval failed: ${extractErrorMessage(data.detail)}`);
       }
     } catch (e) {
       alert("Failed to connect to backend server.");
@@ -1788,7 +1807,7 @@ export default function App() {
         fetchAdminData();
       } else {
         const data = await res.json();
-        alert(`Rejection failed: ${data.detail}`);
+        alert(`Rejection failed: ${extractErrorMessage(data.detail)}`);
       }
     } catch (e) {
       alert("Failed to connect to backend server.");
@@ -1815,7 +1834,7 @@ export default function App() {
         setPromoCode('');
         fetchWalletTxs();
       } else {
-        setRedeemStatusMsg(data.detail || 'Redemption failed.');
+        setRedeemStatusMsg(extractErrorMessage(data.detail, 'Redemption failed.'));
       }
     } catch (err) {
       setRedeemStatusMsg('Connection failed.');
@@ -1939,7 +1958,7 @@ export default function App() {
         fetchSupportedBanks();
       } else {
         const err = await res.json();
-        setBankFormError(err.detail || "Failed to save configuration.");
+        setBankFormError(extractErrorMessage(err.detail, "Failed to save configuration."));
       }
     } catch (err) {
       setBankFormError("Network error.");
@@ -2007,7 +2026,7 @@ export default function App() {
         setAdminNewUserIsAdmin(false);
         fetchAdminData();
       } else {
-        setAdminNewUserError(data.detail || 'Failed to create user account.');
+        setAdminNewUserError(extractErrorMessage(data.detail, 'Failed to create user account.'));
       }
     } catch (err) {
       setAdminNewUserError('Network connection failed. Please try again.');
@@ -2043,7 +2062,7 @@ export default function App() {
         }
       } else {
         const err = await res.json();
-        alert(err.detail || "Credit adjustment failed.");
+        alert(extractErrorMessage(err.detail, "Credit adjustment failed."));
       }
     } catch (e) {
       alert("Network error.");
@@ -2071,7 +2090,7 @@ export default function App() {
         }
       } else {
         const err = await res.json();
-        alert(err.detail || "Action failed.");
+        alert(extractErrorMessage(err.detail, "Action failed."));
       }
     } catch (e) {
       alert("Network error.");
@@ -2115,13 +2134,13 @@ export default function App() {
               
               {statusMessage && (
                 <div className="bg-[#25D366] text-white p-3 border-2 border-black font-bold text-sm">
-                  INFO: {statusMessage}
+                  INFO: {String(statusMessage)}
                 </div>
               )}
 
               {authError && (
                 <div className="bg-[#ff5757] text-white p-3 border-2 border-black font-bold text-sm">
-                  ERROR: {authError}
+                  ERROR: {String(authError)}
                 </div>
               )}
 
@@ -2410,7 +2429,7 @@ export default function App() {
 
             {checkoutError && (
               <div className="bg-[#ff5757] text-white p-3 border-2 border-black font-bold text-xs shadow-[2px_2px_0px_rgba(0,0,0,1)] uppercase">
-                ERROR: {checkoutError}
+                ERROR: {String(checkoutError)}
               </div>
             )}
 
@@ -2525,7 +2544,7 @@ export default function App() {
 
                   {uploadError && (
                     <div className="bg-[#ff5757] text-white p-3 border-2 border-black font-bold text-sm shadow-[2px_2px_0px_rgba(0,0,0,1)]">
-                      ERROR: {uploadError}
+                      ERROR: {String(uploadError)}
                     </div>
                   )}
 
@@ -3006,7 +3025,7 @@ export default function App() {
                       
                       {executeError && (
                         <div className="bg-[#ff5757] text-white p-2 border-2 border-black font-bold text-xs">
-                          {executeError}
+                          {String(executeError)}
                         </div>
                       )}
                     </div>
@@ -3842,7 +3861,7 @@ export default function App() {
                   
                   {purchaseMessage && (
                     <div className="bg-[#3fecff] text-black border-2 border-black p-3 text-sm font-black shadow-[2px_2px_0px_rgba(0,0,0,1)] mb-6 uppercase">
-                      {purchaseMessage}
+                      {String(purchaseMessage)}
                     </div>
                   )}
                   
@@ -3933,7 +3952,7 @@ export default function App() {
                   
                   {redeemStatusMsg && (
                     <div className="mt-4 p-3 border-2 border-black text-xs font-black text-black uppercase bg-[#3fecff] shadow-[2px_2px_0px_rgba(0,0,0,1)]">
-                      {redeemStatusMsg}
+                      {String(redeemStatusMsg)}
                     </div>
                   )}
                 </div>
@@ -4188,7 +4207,7 @@ export default function App() {
 
                 {adminNewUserError && (
                   <div className="bg-[#ff5757] text-white p-3 border-2 border-black font-bold text-xs">
-                    ERROR: {adminNewUserError}
+                    ERROR: {String(adminNewUserError)}
                   </div>
                 )}
 
@@ -4501,7 +4520,7 @@ export default function App() {
 
                     {promoFormError && (
                       <div className="bg-[#ff5757] text-white p-2 border-2 border-black font-bold text-[10px] uppercase">
-                        ERROR: {promoFormError}
+                        ERROR: {String(promoFormError)}
                       </div>
                     )}
 
@@ -4657,7 +4676,7 @@ export default function App() {
 
                     {bankFormError && (
                       <div className="bg-[#ff5757] text-white p-2.5 border-2 border-black font-bold text-[10px] uppercase">
-                        ERROR: {bankFormError}
+                        ERROR: {String(bankFormError)}
                       </div>
                     )}
 
@@ -4857,7 +4876,7 @@ export default function App() {
 
                   {profileErrorMsg && (
                     <div className="bg-[#ff5757] text-white p-3 border-2 border-black font-bold text-xs">
-                      ERROR: {profileErrorMsg}
+                      ERROR: {String(profileErrorMsg)}
                     </div>
                   )}
 
