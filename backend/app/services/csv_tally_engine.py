@@ -451,6 +451,8 @@ def generate_multi_voucher_tally_xml(vouchers: List[Dict[str, Any]]) -> str:
     """
     Generates 100% compliant Tally XML for multi-type accounting vouchers:
     Payment, Receipt, Contra, Journal, Sales, and Purchase.
+    Ensures seamless compatibility with Tally Prime Single-Entry & Double-Entry views,
+    freeing bank allocations from hardcoded party locks to allow flexible alteration.
     """
     envelope = ET.Element("ENVELOPE")
     
@@ -520,15 +522,29 @@ def generate_multi_voucher_tally_xml(vouchers: List[Dict[str, Any]]) -> str:
         v_tname = ET.SubElement(voucher, "VOUCHERTYPENAME")
         v_tname.text = vtype
         
-        # Party ledger name (Primary Bank/Cash Account in Tally Single-Entry View)
+        # In Tally Single-Entry and Accounting Views:
+        # PARTYLEDGERNAME represents the Counter-Party / Particulars ledger.
+        # For Payment: The party/expense being paid (Debit Ledger).
+        # For Receipt: The party/customer paying (Credit Ledger).
+        # For Contra: The Cash or secondary ledger.
         v_party = ET.SubElement(voucher, "PARTYLEDGERNAME")
-        if vtype in ["Payment", "Contra"]:
-            v_party.text = credit_ledger  # Paying Bank/Cash
+        if vtype == "Payment":
+            v_party.text = debit_ledger
         elif vtype == "Receipt":
-            v_party.text = debit_ledger   # Receiving Bank/Cash
+            v_party.text = credit_ledger
+        elif vtype == "Contra":
+            if debit_ledger.strip().lower() in ["cash", "cash-in-hand", "cash in hand", "petty cash"]:
+                v_party.text = debit_ledger
+            elif credit_ledger.strip().lower() in ["cash", "cash-in-hand", "cash in hand", "petty cash"]:
+                v_party.text = credit_ledger
+            else:
+                v_party.text = debit_ledger
         else:
             v_party.text = debit_ledger
             
+        v_view = ET.SubElement(voucher, "PERSISTEDVIEW")
+        v_view.text = "Accounting Voucher View"
+        
         v_narr = ET.SubElement(voucher, "NARRATION")
         v_narr.text = narration
         
@@ -551,11 +567,18 @@ def generate_multi_voucher_tally_xml(vouchers: List[Dict[str, Any]]) -> str:
         dr_amt = ET.SubElement(dr_entry, "AMOUNT")
         dr_amt.text = f"{-amount:.2f}"
         
-        if vtype == "Receipt":
-            dr_party = ET.SubElement(dr_entry, "ISPARTYLEDGER")
+        dr_party = ET.SubElement(dr_entry, "ISPARTYLEDGER")
+        if vtype == "Payment":
+            dr_party.text = "Yes"   # Payment: Debited Expense/Party is the Party Ledger
+        elif vtype == "Receipt":
+            dr_party.text = "No"    # Receipt: Debited Bank/Cash is the Account
+        elif vtype == "Contra":
+            dr_party.text = "Yes" if debit_ledger.strip().lower() in ["cash", "cash-in-hand", "cash in hand", "petty cash"] else "No"
+        else:
             dr_party.text = "Yes"
             
-        # If Receipt into a Bank, attach bank allocations to Debit entry
+        # If Receipt into a Bank, attach bank allocations to Debit entry (BRS support)
+        # NOTE: Do NOT add BANKPARTYNAME or PAYMENTFAVOURING so Tally doesn't lock allocations
         if vtype == "Receipt" and ref_no:
             alloc = ET.SubElement(dr_entry, "BANKALLOCATIONS.LIST")
             ad = ET.SubElement(alloc, "DATE")
@@ -566,8 +589,6 @@ def generate_multi_voucher_tally_xml(vouchers: List[Dict[str, Any]]) -> str:
             an.text = str(ref_no)
             att = ET.SubElement(alloc, "TRANSACTIONTYPE")
             att.text = "Inter Bank Transfer"
-            ap = ET.SubElement(alloc, "BANKPARTYNAME")
-            ap.text = credit_ledger
             aa = ET.SubElement(alloc, "AMOUNT")
             aa.text = f"{-amount:.2f}"
             
@@ -583,11 +604,18 @@ def generate_multi_voucher_tally_xml(vouchers: List[Dict[str, Any]]) -> str:
         cr_amt = ET.SubElement(cr_entry, "AMOUNT")
         cr_amt.text = f"{amount:.2f}"
         
-        if vtype in ["Payment", "Contra"]:
-            cr_party = ET.SubElement(cr_entry, "ISPARTYLEDGER")
-            cr_party.text = "Yes"
+        cr_party = ET.SubElement(cr_entry, "ISPARTYLEDGER")
+        if vtype == "Payment":
+            cr_party.text = "No"    # Payment: Credited Bank/Cash is the Account
+        elif vtype == "Receipt":
+            cr_party.text = "Yes"   # Receipt: Credited Customer/Party is the Party Ledger
+        elif vtype == "Contra":
+            cr_party.text = "Yes" if credit_ledger.strip().lower() in ["cash", "cash-in-hand", "cash in hand", "petty cash"] else "No"
+        else:
+            cr_party.text = "No"
             
-        # If Payment or Contra from a Bank, attach bank allocations to Credit entry
+        # If Payment or Contra from a Bank, attach bank allocations to Credit entry (BRS support)
+        # NOTE: Do NOT add BANKPARTYNAME or PAYMENTFAVOURING so Tally doesn't lock allocations
         if vtype in ["Payment", "Contra"] and ref_no:
             alloc = ET.SubElement(cr_entry, "BANKALLOCATIONS.LIST")
             ad = ET.SubElement(alloc, "DATE")
@@ -598,10 +626,8 @@ def generate_multi_voucher_tally_xml(vouchers: List[Dict[str, Any]]) -> str:
             an.text = str(ref_no)
             att = ET.SubElement(alloc, "TRANSACTIONTYPE")
             att.text = "Inter Bank Transfer"
-            ap = ET.SubElement(alloc, "BANKPARTYNAME")
-            ap.text = debit_ledger
             aa = ET.SubElement(alloc, "AMOUNT")
             aa.text = f"{amount:.2f}"
-            
+
     raw_xml = ET.tostring(envelope, encoding="utf-8")
     return '<?xml version="1.0" encoding="utf-8"?>\n' + raw_xml.decode("utf-8")

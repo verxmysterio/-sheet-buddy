@@ -113,3 +113,49 @@ def test_tally_xml_validator():
     assert val["is_valid"] is True
     assert val["voucher_count"] == 2
     assert val["malformed_count"] == 0
+
+
+def test_tally_xml_contra_and_party_mapping():
+    from app.services.csv_tally_engine import generate_multi_voucher_tally_xml
+    # 1. Test bank statement XML generator
+    txs = [
+        StandardTransaction(txn_date=date(2026, 4, 1), narration="Payment to Supplier", debit=1000.0, credit=None, balance=9000.0),
+        StandardTransaction(txn_date=date(2026, 4, 2), narration="Receipt from Client", debit=None, credit=2500.0, balance=11500.0),
+        StandardTransaction(txn_date=date(2026, 4, 3), narration="Cash Withdrawal ATM", debit=5000.0, credit=None, balance=6500.0, assigned_ledger="Cash"),
+    ]
+    xml_str = generate_tally_xml(txs, bank_ledger_name="HDFC Current Account")
+    val = validate_tally_xml(xml_str)
+    assert val["is_valid"] is True
+    assert val["voucher_count"] == 3
+    assert 'VCHTYPE="Contra"' in xml_str
+    assert "<BANKPARTYNAME>" not in xml_str
+    assert "<PAYMENTFAVOURING>" not in xml_str
+    assert "<PERSISTEDVIEW>Accounting Voucher View</PERSISTEDVIEW>" in xml_str
+
+    # 2. Test CSV engine XML generator
+    vouchers = [
+        {
+            "voucher_type": "Payment",
+            "date": "2026-04-15",
+            "debit_ledger": "Office Rent Expenses",
+            "credit_ledger": "State Bank of India",
+            "amount": 25000.0,
+            "narration": "Office Rent April",
+            "ref_no": "UTR12345"
+        },
+        {
+            "voucher_type": "Contra",
+            "date": "2026-04-16",
+            "debit_ledger": "Cash",
+            "credit_ledger": "State Bank of India",
+            "amount": 10000.0,
+            "narration": "Cash withdrawal",
+            "ref_no": "ATM999"
+        }
+    ]
+    xml_out = generate_multi_voucher_tally_xml(vouchers)
+    val2 = validate_tally_xml(xml_out)
+    assert val2["is_valid"] is True
+    assert val2["voucher_count"] == 2
+    assert "<BANKPARTYNAME>" not in xml_out
+    assert "<PARTYLEDGERNAME>Office Rent Expenses</PARTYLEDGERNAME>" in xml_out

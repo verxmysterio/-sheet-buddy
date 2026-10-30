@@ -41,15 +41,29 @@ def generate_tally_xml(
         
         vch_uuid = str(uuid.uuid4())
         is_payment = (tx.debit is not None and tx.debit > 0)
-        
-        # Voucher type determination
-        vtype = debit_voucher_type if is_payment else credit_voucher_type
+        val = tx.debit if is_payment else (tx.credit or 0.0)
         
         # Counter party ledger resolution
         if counter_ledger_name and counter_ledger_name not in ["Suspense", "Suspense Account"]:
             counter_party = counter_ledger_name
         else:
             counter_party = tx.assigned_ledger or tx.suggested_ledger or counter_ledger_name
+            
+        # Voucher type determination:
+        # 1. Automatically classify as 'Contra' if counter party is Cash / Cash-in-hand / Petty Cash
+        # 2. Respect explicit 'Contra' or 'Journal' override
+        # 3. Otherwise default to Payment (Debit) or Receipt (Credit)
+        explicit_vtype = getattr(tx, "voucher_type", None)
+        if counter_party and counter_party.strip().lower() in ["cash", "cash-in-hand", "cash in hand", "petty cash"]:
+            vtype = "Contra"
+        elif explicit_vtype == "Contra":
+            vtype = "Contra"
+        elif explicit_vtype == "Journal":
+            vtype = "Journal"
+        elif is_payment:
+            vtype = explicit_vtype if explicit_vtype == "Payment" else debit_voucher_type
+        else:
+            vtype = explicit_vtype if explicit_vtype == "Receipt" else credit_voucher_type
             
         voucher = ET.SubElement(
             tally_msg,
@@ -80,8 +94,13 @@ def generate_tally_xml(
         vch_narration = ET.SubElement(voucher, "NARRATION")
         vch_narration.text = tx.narration or "Bank Transaction"
         
+        # In Tally Single-Entry and Accounting Views:
+        # PARTYLEDGERNAME represents the Counter-Party ledger displayed in Particulars
         vch_party = ET.SubElement(voucher, "PARTYLEDGERNAME")
-        vch_party.text = bank_ledger_name
+        vch_party.text = counter_party
+        
+        vch_view = ET.SubElement(voucher, "PERSISTEDVIEW")
+        vch_view.text = "Accounting Voucher View"
         
         vch_eff_date = ET.SubElement(voucher, "EFFECTIVEDATE")
         vch_eff_date.text = date_str
@@ -89,7 +108,7 @@ def generate_tally_xml(
         vch_cashflow = ET.SubElement(voucher, "HASCASHFLOW")
         vch_cashflow.text = "Yes"
         
-        # --- LEDGER ENTRY 1: Counter Ledger ---
+        # --- LEDGER ENTRY 1: Counter Ledger (Expense / Party / Cash in Particulars) ---
         suspense_entry = ET.SubElement(voucher, "ALLLEDGERENTRIES.LIST")
         susp_ledger = ET.SubElement(suspense_entry, "LEDGERNAME")
         susp_ledger.text = counter_party
@@ -98,10 +117,12 @@ def generate_tally_xml(
         susp_pos.text = "Yes" if is_payment else "No"
         
         susp_amt = ET.SubElement(suspense_entry, "AMOUNT")
-        val = tx.debit if is_payment else (tx.credit or 0.0)
         susp_amt.text = f"{-val:.2f}" if is_payment else f"{val:.2f}"
         
-        # --- LEDGER ENTRY 2: Bank ---
+        susp_party = ET.SubElement(suspense_entry, "ISPARTYLEDGER")
+        susp_party.text = "Yes"
+        
+        # --- LEDGER ENTRY 2: Bank (Account Field in Single-Entry Mode) ---
         bank_entry = ET.SubElement(voucher, "ALLLEDGERENTRIES.LIST")
         bank_ledger = ET.SubElement(bank_entry, "LEDGERNAME")
         bank_ledger.text = bank_ledger_name
@@ -113,9 +134,13 @@ def generate_tally_xml(
         bank_amt.text = f"{val:.2f}" if is_payment else f"{-val:.2f}"
         
         bank_party = ET.SubElement(bank_entry, "ISPARTYLEDGER")
-        bank_party.text = "Yes"
+        bank_party.text = "No"
         
-        # Bank Allocation details
+        # Bank Allocation details (BRS tracking)
+        # NOTE: Do NOT include BANKPARTYNAME or PAYMENTFAVOURING tags here.
+        # Hardcoding BANKPARTYNAME causes Tally Prime to throw "INCORRECT LEDGER SELECTED DURING BANK ALLOCATION"
+        # when a user later alters the voucher (e.g. changing Payment to Contra, or switching party to Cash).
+        # Omitting them allows Tally to dynamically inherit the active voucher ledger with full user flexibility.
         bank_allocs = ET.SubElement(bank_entry, "BANKALLOCATIONS.LIST")
         
         alloc_date = ET.SubElement(bank_allocs, "DATE")
@@ -123,9 +148,6 @@ def generate_tally_xml(
         
         alloc_inst_date = ET.SubElement(bank_allocs, "INSTRUMENTDATE")
         alloc_inst_date.text = date_str
-        
-        alloc_favour = ET.SubElement(bank_allocs, "PAYMENTFAVOURING")
-        alloc_favour.text = counter_party
         
         alloc_type = ET.SubElement(bank_allocs, "TRANSACTIONTYPE")
         alloc_type.text = "Cheque" if (tx.cheque_number or not tx.utr) else "Inter Bank Transfer"
@@ -140,9 +162,6 @@ def generate_tally_xml(
         
         alloc_mode = ET.SubElement(bank_allocs, "PAYMENTMODE")
         alloc_mode.text = "Transacted"
-        
-        alloc_party = ET.SubElement(bank_allocs, "BANKPARTYNAME")
-        alloc_party.text = counter_party
         
         alloc_amt = ET.SubElement(bank_allocs, "AMOUNT")
         alloc_amt.text = f"{val:.2f}" if is_payment else f"{-val:.2f}"
