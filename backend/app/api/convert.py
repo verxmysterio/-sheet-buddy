@@ -234,10 +234,21 @@ async def execute_conversion(
     credit_voucher_type = payload.get("credit_voucher_type", "Receipt")
     debit_voucher_type = payload.get("debit_voucher_type", "Payment")
     transactions_raw = payload.get("transactions")
-    pages_count = int(payload.get("pages_count", 0))
+    if isinstance(transactions_raw, str):
+        try:
+            transactions_raw = json.loads(transactions_raw)
+        except Exception:
+            transactions_raw = None
+
+    pages_count = int(payload.get("pages_count") or 0)
     file_fingerprint = payload.get("file_fingerprint")
     client_id = payload.get("client_id")
     edited_narrations = payload.get("edited_narrations")
+    if isinstance(edited_narrations, str):
+        try:
+            edited_narrations = json.loads(edited_narrations)
+        except Exception:
+            edited_narrations = None
     
     if not tally_bank_ledger_name:
         raise HTTPException(
@@ -260,20 +271,48 @@ async def execute_conversion(
     else:
         reconstructed_txs = []
         for tx_dict in transactions_raw:
-            t_date = date.fromisoformat(tx_dict["txn_date"]) if isinstance(tx_dict["txn_date"], str) else tx_dict["txn_date"]
-            v_date = date.fromisoformat(tx_dict.get("val_date", tx_dict["txn_date"])) if tx_dict.get("val_date") else t_date
-            
+            try:
+                if isinstance(tx_dict.get("txn_date"), str):
+                    try:
+                        t_date = date.fromisoformat(tx_dict["txn_date"])
+                    except Exception:
+                        from ..services.csv_tally_engine import parse_date_safely
+                        clean_d = parse_date_safely(tx_dict["txn_date"])
+                        t_date = date.fromisoformat(clean_d) if clean_d else date.today()
+                elif isinstance(tx_dict.get("txn_date"), date):
+                    t_date = tx_dict["txn_date"]
+                else:
+                    t_date = date.today()
+            except Exception:
+                t_date = date.today()
+                
+            v_date = t_date
+            if tx_dict.get("val_date"):
+                try:
+                    if isinstance(tx_dict["val_date"], str):
+                        v_date = date.fromisoformat(tx_dict["val_date"])
+                    elif isinstance(tx_dict["val_date"], date):
+                        v_date = tx_dict["val_date"]
+                except Exception:
+                    v_date = t_date
+
+            bal_raw = tx_dict.get("balance")
+            try:
+                bal_flt = float(bal_raw) if bal_raw is not None else 0.0
+            except Exception:
+                bal_flt = 0.0
+
             reconstructed_txs.append(StandardTransaction(
-                id=tx_dict.get("id", str(uuid.uuid4())),
+                id=str(tx_dict.get("id") or uuid.uuid4()),
                 txn_date=t_date,
                 val_date=v_date,
-                narration=tx_dict.get("narration", ""),
+                narration=str(tx_dict.get("narration") or "Bank Transaction"),
                 ref_no=tx_dict.get("ref_no") or tx_dict.get("utr"),
                 utr=tx_dict.get("utr"),
                 cheque_number=tx_dict.get("cheque_number"),
-                debit=tx_dict.get("debit"),
-                credit=tx_dict.get("credit"),
-                balance=float(tx_dict.get("balance", 0.0)),
+                debit=float(tx_dict["debit"]) if tx_dict.get("debit") is not None else None,
+                credit=float(tx_dict["credit"]) if tx_dict.get("credit") is not None else None,
+                balance=bal_flt,
                 transaction_type=tx_dict.get("transaction_type", "DEBIT"),
                 assigned_ledger=tx_dict.get("assigned_ledger") or tx_dict.get("suggested_ledger") or counter_ledger_name,
                 voucher_type=tx_dict.get("voucher_type") or (debit_voucher_type if tx_dict.get("debit") else credit_voucher_type),

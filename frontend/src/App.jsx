@@ -1502,30 +1502,32 @@ export default function App() {
     setExecuteLoading(true);
     setExecuteError('');
 
-    const formattedPayload = {
-      temp_file_id: parsedSummary.temp_file_id,
-      bank_name: parsedSummary.bank_name || bankName,
-      tally_bank_ledger_name: tallyLedgerName,
-      counter_ledger_name: counterLedgerName,
-      credit_voucher_type: creditVoucherType,
-      debit_voucher_type: debitVoucherType,
-      pages_count: parsedSummary.pages_count,
-      file_fingerprint: parsedSummary.file_fingerprint,
-      transactions: allTransactions.map((tx, idx) => ({
-        ...tx,
-        narration: editedNarrations[idx] !== undefined ? editedNarrations[idx] : tx.narration,
-        assigned_ledger: editedLedgers[idx] !== undefined ? editedLedgers[idx] : (tx.assigned_ledger || counterLedgerName)
-      }))
-    };
+    const structuredTxs = allTransactions.map((tx, idx) => ({
+      ...tx,
+      narration: editedNarrations[idx] !== undefined ? editedNarrations[idx] : tx.narration,
+      assigned_ledger: editedLedgers[idx] !== undefined ? editedLedgers[idx] : (tx.assigned_ledger || counterLedgerName)
+    }));
+
+    // Use FormData for 100% universal compatibility across legacy Form(...) and modern JSON endpoints
+    const formData = new FormData();
+    formData.append('temp_file_id', parsedSummary.temp_file_id || '');
+    formData.append('tally_bank_ledger_name', tallyLedgerName.trim());
+    formData.append('bank_name', parsedSummary.bank_name || bankName || 'Bank Statement');
+    formData.append('counter_ledger_name', counterLedgerName || 'Suspense Account');
+    formData.append('credit_voucher_type', creditVoucherType || 'Receipt');
+    formData.append('debit_voucher_type', debitVoucherType || 'Payment');
+    formData.append('pages_count', String(parsedSummary.pages_count || 1));
+    formData.append('file_fingerprint', parsedSummary.file_fingerprint || '');
+    formData.append('edited_narrations', JSON.stringify(editedNarrations || {}));
+    formData.append('transactions', JSON.stringify(structuredTxs));
 
     try {
       const res = await fetch('/api/convert/execute', {
         method: 'POST',
         headers: { 
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}` 
         },
-        body: JSON.stringify(formattedPayload)
+        body: formData
       });
 
       if (!res.ok) {
