@@ -336,12 +336,15 @@ def detect_duplicate_transactions(transactions: List[StandardTransaction]) -> No
     
     for tx in transactions:
         amount = tx.credit if tx.transaction_type == "CREDIT" else tx.debit
-        exact_key = (str(tx.txn_date), amount, tx.transaction_type, (tx.utr or tx.ref_no or tx.narration.strip()))
+        clean_amt = float(amount) if amount is not None else 0.0
+        exact_key = (str(tx.txn_date), clean_amt, tx.transaction_type, (tx.utr or tx.ref_no or (tx.narration or "").strip()))
         
         if exact_key in seen_exact:
             tx.is_duplicate = True
             tx.duplicate_type = "EXACT"
-            tx.duplicate_reason = f"Exact match with row #{seen_exact[exact_key].source_row} (Date: {tx.txn_date}, Amount: ₹{amount:,.2f})"
+            source_row_val = getattr(seen_exact[exact_key], "source_row", None)
+            row_label = f"row #{source_row_val}" if source_row_val else "previous row"
+            tx.duplicate_reason = f"Exact match with {row_label} (Date: {tx.txn_date}, Amount: ₹{clean_amt:,.2f})"
             tx.requires_review = True
             if "Potential duplicate transaction" not in tx.review_reasons:
                 tx.review_reasons.append("Potential duplicate transaction")

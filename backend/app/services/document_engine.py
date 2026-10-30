@@ -84,7 +84,7 @@ class DocumentEngine:
             total_chars += char_count
             if char_count < 20:
                 empty_pages += 1
-            page_previews.append(text[:2000])
+            page_previews.append(text[:25000])
             
         # Determine document type
         if empty_pages == pages_count:

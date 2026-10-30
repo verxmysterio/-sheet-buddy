@@ -100,7 +100,12 @@ async def upload_statement(
     
     # 3. Automatic Bank Detection
     detection = AutomaticBankDetector.detect_bank_from_text(inspection.page_previews)
-    resolved_bank = detection.bank_name if bank_name in ["auto", "", None] else bank_name
+    is_auto = (
+        not bank_name or
+        str(bank_name).strip().lower() in ["auto", "none", "null", "autodetect", "auto-detect"] or
+        "auto" in str(bank_name).strip().lower()
+    )
+    resolved_bank = detection.bank_name if is_auto else bank_name
     
     # 4. In-Memory Statement Parsing
     try:
@@ -287,7 +292,7 @@ async def execute_conversion(
             logger.warning(f"Error applying edited narrations: {e}")
             
     required_credits = max(1, pages_count or 1)
-    if not current_user.is_admin and current_user.page_credits < required_credits:
+    if current_user.page_credits < required_credits:
         raise HTTPException(
             status_code=status.HTTP_402_PAYMENT_REQUIRED,
             detail=f"Insufficient credits. You need {required_credits} page credits to export this statement. Your current balance is {current_user.page_credits} pages."
@@ -310,8 +315,7 @@ async def execute_conversion(
     validation = validate_tally_xml(xml_content)
     
     balance_before = current_user.page_credits
-    if not current_user.is_admin:
-        current_user.page_credits -= required_credits
+    current_user.page_credits -= required_credits
     balance_after = current_user.page_credits
     
     conversion = Conversion(
@@ -335,7 +339,7 @@ async def execute_conversion(
     wallet_tx = WalletTransaction(
         user_id=current_user.id,
         amount_in_inr=0.0,
-        pages_purchased=-required_credits if not current_user.is_admin else 0,
+        pages_purchased=-required_credits,
         balance_before=balance_before,
         balance_after=balance_after,
         type="CONVERSION",

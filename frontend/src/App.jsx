@@ -78,17 +78,8 @@ export const normalizeDateString = (raw) => {
 };
 
 export const getCsvCreditPricing = (count) => {
-  if (!count || count <= 0) return { raw: 0, discount: 0, final: 0, percent: 0 };
-  const raw = Math.ceil(count / 10);
-  let percent = 0;
-  if (count > 250) percent = 25;
-  else if (count > 100) percent = 20;
-  else if (count > 50) percent = 15;
-  else if (count > 20) percent = 10;
-  
-  const discount = percent > 0 ? Math.floor((raw * percent) / 100) : 0;
-  const final = Math.max(1, raw - discount);
-  return { raw, discount, final, percent };
+  if (!count || count <= 0) return 0;
+  return Math.max(1, Math.ceil(count / 10));
 };
 
 const findColumnIndex = (headers, colName, aliases = []) => {
@@ -184,7 +175,7 @@ function generateClientTallyXml(vouchers, mappingName = "Sheet Buddy Import") {
     return new Date().toISOString().slice(0, 10).replace(/-/g, '');
   };
 
-  let xml = `<ENVELOPE>\n  <HEADER>\n    <TALLYREQUEST>Import Data</TALLYREQUEST>\n  </HEADER>\n  <BODY>\n    <EXPORTDATA>\n      <REQUESTDESC>\n        <REPORTNAME>All Masters</REPORTNAME>\n        <STATICVARIABLES>\n          <SVCURRENTCOMPANY>${escapeXml(mappingName)}</SVCURRENTCOMPANY>\n        </STATICVARIABLES>\n      </REQUESTDESC>\n      <REQUESTDATA>\n`;
+  let xml = `<ENVELOPE>\n  <HEADER>\n    <TALLYREQUEST>Import Data</TALLYREQUEST>\n  </HEADER>\n  <BODY>\n    <IMPORTDATA>\n      <REQUESTDESC>\n        <REPORTNAME>All Masters</REPORTNAME>\n        <STATICVARIABLES>\n          <SVOverwriteImpVch>Yes</SVOverwriteImpVch>\n          <SVCURRENTCOMPANY>${escapeXml(mappingName)}</SVCURRENTCOMPANY>\n        </STATICVARIABLES>\n      </REQUESTDESC>\n      <REQUESTDATA>\n`;
 
   for (let idx = 0; idx < vouchers.length; idx++) {
     const vch = vouchers[idx];
@@ -207,7 +198,7 @@ function generateClientTallyXml(vouchers, mappingName = "Sheet Buddy Import") {
     xml += `            <GUID>SB-CSV-${idx + 1}-${Date.now()}</GUID>\n`;
     xml += `            <VOUCHERTYPENAME>${escapeXml(vtype)}</VOUCHERTYPENAME>\n`;
     xml += `            <VOUCHERNUMBER>${escapeXml(vno)}</VOUCHERNUMBER>\n`;
-    xml += `            <PARTYLEDGERNAME>${escapeXml(isPayment ? crLedger : (isReceipt ? crLedger : drLedger))}</PARTYLEDGERNAME>\n`;
+    xml += `            <PARTYLEDGERNAME>${escapeXml(isPayment ? crLedger : (isReceipt ? drLedger : drLedger))}</PARTYLEDGERNAME>\n`;
     xml += `            <NARRATION>${escapeXml(narr)}</NARRATION>\n`;
 
     // Debit Ledger (Negative amount in Tally Prime double-entry)
@@ -245,7 +236,7 @@ function generateClientTallyXml(vouchers, mappingName = "Sheet Buddy Import") {
     xml += `        </TALLYMESSAGE>\n`;
   }
 
-  xml += `      </REQUESTDATA>\n    </EXPORTDATA>\n  </BODY>\n</ENVELOPE>`;
+  xml += `      </REQUESTDATA>\n    </IMPORTDATA>\n  </BODY>\n</ENVELOPE>`;
   return xml;
 }
 
@@ -371,6 +362,17 @@ export default function App() {
       s = s + 'Z';
     }
     return new Date(s);
+  };
+
+  const formatDisplayDate = (dateVal, includeTime = true) => {
+    if (!dateVal) return 'N/A';
+    try {
+      const d = parseUtcDate(dateVal);
+      if (!d || isNaN(d.getTime())) return String(dateVal);
+      return includeTime ? d.toLocaleString() : d.toLocaleDateString();
+    } catch (e) {
+      return String(dateVal || 'N/A');
+    }
   };
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -583,7 +585,7 @@ export default function App() {
         const data = await res.json();
         setSupportedBanks(data);
         if (data.length > 0) {
-          setBankName(prev => prev || data[0].name);
+          setBankName(prev => prev || data[0].bank_key);
         }
       }
     } catch (e) {
@@ -1063,8 +1065,8 @@ export default function App() {
     }
 
     const pricing = getCsvCreditPricing(csvVouchers.length);
-    if (user && !user.is_admin && user.page_credits < pricing.final) {
-      setCsvConvertError(`Insufficient credits. You need ${pricing.final} credits for ${csvVouchers.length} transactions (rate: 1 credit / 10 txns with discount). Your current balance is ${user.page_credits}.`);
+    if (user && user.page_credits < pricing) {
+      setCsvConvertError(`Insufficient credits. You need ${pricing} credits for ${csvVouchers.length} transactions (rate: 1 credit per 10 transactions). Your current balance is ${user.page_credits}.`);
       return;
     }
 
@@ -1093,12 +1095,14 @@ export default function App() {
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
             body: JSON.stringify({ vouchers: csvVouchers, mapping_name: mappingName })
           });
+          setUser(prev => prev ? ({ ...prev, page_credits: Math.max(0, prev.page_credits - pricing) }) : prev);
           fetchUserProfile();
           fetchHistory();
+          fetchWalletTxs();
         } catch (e) {}
       }
 
-      alert(`Success! 100% Compliant Tally Prime XML generated for ${csvVouchers.length} vouchers (${pricing.final} credits used${pricing.discount > 0 ? `, saved ${pricing.discount} credits with roundoff discount` : ''}).`);
+      alert(`Success! 100% Compliant Tally Prime XML generated for ${csvVouchers.length} vouchers (${pricing} credits deducted).`);
     } catch (err) {
       console.error("Convert to XML error", err);
       setCsvConvertError("Error while generating Tally XML: " + err.message);
@@ -2074,12 +2078,15 @@ export default function App() {
     }
   };
 
-  // Filter history list based on search bar query
-  const filteredHistory = conversionsHistory.filter(conv => {
-    const q = historySearch.toLowerCase();
-    return conv.bank_name.toLowerCase().includes(q) || 
-           (conv.statement_period && conv.statement_period.toLowerCase().includes(q)) ||
-           (conv.account_number && conv.account_number.toLowerCase().includes(q));
+  // Filter history list based on search bar query safely
+  const filteredHistory = (conversionsHistory || []).filter(conv => {
+    if (!conv) return false;
+    const q = (historySearch || '').toLowerCase().trim();
+    if (!q) return true;
+    const bName = (conv.bank_name || '').toLowerCase();
+    const period = (conv.statement_period || '').toLowerCase();
+    const acc = (conv.account_number || '').toLowerCase();
+    return bName.includes(q) || period.includes(q) || acc.includes(q);
   });
 
   // --- Auth View ---
@@ -2468,7 +2475,7 @@ export default function App() {
                       className="w-full pl-3 pr-10 py-2.5 text-sm border-2 border-black font-bold focus:outline-none focus:bg-yellow-50 bg-white"
                     >
                       {supportedBanks.map((b) => (
-                        <option key={b.bank_key} value={b.name}>{b.name}</option>
+                        <option key={b.bank_key} value={b.bank_key}>{b.name}</option>
                       ))}
                     </select>
                     {supportedBanks.find((b) => b.name === bankName)?.parser_type === "SIMULATOR" && (
@@ -3204,8 +3211,7 @@ export default function App() {
                         const pricing = getCsvCreditPricing(csvVouchers.length);
                         return (
                           <span className="text-[10px] bg-black text-white px-1.5 py-0.5 font-black rounded-none">
-                            {pricing.final} {pricing.final === 1 ? 'Credit' : 'Credits'}
-                            {pricing.discount > 0 && <span className="text-[#3affaa] ml-1">(-{pricing.discount} OFF)</span>}
+                            {pricing} {pricing === 1 ? 'Credit' : 'Credits'}
                           </span>
                         );
                       })()}
@@ -3483,8 +3489,7 @@ export default function App() {
                         const pricing = getCsvCreditPricing(csvVouchers.length);
                         return (
                           <span className="text-[10px] bg-[#ffd615] text-black px-1.5 py-0.5 font-black">
-                            {pricing.final} {pricing.final === 1 ? 'Credit' : 'Credits'}
-                            {pricing.discount > 0 && <span className="text-black font-extrabold ml-1">(-{pricing.discount} OFF)</span>}
+                            {pricing} {pricing === 1 ? 'Credit' : 'Credits'}
                           </span>
                         );
                       })()}
@@ -3798,7 +3803,7 @@ export default function App() {
                     <tbody className="bg-white divide-y divide-black text-xs font-bold text-black">
                       {filteredHistory.map((conv) => (
                         <tr key={conv.id} className="hover:bg-slate-50">
-                          <td className="px-6 py-4 border-r border-black whitespace-nowrap">{parseUtcDate(conv.created_at).toLocaleString()}</td>
+                          <td className="px-6 py-4 border-r border-black whitespace-nowrap">{formatDisplayDate(conv.created_at)}</td>
                           <td className="px-6 py-4 border-r border-black font-black uppercase text-slate-800">{conv.bank_name}</td>
                           <td className="px-6 py-4 border-r border-black">{conv.statement_period || 'N/A'}</td>
                           <td className="px-6 py-4 border-r border-black text-center">{conv.pages_count}</td>
@@ -3953,7 +3958,7 @@ export default function App() {
                               </span>
                             )}
                           </div>
-                          <p className="text-slate-400 mt-0.5">{parseUtcDate(tx.created_at).toLocaleDateString()}</p>
+                          <p className="text-slate-400 mt-0.5">{formatDisplayDate(tx.created_at, false)}</p>
                         </div>
                         <div className="text-right">
                           <p className={`font-black text-sm ${tx.pages_purchased > 0 ? 'text-emerald-500' : 'text-[#ff4b3f]'}`}>
@@ -4097,7 +4102,7 @@ export default function App() {
                                 <td className="px-3 py-2 border-r border-black font-mono font-black">{p.code}</td>
                                 <td className="px-3 py-2 border-r border-black text-center text-emerald-600 font-black">+{p.page_credits}</td>
                                 <td className="px-3 py-2 border-r border-black text-center">{p.times_used} / {p.max_uses}</td>
-                                <td className="px-3 py-2 border-r border-black text-[10px] whitespace-nowrap">{parseUtcDate(p.expires_at).toLocaleDateString()}</td>
+                                <td className="px-3 py-2 border-r border-black text-[10px] whitespace-nowrap">{formatDisplayDate(p.expires_at, false)}</td>
                                 <td className="px-3 py-2 text-center">
                                   <button
                                     onClick={() => handleDeletePromoCode(p.id)}
@@ -4304,7 +4309,7 @@ export default function App() {
                       <tbody className="bg-white divide-y divide-black text-xs font-bold text-black">
                         {adminPayments.map((pay) => (
                           <tr key={pay.id} className="hover:bg-slate-50">
-                            <td className="px-4 py-3 border-r border-black whitespace-nowrap">{parseUtcDate(pay.created_at).toLocaleString()}</td>
+                            <td className="px-4 py-3 border-r border-black whitespace-nowrap">{formatDisplayDate(pay.created_at)}</td>
                             <td className="px-4 py-3 border-r border-black truncate max-w-xs">{pay.user_email}</td>
                             <td className="px-4 py-3 border-r border-black text-center text-emerald-600 font-black">+{pay.pages_purchased}</td>
                             <td className="px-4 py-3 border-r border-black text-center font-black">₹{pay.amount_in_inr.toFixed(2)}</td>
@@ -4362,7 +4367,7 @@ export default function App() {
                       <tbody className="bg-white divide-y divide-black text-xs font-bold text-black">
                         {adminQueries.map((query) => (
                           <tr key={query.id} className="hover:bg-slate-50">
-                            <td className="px-4 py-3 border-r border-black whitespace-nowrap">{parseUtcDate(query.created_at).toLocaleString()}</td>
+                            <td className="px-4 py-3 border-r border-black whitespace-nowrap">{formatDisplayDate(query.created_at)}</td>
                             <td className="px-4 py-3 border-r border-black truncate max-w-[200px]">{query.user_email}</td>
                             <td className="px-4 py-3 border-r border-black whitespace-nowrap">
                               {query.whatsapp_number ? (
@@ -4419,7 +4424,7 @@ export default function App() {
                                 {promo.type === 'TIME_BASED' && 'Time-based'}
                               </td>
                               <td className="px-3 py-2.5 border-r border-black text-slate-500 font-normal">
-                                {promo.expires_at ? parseUtcDate(promo.expires_at).toLocaleString() : 'Never'}
+                                {promo.expires_at ? formatDisplayDate(promo.expires_at) : 'Never'}
                               </td>
                               <td className="px-3 py-2.5 border-r border-black text-center">
                                 <span className={`px-1.5 py-0.5 border border-black text-[9px] font-black uppercase ${promo.is_active ? 'bg-[#3affaa] text-black' : 'bg-[#ff5757] text-white'}`}>

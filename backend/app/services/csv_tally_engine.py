@@ -520,12 +520,12 @@ def generate_multi_voucher_tally_xml(vouchers: List[Dict[str, Any]]) -> str:
         v_tname = ET.SubElement(voucher, "VOUCHERTYPENAME")
         v_tname.text = vtype
         
-        # Party ledger name (Primary Party in Tally)
+        # Party ledger name (Primary Bank/Cash Account in Tally Single-Entry View)
         v_party = ET.SubElement(voucher, "PARTYLEDGERNAME")
         if vtype in ["Payment", "Contra"]:
             v_party.text = credit_ledger  # Paying Bank/Cash
         elif vtype == "Receipt":
-            v_party.text = credit_ledger  # Receiving from Customer/Party
+            v_party.text = debit_ledger   # Receiving Bank/Cash
         else:
             v_party.text = debit_ledger
             
@@ -551,6 +551,10 @@ def generate_multi_voucher_tally_xml(vouchers: List[Dict[str, Any]]) -> str:
         dr_amt = ET.SubElement(dr_entry, "AMOUNT")
         dr_amt.text = f"{-amount:.2f}"
         
+        if vtype == "Receipt":
+            dr_party = ET.SubElement(dr_entry, "ISPARTYLEDGER")
+            dr_party.text = "Yes"
+            
         # If Receipt into a Bank, attach bank allocations to Debit entry
         if vtype == "Receipt" and ref_no:
             alloc = ET.SubElement(dr_entry, "BANKALLOCATIONS.LIST")
@@ -579,6 +583,10 @@ def generate_multi_voucher_tally_xml(vouchers: List[Dict[str, Any]]) -> str:
         cr_amt = ET.SubElement(cr_entry, "AMOUNT")
         cr_amt.text = f"{amount:.2f}"
         
+        if vtype in ["Payment", "Contra"]:
+            cr_party = ET.SubElement(cr_entry, "ISPARTYLEDGER")
+            cr_party.text = "Yes"
+            
         # If Payment or Contra from a Bank, attach bank allocations to Credit entry
         if vtype in ["Payment", "Contra"] and ref_no:
             alloc = ET.SubElement(cr_entry, "BANKALLOCATIONS.LIST")

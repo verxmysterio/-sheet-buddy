@@ -71,8 +71,14 @@ class AutomaticBankDetector:
             "name": "Bank of Baroda",
             "format": "Bank of Baroda Finacle Statement",
             "ifsc_prefix": "BARB",
-            "keywords": ["BANK OF BARODA", "BARB", "BOB", "BARODABANK", "FINACLE", "CUSTOMER ACCOUNT LEDGER REPORT"],
-            "headers": ["S No", "Date", "Description", "Cheque No", "Withdrawal (Dr)", "Deposit (Cr)", "Balance"],
+            "keywords": [
+                "BANK OF BARODA", "BARB", "BOB", "BARODABANK", "FINACLE", "CUSTOMER ACCOUNT LEDGER REPORT",
+                "BARBZ", "BARB0", "OPTRANSACTIONHISTORY", "18005700", "18002584455", "18001024455", "B*N* O* B*R*D*"
+            ],
+            "headers": [
+                "TRAN DATE", "VALUE DATE", "NARRATION", "CHQ.NO.", "WITHDRAWAL(DR)", "DEPOSIT(CR)", "BALANCE(INR)",
+                "WITHDRAWAL", "DEPOSIT", "BALANCE", "Cheque No", "Withdrawal (Dr)", "Deposit (Cr)"
+            ],
             "weight": 1.0
         },
         {

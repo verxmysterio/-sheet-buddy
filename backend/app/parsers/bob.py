@@ -1,4 +1,5 @@
 import re
+import io
 from datetime import datetime as dt_class, date
 from pypdf import PdfReader
 from typing import List, Tuple, Any
@@ -6,6 +7,8 @@ from .base import BankParser, StandardTransaction, StatementMetadata, reconcile_
 
 class BOBParser(BankParser):
     def parse(self, pdf_path_or_bytes: Any) -> Tuple[StatementMetadata, List[StandardTransaction]]:
+        if isinstance(pdf_path_or_bytes, bytes):
+            pdf_path_or_bytes = io.BytesIO(pdf_path_or_bytes)
         reader = PdfReader(pdf_path_or_bytes)
         pages_count = len(reader.pages)
         
@@ -19,7 +22,7 @@ class BOBParser(BankParser):
         if name_match:
             account_name = name_match.group(1).strip()
             
-        num_match = re.search(r'Account No:\s*(\S+)', first_page_text, re.IGNORECASE)
+        num_match = re.search(r'(?:Account No|Current Account)\s*[:\-]?\s*([0-9A-Za-zX]+)', first_page_text, re.IGNORECASE)
         if num_match:
             account_number = num_match.group(1).strip()
             
@@ -106,9 +109,9 @@ class BOBParser(BankParser):
                             debit = float(text.replace(',', '').replace('Cr', '').replace('Dr', '').strip())
                         except Exception:
                             pass
-                    elif 100 <= x < 200 and text.isdigit():
+                    elif 350 <= x < 450 and text.isdigit():
                         chq_no = text
-                    elif 180 <= x < 450:
+                    elif 120 <= x < 450:
                         narr_parts.append(text)
                         
                 narration = " ".join(narr_parts).strip() or "BOB TRANSACTION"
@@ -125,7 +128,7 @@ class BOBParser(BankParser):
                 ))
             elif raw_tx_list and len(row_el) > 0:
                 extra_narr = " ".join([el['text'] for el in row_el if el['x'] < 450]).strip()
-                if extra_narr and not any(k in extra_narr for k in ["Page", "Statement", "Bank of Baroda"]):
+                if extra_narr and not any(k in extra_narr for k in ["Page", "Statement", "Bank of Baroda", "Contact-Us", "TRAN DATE", "VALUE DATE", "computer-generated"]):
                     raw_tx_list[-1].narration += " " + extra_narr
                     
         if raw_tx_list:
