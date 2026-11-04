@@ -528,8 +528,8 @@ export default function App() {
         setConfigDropdownOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
   // --- Data Log States ---
@@ -3038,45 +3038,44 @@ export default function App() {
             </button>
           </div>
 
-          {/* Center Navigation: Single row desktop with horizontal scrollbar if needed */}
-          <div className={`${mobileMenuOpen ? 'flex' : 'hidden'} lg:flex flex-col lg:flex-row flex-1 items-stretch lg:items-center justify-between min-w-0 overflow-hidden`}>
-            <nav className="flex flex-col lg:flex-row lg:flex-nowrap items-stretch lg:items-center p-2.5 gap-1.5 flex-1 min-w-0 border-b lg:border-b-0 border-slate-200">
+          {/* Center Navigation & Action Controls */}
+          <div className={`${mobileMenuOpen ? 'flex' : 'hidden'} lg:flex flex-col lg:flex-row flex-1 items-stretch lg:items-center justify-between min-w-0 overflow-visible`}>
+            <nav className="flex flex-col lg:flex-row lg:flex-nowrap items-stretch lg:items-center p-2 lg:p-0 lg:px-4 gap-1 flex-1 min-w-0 overflow-visible border-b lg:border-b-0 border-slate-200">
               
-              {/* 1. IMPORT TRANSACTION (Dropdown: PDF TO TALLY & CSV TO TALLY) */}
-              <div 
-                ref={importMenuRef}
-                className="relative flex-shrink-0"
-                onMouseEnter={() => setImportDropdownOpen(true)}
-                onMouseLeave={() => setImportDropdownOpen(false)}
-              >
+              {/* 1. IMPORT TRANSACTION (Dropdown) */}
+              <div ref={importMenuRef} className="relative flex-shrink-0">
                 <button
                   type="button"
-                  onClick={() => setImportDropdownOpen(prev => !prev)}
-                  className={`w-full lg:w-auto px-3.5 py-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-between lg:justify-start gap-2 whitespace-nowrap ${
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setImportDropdownOpen(prev => !prev);
+                    setConfigDropdownOpen(false);
+                  }}
+                  className={`w-full lg:w-auto px-3 py-1.5 text-xs rounded-md transition-colors flex items-center justify-between lg:justify-start gap-1.5 whitespace-nowrap ${
                     (activeTab === 'convert' || activeTab === 'csv')
-                      ? 'bg-slate-900 text-white shadow-sm'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                      ? 'text-slate-900 bg-slate-100 font-semibold border border-slate-200/90 shadow-2xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 font-medium'
                   }`}
                 >
-                  <span className="flex items-center gap-2">
-                    <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <span className="flex items-center gap-1.5">
+                    <svg className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V3" />
                     </svg>
                     <span>IMPORT TRANSACTION</span>
                   </span>
                   <svg 
-                    className={`w-3.5 h-3.5 transition-transform duration-200 ${importDropdownOpen ? 'rotate-180' : ''}`} 
+                    className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-150 ${importDropdownOpen ? 'rotate-180 text-slate-700' : ''}`} 
                     fill="none" 
                     viewBox="0 0 24 24" 
                     stroke="currentColor" 
-                    strokeWidth={2.2}
+                    strokeWidth={2}
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
 
                 {importDropdownOpen && (
-                  <div className="lg:absolute left-0 top-full mt-1.5 w-full lg:w-64 bg-white border border-slate-200/90 rounded-xl shadow-xl shadow-slate-900/10 p-1.5 z-50 animate-in fade-in slide-in-from-top-1">
+                  <div className="lg:absolute left-0 top-full mt-1.5 w-52 bg-white border border-slate-200 rounded-lg shadow-xl shadow-slate-900/10 py-1 z-[100] animate-in fade-in-50 zoom-in-95 duration-100">
                     <button
                       type="button"
                       onClick={() => {
@@ -3085,24 +3084,22 @@ export default function App() {
                         setImportDropdownOpen(false);
                         setMobileMenuOpen(false);
                       }}
-                      className={`w-full text-left p-2 rounded-lg transition-all flex items-center gap-3 ${
-                        activeTab === 'convert' ? 'bg-slate-900 text-white shadow-sm' : 'hover:bg-slate-50 text-slate-800'
+                      className={`w-full flex items-center justify-between px-3 py-2 text-xs transition-colors ${
+                        activeTab === 'convert'
+                          ? 'text-indigo-600 bg-indigo-50/70 font-semibold'
+                          : 'text-slate-700 hover:text-slate-900 hover:bg-slate-50 font-medium'
                       }`}
                     >
-                      <div className={`w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 ${
-                        activeTab === 'convert' ? 'bg-slate-800 text-white' : 'bg-rose-50 text-rose-600 border border-rose-100'
-                      }`}>
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <div className="flex items-center gap-2">
+                        <svg className={`w-4 h-4 ${activeTab === 'convert' ? 'text-indigo-600' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                           <path strokeLinecap="round" strokeLinejoin="round" d="M9 13h6m-6 4h4" />
                         </svg>
+                        <span>PDF to Tally</span>
                       </div>
-                      <div>
-                        <div className="text-xs font-bold leading-tight">PDF TO TALLY</div>
-                        <div className={`text-[10px] leading-tight mt-0.5 ${activeTab === 'convert' ? 'text-slate-300' : 'text-slate-400'}`}>
-                          Bank Statement PDF Converter
-                        </div>
-                      </div>
+                      {activeTab === 'convert' && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>
+                      )}
                     </button>
 
                     <button
@@ -3113,64 +3110,61 @@ export default function App() {
                         setImportDropdownOpen(false);
                         setMobileMenuOpen(false);
                       }}
-                      className={`w-full text-left p-2 rounded-lg transition-all flex items-center gap-3 mt-1 ${
-                        activeTab === 'csv' ? 'bg-slate-900 text-white shadow-sm' : 'hover:bg-slate-50 text-slate-800'
+                      className={`w-full flex items-center justify-between px-3 py-2 text-xs transition-colors ${
+                        activeTab === 'csv'
+                          ? 'text-indigo-600 bg-indigo-50/70 font-semibold'
+                          : 'text-slate-700 hover:text-slate-900 hover:bg-slate-50 font-medium'
                       }`}
                     >
-                      <div className={`w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 ${
-                        activeTab === 'csv' ? 'bg-slate-800 text-white' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'
-                      }`}>
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <div className="flex items-center gap-2">
+                        <svg className={`w-4 h-4 ${activeTab === 'csv' ? 'text-indigo-600' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 4h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
+                        <span>CSV to Tally</span>
                       </div>
-                      <div>
-                        <div className="text-xs font-bold leading-tight">CSV TO TALLY</div>
-                        <div className={`text-[10px] leading-tight mt-0.5 ${activeTab === 'csv' ? 'text-slate-300' : 'text-slate-400'}`}>
-                          Multi-Voucher CSV Importer
-                        </div>
-                      </div>
+                      {activeTab === 'csv' && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>
+                      )}
                     </button>
                   </div>
                 )}
               </div>
 
-              {/* 2. CONFIGURATION (Dropdown: CLIENT DOSSIER, LEDGER RULES, CLOUD XML VAULT) */}
-              <div 
-                ref={configMenuRef}
-                className="relative flex-shrink-0"
-                onMouseEnter={() => setConfigDropdownOpen(true)}
-                onMouseLeave={() => setConfigDropdownOpen(false)}
-              >
+              {/* 2. CONFIGURATION (Dropdown) */}
+              <div ref={configMenuRef} className="relative flex-shrink-0">
                 <button
                   type="button"
-                  onClick={() => setConfigDropdownOpen(prev => !prev)}
-                  className={`w-full lg:w-auto px-3.5 py-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-between lg:justify-start gap-2 whitespace-nowrap ${
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setConfigDropdownOpen(prev => !prev);
+                    setImportDropdownOpen(false);
+                  }}
+                  className={`w-full lg:w-auto px-3 py-1.5 text-xs rounded-md transition-colors flex items-center justify-between lg:justify-start gap-1.5 whitespace-nowrap ${
                     (activeTab === 'clients' || activeTab === 'rules' || activeTab === 'history')
-                      ? 'bg-slate-900 text-white shadow-sm'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                      ? 'text-slate-900 bg-slate-100 font-semibold border border-slate-200/90 shadow-2xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 font-medium'
                   }`}
                 >
-                  <span className="flex items-center gap-2">
-                    <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <span className="flex items-center gap-1.5">
+                    <svg className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                       <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                     <span>CONFIGURATION</span>
                   </span>
                   <svg 
-                    className={`w-3.5 h-3.5 transition-transform duration-200 ${configDropdownOpen ? 'rotate-180' : ''}`} 
+                    className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-150 ${configDropdownOpen ? 'rotate-180 text-slate-700' : ''}`} 
                     fill="none" 
                     viewBox="0 0 24 24" 
                     stroke="currentColor" 
-                    strokeWidth={2.2}
+                    strokeWidth={2}
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
 
                 {configDropdownOpen && (
-                  <div className="lg:absolute left-0 top-full mt-1.5 w-full lg:w-68 bg-white border border-slate-200/90 rounded-xl shadow-xl shadow-slate-900/10 p-1.5 z-50 animate-in fade-in slide-in-from-top-1">
+                  <div className="lg:absolute left-0 top-full mt-1.5 w-56 bg-white border border-slate-200 rounded-lg shadow-xl shadow-slate-900/10 py-1 z-[100] animate-in fade-in-50 zoom-in-95 duration-100">
                     <button
                       type="button"
                       onClick={() => {
@@ -3180,23 +3174,21 @@ export default function App() {
                         setConfigDropdownOpen(false);
                         setMobileMenuOpen(false);
                       }}
-                      className={`w-full text-left p-2 rounded-lg transition-all flex items-center gap-3 ${
-                        activeTab === 'clients' ? 'bg-slate-900 text-white shadow-sm' : 'hover:bg-slate-50 text-slate-800'
+                      className={`w-full flex items-center justify-between px-3 py-2 text-xs transition-colors ${
+                        activeTab === 'clients'
+                          ? 'text-indigo-600 bg-indigo-50/70 font-semibold'
+                          : 'text-slate-700 hover:text-slate-900 hover:bg-slate-50 font-medium'
                       }`}
                     >
-                      <div className={`w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 ${
-                        activeTab === 'clients' ? 'bg-slate-800 text-white' : 'bg-indigo-50 text-indigo-600 border border-indigo-100'
-                      }`}>
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <div className="flex items-center gap-2">
+                        <svg className={`w-4 h-4 ${activeTab === 'clients' ? 'text-indigo-600' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                         </svg>
+                        <span>Client Dossier</span>
                       </div>
-                      <div>
-                        <div className="text-xs font-bold leading-tight">CLIENT DOSSIER</div>
-                        <div className={`text-[10px] leading-tight mt-0.5 ${activeTab === 'clients' ? 'text-slate-300' : 'text-slate-400'}`}>
-                          Practice Workspace & Audit Matrix
-                        </div>
-                      </div>
+                      {activeTab === 'clients' && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>
+                      )}
                     </button>
 
                     <button
@@ -3207,23 +3199,21 @@ export default function App() {
                         setConfigDropdownOpen(false);
                         setMobileMenuOpen(false);
                       }}
-                      className={`w-full text-left p-2 rounded-lg transition-all flex items-center gap-3 mt-1 ${
-                        activeTab === 'rules' ? 'bg-slate-900 text-white shadow-sm' : 'hover:bg-slate-50 text-slate-800'
+                      className={`w-full flex items-center justify-between px-3 py-2 text-xs transition-colors ${
+                        activeTab === 'rules'
+                          ? 'text-indigo-600 bg-indigo-50/70 font-semibold'
+                          : 'text-slate-700 hover:text-slate-900 hover:bg-slate-50 font-medium'
                       }`}
                     >
-                      <div className={`w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 ${
-                        activeTab === 'rules' ? 'bg-slate-800 text-white' : 'bg-amber-50 text-amber-600 border border-amber-100'
-                      }`}>
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <div className="flex items-center gap-2">
+                        <svg className={`w-4 h-4 ${activeTab === 'rules' ? 'text-indigo-600' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
                         </svg>
+                        <span>Ledger Rules</span>
                       </div>
-                      <div>
-                        <div className="text-xs font-bold leading-tight">LEDGER RULES</div>
-                        <div className={`text-[10px] leading-tight mt-0.5 ${activeTab === 'rules' ? 'text-slate-300' : 'text-slate-400'}`}>
-                          Automated Counter Ledger Heuristics
-                        </div>
-                      </div>
+                      {activeTab === 'rules' && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>
+                      )}
                     </button>
 
                     <button
@@ -3234,23 +3224,21 @@ export default function App() {
                         setConfigDropdownOpen(false);
                         setMobileMenuOpen(false);
                       }}
-                      className={`w-full text-left p-2 rounded-lg transition-all flex items-center gap-3 mt-1 ${
-                        activeTab === 'history' ? 'bg-slate-900 text-white shadow-sm' : 'hover:bg-slate-50 text-slate-800'
+                      className={`w-full flex items-center justify-between px-3 py-2 text-xs transition-colors ${
+                        activeTab === 'history'
+                          ? 'text-indigo-600 bg-indigo-50/70 font-semibold'
+                          : 'text-slate-700 hover:text-slate-900 hover:bg-slate-50 font-medium'
                       }`}
                     >
-                      <div className={`w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 ${
-                        activeTab === 'history' ? 'bg-slate-800 text-white' : 'bg-sky-50 text-sky-600 border border-sky-100'
-                      }`}>
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <div className="flex items-center gap-2">
+                        <svg className={`w-4 h-4 ${activeTab === 'history' ? 'text-indigo-600' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 00-9.78 2.096A4.001 4.001 0 003 15z" />
                         </svg>
+                        <span>Cloud XML Vault</span>
                       </div>
-                      <div>
-                        <div className="text-xs font-bold leading-tight">CLOUD XML VAULT</div>
-                        <div className={`text-[10px] leading-tight mt-0.5 ${activeTab === 'history' ? 'text-slate-300' : 'text-slate-400'}`}>
-                          Permanent Cloud Storage & History
-                        </div>
-                      </div>
+                      {activeTab === 'history' && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>
+                      )}
                     </button>
                   </div>
                 )}
@@ -3266,16 +3254,16 @@ export default function App() {
                   setImportDropdownOpen(false);
                   setConfigDropdownOpen(false);
                 }}
-                className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-between lg:justify-start gap-2 whitespace-nowrap flex-shrink-0 ${
-                  activeTab === 'wallet' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                className={`px-3 py-1.5 text-xs rounded-md transition-colors flex items-center justify-between lg:justify-start gap-1.5 whitespace-nowrap flex-shrink-0 ${
+                  activeTab === 'wallet'
+                    ? 'text-slate-900 bg-slate-100 font-semibold border border-slate-200/90 shadow-2xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 font-medium'
                 }`}
               >
-                <span className="flex items-center gap-2">
-                  <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                  </svg>
-                  <span>CREDITS</span>
-                </span>
+                <svg className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                </svg>
+                <span>CREDITS</span>
               </button>
 
               {/* 4. SUPPORT */}
@@ -3288,16 +3276,16 @@ export default function App() {
                   setImportDropdownOpen(false);
                   setConfigDropdownOpen(false);
                 }}
-                className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-between lg:justify-start gap-2 whitespace-nowrap flex-shrink-0 ${
-                  activeTab === 'support' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                className={`px-3 py-1.5 text-xs rounded-md transition-colors flex items-center justify-between lg:justify-start gap-1.5 whitespace-nowrap flex-shrink-0 ${
+                  activeTab === 'support'
+                    ? 'text-slate-900 bg-slate-100 font-semibold border border-slate-200/90 shadow-2xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 font-medium'
                 }`}
               >
-                <span className="flex items-center gap-2">
-                  <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
-                  </svg>
-                  <span>SUPPORT</span>
-                </span>
+                <svg className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                <span>SUPPORT</span>
               </button>
 
               {/* 5. PROFILE */}
@@ -3315,16 +3303,16 @@ export default function App() {
                   setImportDropdownOpen(false);
                   setConfigDropdownOpen(false);
                 }}
-                className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-between lg:justify-start gap-2 whitespace-nowrap flex-shrink-0 ${
-                  activeTab === 'settings' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                className={`px-3 py-1.5 text-xs rounded-md transition-colors flex items-center justify-between lg:justify-start gap-1.5 whitespace-nowrap flex-shrink-0 ${
+                  activeTab === 'settings'
+                    ? 'text-slate-900 bg-slate-100 font-semibold border border-slate-200/90 shadow-2xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 font-medium'
                 }`}
               >
-                <span className="flex items-center gap-2">
-                  <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                  <span>PROFILE</span>
-                </span>
+                <svg className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <span>PROFILE</span>
               </button>
 
               {/* ADMIN CONSOLE (Preserved for Administrators) */}
@@ -3338,30 +3326,30 @@ export default function App() {
                     setImportDropdownOpen(false);
                     setConfigDropdownOpen(false);
                   }}
-                  className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-between lg:justify-start gap-2 whitespace-nowrap flex-shrink-0 ${
-                    activeTab === 'admin' ? 'bg-indigo-600 text-white shadow-sm' : 'text-indigo-600 hover:bg-indigo-50 border border-indigo-200'
+                  className={`px-3 py-1.5 text-xs rounded-md transition-colors flex items-center justify-between lg:justify-start gap-1.5 whitespace-nowrap flex-shrink-0 ${
+                    activeTab === 'admin'
+                      ? 'text-indigo-600 bg-indigo-50 font-semibold border border-indigo-200 shadow-2xs'
+                      : 'text-indigo-600 hover:bg-indigo-50/70 font-medium'
                   }`}
                 >
-                  <span className="flex items-center gap-2">
-                    <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                    </svg>
-                    <span>ADMIN CONSOLE</span>
-                  </span>
+                  <svg className="w-4 h-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                  <span>ADMIN CONSOLE</span>
                 </button>
               )}
             </nav>
 
             {/* Right: User Credits status and logout */}
-            <div className="flex items-center justify-between sm:justify-end px-5 py-2.5 space-x-3 border-t lg:border-t-0 lg:border-l border-slate-200 bg-white flex-shrink-0 self-stretch lg:self-center">
-              <div className="flex items-center space-x-1.5 bg-emerald-50 border border-emerald-200/90 text-emerald-800 px-3 py-1.5 rounded-full shadow-sm flex-shrink-0">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span className="text-xs font-mono font-bold">{user.page_credits}</span>
-                <span className="text-[10px] font-semibold uppercase text-emerald-700 tracking-wider">Credits</span>
+            <div className="flex items-center justify-between sm:justify-end px-4 py-2 space-x-2.5 border-t lg:border-t-0 lg:border-l border-slate-200 bg-white flex-shrink-0 self-stretch lg:self-center">
+              <div className="flex items-center space-x-1.5 bg-slate-50 border border-slate-200 text-slate-800 px-2.5 py-1 rounded-md shadow-2xs flex-shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span className="text-xs font-mono font-semibold">{user.page_credits}</span>
+                <span className="text-[10px] font-medium uppercase text-slate-500 tracking-wider">Credits</span>
               </div>
               <button
                 onClick={handleLogout}
-                className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-200 shadow-sm transition-all flex-shrink-0"
+                className="px-2.5 py-1 rounded-md border border-slate-200 text-xs font-medium text-slate-600 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-200 transition-colors flex-shrink-0 shadow-2xs"
               >
                 Logout
               </button>
@@ -3370,9 +3358,9 @@ export default function App() {
         </div>
 
         {/* Active Client Practice Workspace Bar */}
-        <div className="bg-slate-900 text-slate-200 border-t border-slate-800 px-6 py-2.5 flex flex-wrap items-center justify-between text-xs gap-3">
-          <div className="flex flex-wrap items-center gap-2.5">
-            <span className="text-[11px] font-semibold text-slate-400 flex items-center gap-1.5 tracking-wide uppercase">
+        <div className="bg-slate-50/90 border-t border-slate-200/80 px-6 py-2 flex flex-wrap items-center justify-between text-xs gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[11px] font-semibold text-slate-500 flex items-center gap-1.5 tracking-wide uppercase">
               <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
@@ -3381,7 +3369,7 @@ export default function App() {
             <select
               value={activeClientId}
               onChange={(e) => setActiveClientId(e.target.value)}
-              className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1 text-xs font-medium text-white focus:outline-none focus:ring-1 focus:ring-indigo-400 cursor-pointer"
+              className="bg-white border border-slate-200 rounded-md px-2.5 py-1 text-xs font-medium text-slate-800 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer shadow-2xs"
             >
               <option value="">(All Clients / General Practice)</option>
               {clientsList.map(c => (
@@ -3401,7 +3389,7 @@ export default function App() {
                     setActiveTab('clients');
                   }
                 }}
-                className="text-[11px] bg-indigo-600 hover:bg-indigo-500 text-white px-2.5 py-1 rounded-md font-semibold transition-all shadow-sm flex items-center gap-1.5"
+                className="text-[11px] bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded-md font-medium transition-colors shadow-2xs flex items-center gap-1.5"
               >
                 <span>Open Dossier</span>
                 <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -3415,9 +3403,9 @@ export default function App() {
             <button
               type="button"
               onClick={() => handleOpenClientModal()}
-              className="text-[11px] bg-slate-800 hover:bg-slate-700 text-white px-3 py-1 rounded-md font-semibold border border-slate-700 transition-all flex items-center gap-1.5"
+              className="text-[11px] bg-white hover:bg-slate-50 text-slate-700 px-2.5 py-1 rounded-md font-medium border border-slate-200 shadow-2xs transition-colors flex items-center gap-1.5"
             >
-              <svg className="w-3.5 h-3.5 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <svg className="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
               </svg>
               <span>Add Client Company</span>
@@ -3425,7 +3413,7 @@ export default function App() {
             <button
               type="button"
               onClick={() => { setActiveTab('clients'); setSelectedDossierClient(null); }}
-              className="text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1 rounded-md font-semibold border border-slate-700 transition-all flex items-center gap-1.5"
+              className="text-[11px] bg-white hover:bg-slate-50 text-slate-600 px-2.5 py-1 rounded-md font-medium border border-slate-200 shadow-2xs transition-colors flex items-center gap-1.5"
             >
               <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -3433,8 +3421,7 @@ export default function App() {
               <span>All Clients ({clientsList.length})</span>
             </button>
           </div>
-        </div>
-      </header>
+        </div>      </header>
 
       {/* Main Content Workspace */}
       <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
