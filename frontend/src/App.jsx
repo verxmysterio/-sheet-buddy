@@ -514,6 +514,36 @@ export default function App() {
   };
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  // Tally Prime Functional Hotkeys [F1] - [F5]
+  useEffect(() => {
+    const handleTallyHotkeys = (e) => {
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
+      if (e.key === 'F1') {
+        e.preventDefault();
+        setActiveTab('convert');
+        setExecuteError('');
+      } else if (e.key === 'F2') {
+        e.preventDefault();
+        setActiveTab('clients');
+        setSelectedDossierClient(null);
+        setExecuteError('');
+      } else if (e.key === 'F3') {
+        e.preventDefault();
+        setActiveTab('wallet');
+        setExecuteError('');
+      } else if (e.key === 'F4') {
+        e.preventDefault();
+        setActiveTab('support');
+        setExecuteError('');
+      } else if (e.key === 'F5') {
+        e.preventDefault();
+        setActiveTab('settings');
+        setExecuteError('');
+      }
+    };
+    window.addEventListener('keydown', handleTallyHotkeys);
+    return () => window.removeEventListener('keydown', handleTallyHotkeys);
+  }, []);
   const [importDropdownOpen, setImportDropdownOpen] = useState(false);
   const [configDropdownOpen, setConfigDropdownOpen] = useState(false);
   const importMenuRef = useRef(null);
@@ -2986,7 +3016,7 @@ export default function App() {
             <span>A Complete Tally Supporting Tool • Since 2026</span>
             <span>•</span>
             <span>
-              Build with ❤️ by{" "}
+              Sheet Buddy Pro • Engineered for Chartered Accountants •{" "}
               <a
                 href="https://www.instagram.com/verx_mysterio?igsi=MzliODFvcWt0emhn"
                 target="_blank"
@@ -3006,26 +3036,26 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 antialiased font-sans">
       
-      {/* Top Header containing Navigation Menu, Logo, and User stats */}
-      <header className="bg-white/95 backdrop-blur-md border-b border-slate-200/90 sticky top-0 z-50 shadow-sm w-full max-w-full">
+      {/* Top Header containing Navigation Menu, Logo, and User stats (Tally Pro Terminal) */}
+      <header className="bg-[#0b192c] text-white border-b-2 border-[#1e3e62] sticky top-0 z-50 shadow-md w-full max-w-full">
         <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between w-full max-w-full">
           
-          {/* Left: Brand Logo & Mobile hamburger toggle */}
-          <div className="h-16 flex items-center justify-between px-6 border-b lg:border-b-0 lg:border-r border-slate-200 bg-white flex-shrink-0">
+          {/* Left: Brand Logo & Tally Prime Badge */}
+          <div className="h-14 flex items-center justify-between px-5 border-b lg:border-b-0 lg:border-r border-[#1e3e62] bg-[#0b192c] flex-shrink-0">
             <div className="flex items-center space-x-3 cursor-pointer select-none" onClick={() => { setActiveTab('convert'); setExecuteError(''); }}>
-              <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center p-1.5 shadow-sm">
-                <img src="/symbol_mark.svg" alt="Sheet Buddy Logo" className="w-full h-full object-contain" />
-              </div>
+              <span className="px-2 py-0.5 bg-[#008170] text-white font-extrabold text-[10px] rounded tracking-wider font-mono">
+                TALLY PRIME
+              </span>
               <div>
-                <span className="font-bold text-slate-900 text-base tracking-tight block leading-none">Sheet Buddy</span>
-                <span className="text-[10px] font-medium text-slate-400 block mt-1 tracking-normal">Tally Companion • 2026</span>
+                <span className="font-bold text-white text-sm tracking-tight block leading-none font-mono">Sheet Buddy Pro</span>
+                <span className="text-[10px] font-mono text-slate-400 block mt-1 tracking-normal">Accounting Suite • 2026</span>
               </div>
             </div>
 
             {/* Hamburger Icon button for mobile screen */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 focus:outline-none transition-colors"
+              className="lg:hidden p-2 rounded border border-[#1e3e62] bg-[#1e3e62]/40 hover:bg-[#1e3e62] text-slate-200 focus:outline-none transition-colors"
               aria-label="Toggle navigation"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -3040,9 +3070,9 @@ export default function App() {
 
           {/* Center Navigation & Action Controls */}
           <div className={`${mobileMenuOpen ? 'flex' : 'hidden'} lg:flex flex-col lg:flex-row flex-1 items-stretch lg:items-center justify-between min-w-0 overflow-visible`}>
-            <nav className="flex flex-col lg:flex-row lg:flex-nowrap items-stretch lg:items-center p-2 lg:p-0 lg:px-4 gap-1 flex-1 min-w-0 overflow-visible border-b lg:border-b-0 border-slate-200">
+            <nav className="flex flex-col lg:flex-row lg:flex-nowrap items-stretch lg:items-center p-2 lg:p-0 lg:px-4 gap-1.5 flex-1 min-w-0 overflow-visible border-b lg:border-b-0 border-[#1e3e62] font-mono text-xs">
               
-              {/* 1. IMPORT TRANSACTION (Dropdown) */}
+              {/* 1. [F1] IMPORT (Dropdown: PDF TO TALLY & CSV TO TALLY) */}
               <div ref={importMenuRef} className="relative flex-shrink-0">
                 <button
                   type="button"
@@ -3051,31 +3081,31 @@ export default function App() {
                     setImportDropdownOpen(prev => !prev);
                     setConfigDropdownOpen(false);
                   }}
-                  className={`w-full lg:w-auto px-3 py-1.5 text-xs rounded-md transition-colors flex items-center justify-between lg:justify-start gap-1.5 whitespace-nowrap ${
+                  className={`w-full lg:w-auto px-3 py-1.5 rounded transition-all flex items-center justify-between lg:justify-start gap-1.5 whitespace-nowrap font-mono ${
                     (activeTab === 'convert' || activeTab === 'csv')
-                      ? 'text-slate-900 bg-slate-100 font-semibold border border-slate-200/90 shadow-2xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 font-medium'
+                      ? 'bg-[#1e3e62] text-amber-300 font-bold border border-[#008170] shadow-sm'
+                      : 'text-slate-200 hover:text-white hover:bg-[#1e3e62]/60 font-semibold'
                   }`}
                 >
                   <span className="flex items-center gap-1.5">
-                    <svg className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                    <svg className="w-3.5 h-3.5 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V3" />
                     </svg>
-                    <span>IMPORT TRANSACTION</span>
+                    <span>[F1] IMPORT</span>
                   </span>
                   <svg 
-                    className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-150 ${importDropdownOpen ? 'rotate-180 text-slate-700' : ''}`} 
+                    className={`w-3 h-3 text-slate-400 transition-transform duration-150 ${importDropdownOpen ? 'rotate-180 text-amber-300' : ''}`} 
                     fill="none" 
                     viewBox="0 0 24 24" 
                     stroke="currentColor" 
-                    strokeWidth={2}
+                    strokeWidth={2.2}
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
 
                 {importDropdownOpen && (
-                  <div className="lg:absolute left-0 top-full mt-1.5 w-52 bg-white border border-slate-200 rounded-lg shadow-xl shadow-slate-900/10 py-1 z-[100] animate-in fade-in-50 zoom-in-95 duration-100">
+                  <div className="lg:absolute left-0 top-full mt-1 w-52 bg-[#0b192c] border-2 border-[#1e3e62] text-white rounded shadow-2xl py-1 z-[100] font-mono">
                     <button
                       type="button"
                       onClick={() => {
@@ -3086,19 +3116,19 @@ export default function App() {
                       }}
                       className={`w-full flex items-center justify-between px-3 py-2 text-xs transition-colors ${
                         activeTab === 'convert'
-                          ? 'text-indigo-600 bg-indigo-50/70 font-semibold'
-                          : 'text-slate-700 hover:text-slate-900 hover:bg-slate-50 font-medium'
+                          ? 'text-amber-300 bg-[#1e3e62] font-bold'
+                          : 'text-slate-200 hover:text-white hover:bg-[#1e3e62]/60'
                       }`}
                     >
                       <div className="flex items-center gap-2">
-                        <svg className={`w-4 h-4 ${activeTab === 'convert' ? 'text-indigo-600' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                        <svg className={`w-3.5 h-3.5 ${activeTab === 'convert' ? 'text-amber-300' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                           <path strokeLinecap="round" strokeLinejoin="round" d="M9 13h6m-6 4h4" />
                         </svg>
-                        <span>PDF to Tally</span>
+                        <span>[1] PDF to Tally</span>
                       </div>
                       {activeTab === 'convert' && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
                       )}
                     </button>
 
@@ -3112,25 +3142,25 @@ export default function App() {
                       }}
                       className={`w-full flex items-center justify-between px-3 py-2 text-xs transition-colors ${
                         activeTab === 'csv'
-                          ? 'text-indigo-600 bg-indigo-50/70 font-semibold'
-                          : 'text-slate-700 hover:text-slate-900 hover:bg-slate-50 font-medium'
+                          ? 'text-amber-300 bg-[#1e3e62] font-bold'
+                          : 'text-slate-200 hover:text-white hover:bg-[#1e3e62]/60'
                       }`}
                     >
                       <div className="flex items-center gap-2">
-                        <svg className={`w-4 h-4 ${activeTab === 'csv' ? 'text-indigo-600' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                        <svg className={`w-3.5 h-3.5 ${activeTab === 'csv' ? 'text-amber-300' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 4h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
-                        <span>CSV to Tally</span>
+                        <span>[2] CSV to Tally</span>
                       </div>
                       {activeTab === 'csv' && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
                       )}
                     </button>
                   </div>
                 )}
               </div>
 
-              {/* 2. CONFIGURATION (Dropdown) */}
+              {/* 2. [F2] CONFIGURATION (Dropdown) */}
               <div ref={configMenuRef} className="relative flex-shrink-0">
                 <button
                   type="button"
@@ -3139,32 +3169,32 @@ export default function App() {
                     setConfigDropdownOpen(prev => !prev);
                     setImportDropdownOpen(false);
                   }}
-                  className={`w-full lg:w-auto px-3 py-1.5 text-xs rounded-md transition-colors flex items-center justify-between lg:justify-start gap-1.5 whitespace-nowrap ${
+                  className={`w-full lg:w-auto px-3 py-1.5 rounded transition-all flex items-center justify-between lg:justify-start gap-1.5 whitespace-nowrap font-mono ${
                     (activeTab === 'clients' || activeTab === 'rules' || activeTab === 'history')
-                      ? 'text-slate-900 bg-slate-100 font-semibold border border-slate-200/90 shadow-2xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 font-medium'
+                      ? 'bg-[#1e3e62] text-amber-300 font-bold border border-[#008170] shadow-sm'
+                      : 'text-slate-200 hover:text-white hover:bg-[#1e3e62]/60 font-semibold'
                   }`}
                 >
                   <span className="flex items-center gap-1.5">
-                    <svg className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                    <svg className="w-3.5 h-3.5 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                       <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
-                    <span>CONFIGURATION</span>
+                    <span>[F2] CONFIG</span>
                   </span>
                   <svg 
-                    className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-150 ${configDropdownOpen ? 'rotate-180 text-slate-700' : ''}`} 
+                    className={`w-3 h-3 text-slate-400 transition-transform duration-150 ${configDropdownOpen ? 'rotate-180 text-amber-300' : ''}`} 
                     fill="none" 
                     viewBox="0 0 24 24" 
                     stroke="currentColor" 
-                    strokeWidth={2}
+                    strokeWidth={2.2}
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
 
                 {configDropdownOpen && (
-                  <div className="lg:absolute left-0 top-full mt-1.5 w-56 bg-white border border-slate-200 rounded-lg shadow-xl shadow-slate-900/10 py-1 z-[100] animate-in fade-in-50 zoom-in-95 duration-100">
+                  <div className="lg:absolute left-0 top-full mt-1 w-56 bg-[#0b192c] border-2 border-[#1e3e62] text-white rounded shadow-2xl py-1 z-[100] font-mono">
                     <button
                       type="button"
                       onClick={() => {
@@ -3176,18 +3206,18 @@ export default function App() {
                       }}
                       className={`w-full flex items-center justify-between px-3 py-2 text-xs transition-colors ${
                         activeTab === 'clients'
-                          ? 'text-indigo-600 bg-indigo-50/70 font-semibold'
-                          : 'text-slate-700 hover:text-slate-900 hover:bg-slate-50 font-medium'
+                          ? 'text-amber-300 bg-[#1e3e62] font-bold'
+                          : 'text-slate-200 hover:text-white hover:bg-[#1e3e62]/60'
                       }`}
                     >
                       <div className="flex items-center gap-2">
-                        <svg className={`w-4 h-4 ${activeTab === 'clients' ? 'text-indigo-600' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                        <svg className={`w-3.5 h-3.5 ${activeTab === 'clients' ? 'text-amber-300' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                         </svg>
-                        <span>Client Dossier</span>
+                        <span>[1] Client Dossiers</span>
                       </div>
                       {activeTab === 'clients' && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
                       )}
                     </button>
 
@@ -3201,18 +3231,18 @@ export default function App() {
                       }}
                       className={`w-full flex items-center justify-between px-3 py-2 text-xs transition-colors ${
                         activeTab === 'rules'
-                          ? 'text-indigo-600 bg-indigo-50/70 font-semibold'
-                          : 'text-slate-700 hover:text-slate-900 hover:bg-slate-50 font-medium'
+                          ? 'text-amber-300 bg-[#1e3e62] font-bold'
+                          : 'text-slate-200 hover:text-white hover:bg-[#1e3e62]/60'
                       }`}
                     >
                       <div className="flex items-center gap-2">
-                        <svg className={`w-4 h-4 ${activeTab === 'rules' ? 'text-indigo-600' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                        <svg className={`w-3.5 h-3.5 ${activeTab === 'rules' ? 'text-amber-300' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
                         </svg>
-                        <span>Ledger Rules</span>
+                        <span>[2] Ledger Rules</span>
                       </div>
                       {activeTab === 'rules' && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
                       )}
                     </button>
 
@@ -3226,25 +3256,25 @@ export default function App() {
                       }}
                       className={`w-full flex items-center justify-between px-3 py-2 text-xs transition-colors ${
                         activeTab === 'history'
-                          ? 'text-indigo-600 bg-indigo-50/70 font-semibold'
-                          : 'text-slate-700 hover:text-slate-900 hover:bg-slate-50 font-medium'
+                          ? 'text-amber-300 bg-[#1e3e62] font-bold'
+                          : 'text-slate-200 hover:text-white hover:bg-[#1e3e62]/60'
                       }`}
                     >
                       <div className="flex items-center gap-2">
-                        <svg className={`w-4 h-4 ${activeTab === 'history' ? 'text-indigo-600' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                        <svg className={`w-3.5 h-3.5 ${activeTab === 'history' ? 'text-amber-300' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 00-9.78 2.096A4.001 4.001 0 003 15z" />
                         </svg>
-                        <span>Cloud XML Vault</span>
+                        <span>[3] Cloud XML Vault</span>
                       </div>
                       {activeTab === 'history' && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
                       )}
                     </button>
                   </div>
                 )}
               </div>
 
-              {/* 3. CREDITS */}
+              {/* 3. [F3] CREDITS */}
               <button
                 type="button"
                 onClick={() => {
@@ -3254,19 +3284,16 @@ export default function App() {
                   setImportDropdownOpen(false);
                   setConfigDropdownOpen(false);
                 }}
-                className={`px-3 py-1.5 text-xs rounded-md transition-colors flex items-center justify-between lg:justify-start gap-1.5 whitespace-nowrap flex-shrink-0 ${
+                className={`px-3 py-1.5 rounded transition-all flex items-center justify-between lg:justify-start gap-1.5 whitespace-nowrap flex-shrink-0 font-mono ${
                   activeTab === 'wallet'
-                    ? 'text-slate-900 bg-slate-100 font-semibold border border-slate-200/90 shadow-2xs'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 font-medium'
+                    ? 'bg-[#1e3e62] text-amber-300 font-bold border border-[#008170] shadow-sm'
+                    : 'text-slate-200 hover:text-white hover:bg-[#1e3e62]/60 font-semibold'
                 }`}
               >
-                <svg className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                </svg>
-                <span>CREDITS</span>
+                <span>[F3] CREDITS</span>
               </button>
 
-              {/* 4. SUPPORT */}
+              {/* 4. [F4] SUPPORT */}
               <button
                 type="button"
                 onClick={() => {
@@ -3276,19 +3303,16 @@ export default function App() {
                   setImportDropdownOpen(false);
                   setConfigDropdownOpen(false);
                 }}
-                className={`px-3 py-1.5 text-xs rounded-md transition-colors flex items-center justify-between lg:justify-start gap-1.5 whitespace-nowrap flex-shrink-0 ${
+                className={`px-3 py-1.5 rounded transition-all flex items-center justify-between lg:justify-start gap-1.5 whitespace-nowrap flex-shrink-0 font-mono ${
                   activeTab === 'support'
-                    ? 'text-slate-900 bg-slate-100 font-semibold border border-slate-200/90 shadow-2xs'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 font-medium'
+                    ? 'bg-[#1e3e62] text-amber-300 font-bold border border-[#008170] shadow-sm'
+                    : 'text-slate-200 hover:text-white hover:bg-[#1e3e62]/60 font-semibold'
                 }`}
               >
-                <svg className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-                <span>SUPPORT</span>
+                <span>[F4] SUPPORT</span>
               </button>
 
-              {/* 5. PROFILE */}
+              {/* 5. [F5] PROFILE */}
               <button
                 type="button"
                 onClick={() => {
@@ -3303,19 +3327,16 @@ export default function App() {
                   setImportDropdownOpen(false);
                   setConfigDropdownOpen(false);
                 }}
-                className={`px-3 py-1.5 text-xs rounded-md transition-colors flex items-center justify-between lg:justify-start gap-1.5 whitespace-nowrap flex-shrink-0 ${
+                className={`px-3 py-1.5 rounded transition-all flex items-center justify-between lg:justify-start gap-1.5 whitespace-nowrap flex-shrink-0 font-mono ${
                   activeTab === 'settings'
-                    ? 'text-slate-900 bg-slate-100 font-semibold border border-slate-200/90 shadow-2xs'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 font-medium'
+                    ? 'bg-[#1e3e62] text-amber-300 font-bold border border-[#008170] shadow-sm'
+                    : 'text-slate-200 hover:text-white hover:bg-[#1e3e62]/60 font-semibold'
                 }`}
               >
-                <svg className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                <span>PROFILE</span>
+                <span>[F5] PROFILE</span>
               </button>
 
-              {/* ADMIN CONSOLE (Preserved for Administrators) */}
+              {/* ADMIN CONSOLE */}
               {user.is_admin && (
                 <button
                   type="button"
@@ -3326,52 +3347,45 @@ export default function App() {
                     setImportDropdownOpen(false);
                     setConfigDropdownOpen(false);
                   }}
-                  className={`px-3 py-1.5 text-xs rounded-md transition-colors flex items-center justify-between lg:justify-start gap-1.5 whitespace-nowrap flex-shrink-0 ${
+                  className={`px-3 py-1.5 rounded transition-all flex items-center justify-between lg:justify-start gap-1.5 whitespace-nowrap flex-shrink-0 font-mono ${
                     activeTab === 'admin'
-                      ? 'text-indigo-600 bg-indigo-50 font-semibold border border-indigo-200 shadow-2xs'
-                      : 'text-indigo-600 hover:bg-indigo-50/70 font-medium'
+                      ? 'bg-amber-400 text-[#0b192c] font-bold shadow-sm'
+                      : 'text-amber-400 hover:bg-[#1e3e62]/60 font-semibold border border-amber-400/40'
                   }`}
                 >
-                  <svg className="w-4 h-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                  </svg>
-                  <span>ADMIN CONSOLE</span>
+                  <span>[ADMIN] CONSOLE</span>
                 </button>
               )}
             </nav>
 
-            {/* Right: User Credits status and logout */}
-            <div className="flex items-center justify-between sm:justify-end px-4 py-2 space-x-2.5 border-t lg:border-t-0 lg:border-l border-slate-200 bg-white flex-shrink-0 self-stretch lg:self-center">
-              <div className="flex items-center space-x-1.5 bg-slate-50 border border-slate-200 text-slate-800 px-2.5 py-1 rounded-md shadow-2xs flex-shrink-0">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span className="text-xs font-mono font-semibold">{user.page_credits}</span>
-                <span className="text-[10px] font-medium uppercase text-slate-500 tracking-wider">Credits</span>
+            {/* Right: Credits Counter in Tally Gold & Logout */}
+            <div className="flex items-center justify-between sm:justify-end px-4 py-2 space-x-2.5 border-t lg:border-t-0 lg:border-l border-[#1e3e62] bg-[#0b192c] flex-shrink-0 self-stretch lg:self-center font-mono">
+              <div className="flex items-center space-x-1.5 bg-[#1e3e62] border border-[#008170]/50 text-amber-300 px-3 py-1 rounded shadow-sm flex-shrink-0">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span className="text-xs font-bold">CREDITS: {user.page_credits}</span>
               </div>
               <button
                 onClick={handleLogout}
-                className="px-2.5 py-1 rounded-md border border-slate-200 text-xs font-medium text-slate-600 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-200 transition-colors flex-shrink-0 shadow-2xs"
+                className="px-2.5 py-1 rounded border border-[#1e3e62] text-xs font-semibold text-slate-300 hover:text-rose-400 hover:bg-rose-950/40 transition-colors flex-shrink-0"
               >
-                Logout
+                [Esc] Exit
               </button>
             </div>
           </div>
         </div>
 
-        {/* Active Client Practice Workspace Bar */}
-        <div className="bg-slate-50/90 border-t border-slate-200/80 px-6 py-2 flex flex-wrap items-center justify-between text-xs gap-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[11px] font-semibold text-slate-500 flex items-center gap-1.5 tracking-wide uppercase">
-              <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-              <span>Workspace:</span>
+        {/* Tier 2: Company Practice Header (Tally Ruled Sub-Bar) */}
+        <div className="bg-[#1e3e62]/20 border-b border-slate-300 px-6 py-2 flex flex-wrap items-center justify-between text-xs font-mono text-slate-900 bg-slate-100">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <span className="text-[11px] font-bold text-[#0b192c] flex items-center gap-1.5 tracking-wider uppercase">
+              COMPANY:
             </span>
             <select
               value={activeClientId}
               onChange={(e) => setActiveClientId(e.target.value)}
-              className="bg-white border border-slate-200 rounded-md px-2.5 py-1 text-xs font-medium text-slate-800 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer shadow-2xs"
+              className="bg-white border-2 border-slate-400 rounded px-2.5 py-1 text-xs font-bold text-[#0b192c] focus:outline-none focus:border-[#008170] cursor-pointer shadow-sm font-mono"
             >
-              <option value="">(All Clients / General Practice)</option>
+              <option value="">(All Practice Accounts / General)</option>
               {clientsList.map(c => (
                 <option key={c.id} value={c.id}>
                   {c.name} {c.financial_year ? `[FY ${c.financial_year}]` : ''}
@@ -3389,41 +3403,31 @@ export default function App() {
                     setActiveTab('clients');
                   }
                 }}
-                className="text-[11px] bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded-md font-medium transition-colors shadow-2xs flex items-center gap-1.5"
+                className="text-[11px] bg-[#008170] hover:bg-[#006e5f] text-white px-2.5 py-1 rounded font-bold transition-colors shadow-sm flex items-center gap-1 font-mono"
               >
-                <span>Open Dossier</span>
-                <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                </svg>
+                <span>[Alt+D] Open Dossier</span>
               </button>
             )}
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 font-mono">
             <button
               type="button"
               onClick={() => handleOpenClientModal()}
-              className="text-[11px] bg-white hover:bg-slate-50 text-slate-700 px-2.5 py-1 rounded-md font-medium border border-slate-200 shadow-2xs transition-colors flex items-center gap-1.5"
+              className="text-[11px] bg-white hover:bg-slate-50 text-slate-900 px-2.5 py-1 rounded font-bold border-2 border-slate-400 shadow-sm transition-colors flex items-center gap-1.5"
             >
-              <svg className="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-              </svg>
-              <span>Add Client Company</span>
+              <span>+ Add Company</span>
             </button>
             <button
               type="button"
               onClick={() => { setActiveTab('clients'); setSelectedDossierClient(null); }}
-              className="text-[11px] bg-white hover:bg-slate-50 text-slate-600 px-2.5 py-1 rounded-md font-medium border border-slate-200 shadow-2xs transition-colors flex items-center gap-1.5"
+              className="text-[11px] bg-white hover:bg-slate-50 text-slate-800 px-2.5 py-1 rounded font-bold border-2 border-slate-400 shadow-sm transition-colors flex items-center gap-1.5"
             >
-              <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              <span>All Clients ({clientsList.length})</span>
+              <span>All Companies ({clientsList.length})</span>
             </button>
           </div>
-        </div>      </header>
-
-      {/* Main Content Workspace */}
+        </div>
+      </header>{/* Main Content Workspace */}
       <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
 
         {checkoutSession ? (
@@ -3471,7 +3475,7 @@ export default function App() {
 
             <div className="bg-amber-50 rounded-xl border border-amber-200 p-4 text-xs font-medium text-amber-900 space-y-2 leading-relaxed">
               <p className="font-bold text-amber-950 flex items-center gap-1.5">
-                <span>⚠️</span> Action Required:
+                <span className="text-amber-500 font-bold font-mono">[!]</span> Action Required:
               </p>
               <p>
                 Please pay exactly <span className="font-bold font-mono text-amber-950">₹{checkoutSession.amount.toFixed(2)}</span> using the QR code above.
@@ -3511,65 +3515,74 @@ export default function App() {
           </div>
         ) : (
           <>
-        {/* --- TAB 1: CONVERT STATEMENT --- */}
+        {/* --- TAB 1: CONVERT STATEMENT (Option 2: Tally Pro Terminal) --- */}
         {activeTab === 'convert' && (
-          <div className="space-y-6">
+          <div className="space-y-5 max-w-7xl mx-auto">
             
             {/* Top Brand Banner */}
             {!parsedSummary && (
-              <div className="bg-white text-slate-800 p-5 rounded-xl border border-slate-200/90 shadow-2xs max-w-2xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="bg-white text-slate-800 p-4 rounded-lg border-2 border-slate-400 shadow-sm max-w-2xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 font-mono">
                 <div className="flex items-center space-x-3.5">
-                  <div className="w-10 h-10 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center p-1.5 flex-shrink-0">
-                    <img src="/symbol_mark.svg" alt="Sheet Buddy" className="w-full h-full object-contain" />
+                  <div className="w-10 h-10 rounded bg-[#0b192c] border border-[#1e3e62] flex items-center justify-center p-1.5 flex-shrink-0">
+                    <img src="/symbol_mark.svg" alt="Sheet Buddy" className="w-full h-full object-contain filter invert" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider block">BANK STATEMENT → TALLY VOUCHERS</span>
-                    <p className="text-xs font-medium text-slate-500 mt-0.5">Fast, Automated & Mathematically Reconciled XML Export</p>
+                    <span className="text-[11px] font-bold text-[#0b192c] uppercase tracking-wider block">BANK STATEMENT → TALLY XML BRIDGE</span>
+                    <p className="text-xs font-mono text-slate-500 mt-0.5">Automated Coordinate Parser & Reconciled Voucher Engine</p>
                   </div>
                 </div>
-                <span className="px-2.5 py-1 bg-slate-100 text-slate-600 text-[10px] font-semibold rounded-full border border-slate-200">SINCE 2026</span>
+                <span className="px-2.5 py-1 bg-[#008170] text-white text-[10px] font-bold rounded tracking-wider uppercase font-mono">
+                  TALLY PRIME ENGINE
+                </span>
               </div>
             )}
             
             {/* UPLOAD FORM */}
             {!parsedSummary && (
-              <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xl shadow-slate-200/40 p-6 sm:p-8 max-w-2xl mx-auto space-y-6">
-                <div className="flex items-center space-x-3.5 bg-slate-50 p-4 rounded-xl border border-slate-200/80">
-                  <div className="w-9 h-9 rounded-xl bg-slate-900 flex items-center justify-center p-1.5 text-white flex-shrink-0">
-                    <img src="/app_icon_yellow.svg" alt="SB Icon" className="w-6 h-6 object-contain" />
+              <div className="bg-white rounded-lg border-2 border-slate-400 shadow-sm p-6 sm:p-7 max-w-2xl mx-auto space-y-5 font-mono">
+                <div className="flex items-center justify-between bg-[#0b192c] text-white p-3.5 rounded border border-[#1e3e62]">
+                  <div className="flex items-center space-x-3">
+                    <span className="px-2 py-0.5 bg-[#008170] text-white font-extrabold text-[10px] rounded tracking-wider">
+                      [F1]
+                    </span>
+                    <div>
+                      <h2 className="text-sm font-bold tracking-tight">Import Bank Statement PDF</h2>
+                      <p className="text-[11px] text-slate-400">Extracts transaction coordinates & compiles Tally vouchers</p>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="text-base font-bold text-slate-900 tracking-tight">Import Bank Statement PDF</h2>
-                    <p className="text-xs text-slate-500 font-medium">Automatically parses statement coordinates into Tally Vouchers</p>
-                  </div>
+                  <span className="text-[10px] bg-[#1e3e62] text-amber-300 font-bold px-2 py-0.5 rounded border border-amber-400/30">
+                    MULTI-PDF READY
+                  </span>
                 </div>
 
-                <form onSubmit={handleUploadAndParse} className="space-y-5">
+                <form onSubmit={handleUploadAndParse} className="space-y-4">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">Select Bank Statement Format</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
+                      Select Bank Statement Format
+                    </label>
                     <select
                       value={supportedBanks.some(b => b.bank_key === bankName) ? bankName : (supportedBanks[0]?.bank_key || 'sbi')}
                       onChange={(e) => setBankName(e.target.value)}
-                      className="w-full px-3.5 py-2.5 text-xs font-medium border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-white transition-all"
+                      className="w-full px-3 py-2 text-xs font-mono font-bold border-2 border-slate-400 rounded focus:outline-none focus:border-[#008170] bg-white transition-colors"
                     >
                       {supportedBanks.map((b) => (
                         <option key={b.bank_key} value={b.bank_key}>{b.name}</option>
                       ))}
                     </select>
                     {supportedBanks.find((b) => b.name === bankName)?.parser_type === "SIMULATOR" && (
-                      <p className="mt-2 text-xs font-medium text-cyan-800 bg-cyan-50 border border-cyan-200 rounded-lg px-2.5 py-1 inline-block">
-                        MOCK SIMULATOR ACTIVE: You can upload any test PDF to try.
+                      <p className="mt-2 text-xs font-mono font-bold text-cyan-900 bg-cyan-50 border border-cyan-300 rounded px-2.5 py-1 inline-block">
+                        MOCK SIMULATOR ACTIVE: You can upload any test PDF to verify pipeline.
                       </p>
                     )}
                   </div>
 
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
-                      <label className="block text-xs font-semibold text-slate-700">
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide">
                         Upload Statement PDF(s)
                       </label>
-                      <span className="text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/80 rounded-full px-2.5 py-0.5">
-                        Multi-Upload Supported
+                      <span className="text-[10px] font-bold font-mono bg-slate-100 text-slate-700 border border-slate-300 rounded px-2 py-0.5">
+                        Batch Multi-Upload Supported
                       </span>
                     </div>
 
@@ -3590,17 +3603,17 @@ export default function App() {
                           setEditedLedgers({});
                         }
                       }}
-                      className="flex justify-center px-6 pt-8 pb-8 border-2 border-dashed border-slate-300 hover:border-indigo-500 hover:bg-slate-50/70 rounded-2xl cursor-pointer bg-slate-50/40 transition-all"
+                      className="flex justify-center px-6 pt-7 pb-7 border-2 border-dashed border-slate-400 hover:border-[#008170] hover:bg-amber-50/30 rounded-lg cursor-pointer bg-slate-50/60 transition-all font-mono"
                     >
-                      <div className="space-y-3 text-center">
-                        <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center mx-auto text-slate-600">
-                          <svg className="w-6 h-6 stroke-current fill-none" viewBox="0 0 24 24" strokeWidth="2">
+                      <div className="space-y-2.5 text-center">
+                        <div className="w-10 h-10 rounded bg-[#0b192c] text-amber-300 border border-[#1e3e62] flex items-center justify-center mx-auto">
+                          <svg className="w-5 h-5 stroke-current fill-none" viewBox="0 0 24 24" strokeWidth="2">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                           </svg>
                         </div>
-                        <div className="flex text-xs justify-center">
-                          <label className="relative cursor-pointer font-semibold text-indigo-600 hover:text-indigo-500">
-                            <span>Choose single or multiple statement PDFs</span>
+                        <div className="flex text-xs justify-center font-bold">
+                          <label className="relative cursor-pointer text-[#008170] hover:underline">
+                            <span>Browse single or multiple statement PDFs</span>
                             <input
                               type="file"
                               accept=".pdf"
@@ -3610,8 +3623,8 @@ export default function App() {
                             />
                           </label>
                         </div>
-                        <p className="text-[11px] text-slate-400 font-medium">
-                          Select single or multiple files • Drag & drop supported
+                        <p className="text-[11px] text-slate-500 font-mono">
+                          Drag and drop files here • PDF coordinate analysis
                         </p>
                       </div>
                     </div>
@@ -3619,86 +3632,87 @@ export default function App() {
 
                   {/* Multi-File or Single-File Selection Display */}
                   {selectedFiles.length > 1 ? (
-                    <div className="bg-slate-50 rounded-xl border border-slate-200/90 p-4 space-y-2.5">
-                      <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+                    <div className="bg-slate-50 rounded-lg border-2 border-slate-400 p-3 space-y-2 font-mono">
+                      <div className="flex items-center justify-between pb-2 border-b border-slate-300">
                         <div className="flex items-center space-x-2">
-                          <span className="bg-indigo-100 text-indigo-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                          <span className="bg-[#0b192c] text-white text-[10px] font-bold px-2 py-0.5 rounded">
                             {selectedFiles.length} FILES SELECTED
                           </span>
-                          <span className="text-[11px] font-mono font-medium text-slate-500">
+                          <span className="text-[11px] font-mono text-slate-600 font-bold">
                             Total: {(selectedFiles.reduce((acc, f) => acc + f.size, 0) / (1024 * 1024)).toFixed(2)} MB
                           </span>
                         </div>
                         <button
                           type="button"
                           onClick={() => { setSelectedFiles([]); setSelectedFile(null); }}
-                          className="text-[11px] text-rose-600 hover:text-rose-700 font-semibold"
+                          className="text-[11px] text-rose-700 hover:text-rose-900 font-bold"
                         >
                           Clear All
                         </button>
                       </div>
-                      <div className="max-h-40 overflow-y-auto space-y-1.5 pr-1 divide-y divide-slate-200/60">
+                      <div className="max-h-36 overflow-y-auto space-y-1 pr-1 divide-y divide-slate-200">
                         {selectedFiles.map((f, fIdx) => (
-                          <div key={fIdx} className="flex items-center justify-between pt-1.5 text-xs font-medium">
+                          <div key={fIdx} className="flex items-center justify-between pt-1 text-xs">
                             <div className="flex items-center space-x-2 truncate max-w-sm">
-                              <span className="text-[10px] font-mono text-slate-400">#{fIdx + 1}</span>
-                              <span className="text-slate-800 truncate font-mono text-[11px]">{f.name}</span>
-                              <span className="text-[10px] text-slate-400 font-mono">({(f.size / 1024).toFixed(0)} KB)</span>
+                              <span className="text-[10px] font-mono text-slate-500">#{fIdx + 1}</span>
+                              <span className="text-slate-800 truncate font-mono text-[11px] font-medium">{f.name}</span>
+                              <span className="text-[10px] text-slate-500 font-mono">({(f.size / 1024).toFixed(0)} KB)</span>
                             </div>
                             <button
                               type="button"
                               onClick={() => handleRemoveFile(fIdx)}
-                              className="text-slate-400 hover:text-rose-600 px-1 text-xs font-bold transition-colors ml-2"
+                              className="text-slate-500 hover:text-rose-700 px-1 text-xs font-bold transition-colors ml-2 font-mono"
                               title="Remove this file"
                             >
-                              ✕
+                              [X]
                             </button>
                           </div>
                         ))}
                       </div>
                     </div>
                   ) : selectedFile ? (
-                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 flex items-center justify-between text-xs font-medium">
+                    <div className="bg-slate-50 p-2.5 rounded-lg border-2 border-slate-400 flex items-center justify-between text-xs font-mono">
                       <div className="flex items-center space-x-2 truncate max-w-md">
-                        <span className="text-slate-700 truncate font-mono">{selectedFile.name}</span>
-                        <span className="text-[10px] text-slate-400 font-mono">({(selectedFile.size / 1024).toFixed(0)} KB)</span>
+                        <span className="font-bold text-[#0b192c]">PDF:</span>
+                        <span className="text-slate-800 truncate font-mono">{selectedFile.name}</span>
+                        <span className="text-[10px] text-slate-500 font-mono">({(selectedFile.size / 1024).toFixed(0)} KB)</span>
                       </div>
                       <button
                         type="button"
                         onClick={() => { setSelectedFiles([]); setSelectedFile(null); }}
-                        className="text-rose-600 hover:text-rose-700 text-xs font-semibold"
+                        className="text-rose-700 hover:text-rose-900 text-xs font-bold font-mono"
                       >
-                        Remove
+                        [Remove]
                       </button>
                     </div>
                   ) : null}
 
                   {/* Upload & Parse Live Progress Bar */}
                   {uploadLoading && uploadProgress && (
-                    <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-sm space-y-2">
-                      <div className="flex items-center justify-between text-xs font-semibold">
-                        <span className="text-slate-800">
-                          Parsing File {uploadProgress.current} of {uploadProgress.total}
+                    <div className="bg-white border-2 border-slate-400 p-3.5 rounded-lg shadow-sm space-y-2 font-mono">
+                      <div className="flex items-center justify-between text-xs font-bold">
+                        <span className="text-[#0b192c]">
+                          Parsing Statement {uploadProgress.current} of {uploadProgress.total}
                         </span>
-                        <span className="font-mono text-indigo-600 font-bold">
+                        <span className="font-mono text-[#008170] font-bold">
                           {Math.round((uploadProgress.current / uploadProgress.total) * 100)}%
                         </span>
                       </div>
-                      <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                      <div className="w-full bg-slate-200 rounded h-2 overflow-hidden border border-slate-300">
                         <div
-                          className="bg-indigo-600 h-full transition-all duration-300 rounded-full"
+                          className="bg-[#008170] h-full transition-all duration-300"
                           style={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }}
                         />
                       </div>
-                      <p className="text-[11px] font-mono text-slate-400 truncate">
-                        Current: {uploadProgress.filename}
+                      <p className="text-[11px] font-mono text-slate-600 truncate">
+                        File: {uploadProgress.filename}
                       </p>
                     </div>
                   )}
 
                   {uploadError && (
-                    <div className="bg-rose-50 text-rose-700 p-3.5 rounded-xl border border-rose-200 font-medium text-xs">
-                      {String(uploadError)}
+                    <div className="bg-rose-50 text-rose-900 p-3 rounded-lg border-2 border-rose-300 font-mono text-xs font-bold">
+                      [Error]: {String(uploadError)}
                     </div>
                   )}
 
@@ -3706,11 +3720,11 @@ export default function App() {
                     <button
                       type="submit"
                       disabled={uploadLoading || (selectedFiles.length === 0 && !selectedFile)}
-                      className="w-full flex justify-center py-3 px-4 rounded-xl font-semibold text-white bg-slate-900 hover:bg-slate-800 shadow-sm transition-all text-xs disabled:opacity-50"
+                      className="w-full flex justify-center py-2.5 px-4 rounded font-mono font-bold text-white bg-[#008170] hover:bg-[#006e5f] shadow-sm transition-colors text-xs uppercase tracking-wider disabled:opacity-50"
                     >
                       {uploadLoading
-                        ? (uploadProgress ? `Processing ${uploadProgress.current} of ${uploadProgress.total} Statements...` : 'Uploading & Extracting PDF Data...')
-                        : (selectedFiles.length > 1 ? `⚡ Parse ${selectedFiles.length} Statement PDFs` : '⚡ Parse Statement PDF')}
+                        ? (uploadProgress ? `Processing ${uploadProgress.current} of ${uploadProgress.total} Statements...` : 'Extracting PDF Data...')
+                        : (selectedFiles.length > 1 ? `[Enter] PARSE ${selectedFiles.length} STATEMENT PDFS` : '[Enter] PARSE STATEMENT PDF')}
                     </button>
                   </div>
                 </form>
@@ -3719,47 +3733,47 @@ export default function App() {
 
             {/* DETAILED STATS PREVIEW & EXECUTION STEP */}
             {parsedSummary && (
-              <div className="space-y-6 max-w-7xl mx-auto">
+              <div className="space-y-4 max-w-7xl mx-auto">
                 
-                {/* 1. Multi-Signal Auto-Detected Bank Banner (Linear Minimalist) */}
-                <div className="bg-white text-slate-800 p-5 rounded-xl border border-slate-200/90 shadow-2xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                {/* 1. Multi-Signal Auto-Detected Bank Banner (Tally Pro Terminal) */}
+                <div className="bg-white text-slate-900 p-4 rounded-lg border-2 border-slate-400 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4 font-mono">
                   <div className="flex items-center space-x-3.5">
-                    <div className="w-11 h-11 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center p-1.5 flex-shrink-0">
-                      <img src="/symbol_mark.svg" alt="Bank Logo" className="w-full h-full object-contain" />
+                    <div className="w-10 h-10 rounded bg-[#0b192c] border border-[#1e3e62] flex items-center justify-center p-1.5 flex-shrink-0">
+                      <img src="/symbol_mark.svg" alt="Bank Logo" className="w-full h-full object-contain filter invert" />
                     </div>
                     <div>
                       <div className="flex items-center space-x-2">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600">
-                          INTELLIGENT DETECTION ENGINE
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#0b192c]">
+                          TALLY DETECTION MATRIX
                         </span>
-                        <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase">
+                        <span className="bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] font-bold px-2 py-0.2 rounded uppercase">
                           {parsedSummary.detection_confidence ? `${Math.round(parsedSummary.detection_confidence)}% Confidence` : 'High Confidence'}
                         </span>
                       </div>
-                      <h3 className="text-lg font-bold text-slate-900 tracking-tight mt-0.5">
+                      <h3 className="text-base font-bold text-[#0b192c] tracking-tight mt-0.5">
                         {parsedSummary.bank_name || parsedSummary.detected_bank || 'Standard Bank Statement'}
                       </h3>
-                      <div className="flex flex-wrap gap-1.5 mt-2">
-                        <span className="bg-slate-100 text-slate-700 text-[10px] font-mono px-2 py-0.5 rounded border border-slate-200">
-                          Type: {parsedSummary.document_type || 'NATIVE_PDF'}
+                      <div className="flex flex-wrap gap-1.5 mt-1.5">
+                        <span className="bg-slate-100 text-slate-800 text-[10px] font-mono px-2 py-0.5 rounded border border-slate-300">
+                          Format: {parsedSummary.document_type || 'NATIVE_PDF'}
                         </span>
                         {parsedSummary.account_number && (
-                          <span className="bg-slate-100 text-slate-700 text-[10px] font-mono px-2 py-0.5 rounded border border-slate-200">
+                          <span className="bg-slate-100 text-slate-800 text-[10px] font-mono px-2 py-0.5 rounded border border-slate-300">
                             A/C: {parsedSummary.account_number}
                           </span>
                         )}
                         {parsedSummary.statement_period && (
-                          <span className="bg-slate-100 text-slate-700 text-[10px] font-mono px-2 py-0.5 rounded border border-slate-200">
+                          <span className="bg-slate-100 text-slate-800 text-[10px] font-mono px-2 py-0.5 rounded border border-slate-300">
                             Period: {parsedSummary.statement_period}
                           </span>
                         )}
                         {parsedSummary.multi_file_count > 1 && (
-                          <span className="bg-indigo-50 text-indigo-700 text-[10px] font-mono font-semibold px-2 py-0.5 rounded border border-indigo-200 uppercase">
+                          <span className="bg-[#1e3e62] text-amber-300 text-[10px] font-mono font-bold px-2 py-0.5 rounded uppercase">
                             {parsedSummary.multi_file_count} Statements Consolidated
                           </span>
                         )}
                         {parsedSummary.detection_signals && parsedSummary.detection_signals.slice(0, 3).map((sig, sIdx) => (
-                          <span key={sIdx} className="bg-slate-100 text-slate-700 text-[9px] font-mono px-1.5 py-0.5 rounded border border-slate-200">
+                          <span key={sIdx} className="bg-slate-100 text-slate-700 text-[9px] font-mono px-1.5 py-0.5 rounded border border-slate-300">
                             {sig}
                           </span>
                         ))}
@@ -3767,13 +3781,16 @@ export default function App() {
                     </div>
                   </div>
                   
-                  <div className="flex items-center space-x-2 self-stretch md:self-auto justify-end">
+                  <div className="flex items-center space-x-2 self-stretch md:self-auto justify-end font-mono">
                     <button
                       onClick={() => setShortcutsModalOpen(true)}
-                      className="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs rounded-lg border border-slate-200 shadow-2xs transition-colors"
+                      className="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-800 font-bold text-xs rounded border-2 border-slate-400 shadow-sm transition-colors flex items-center gap-1.5"
                       title="View Keyboard Shortcuts"
                     >
-                      ⌨️ Shortcuts
+                      <svg className="w-3.5 h-3.5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                      </svg>
+                      <span>[Alt+S] Shortcuts</span>
                     </button>
                     <button
                       onClick={() => {
@@ -3782,118 +3799,147 @@ export default function App() {
                         setSelectedFiles([]);
                         setAllTransactions([]);
                       }}
-                      className="px-3 py-1.5 bg-white hover:bg-rose-50 text-rose-600 font-medium text-xs rounded-lg border border-rose-200 shadow-2xs transition-colors"
+                      className="px-3 py-1.5 bg-white hover:bg-rose-50 text-rose-700 font-bold text-xs rounded border-2 border-rose-300 shadow-sm transition-colors"
                     >
-                      Re-Upload
+                      [Esc] Re-Upload
                     </button>
                   </div>
                 </div>
 
                 {/* Warning Alerts */}
                 {parsedSummary.is_duplicate && (
-                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs font-medium text-amber-900 flex items-start space-x-3 shadow-sm">
-                    <svg className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <div className="bg-amber-50 border-2 border-amber-400 rounded-lg p-3 text-xs font-mono text-amber-950 flex items-start space-x-2.5 shadow-sm">
+                    <svg className="w-4 h-4 text-amber-700 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
                     <div>
-                      <span className="font-bold block text-amber-950 uppercase text-[11px]">Duplicate Statement File Warning</span>
-                      This PDF has already been successfully converted before. Re-converting is allowed, but ensure you are not importing duplicate entries into Tally.
+                      <span className="font-bold block uppercase text-[11px]">[Warning] Duplicate Statement File</span>
+                      This statement PDF was previously parsed. Re-conversion is permitted; verify duplicate vouchers are not imported into Tally.
                     </div>
                   </div>
                 )}
 
                 {!parsedSummary.reconciled && (
-                  <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 text-xs font-medium text-rose-900 flex items-start space-x-3 shadow-sm">
-                    <svg className="w-5 h-5 text-rose-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <div className="bg-rose-50 border-2 border-rose-400 rounded-lg p-3 text-xs font-mono text-rose-950 flex items-start space-x-2.5 shadow-sm">
+                    <svg className="w-4 h-4 text-rose-700 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
                     <div>
-                      <span className="font-bold block text-rose-950 uppercase text-[11px]">Reconciliation Audit Warning</span>
-                      The transaction sum (Opening + Credits - Debits) differs from the reported Closing Balance {parsedSummary.reconciliation_discrepancy ? `by ₹${Math.abs(parsedSummary.reconciliation_discrepancy).toFixed(2)}` : ''}. Review highlighted rows below.
+                      <span className="font-bold block uppercase text-[11px]">[Audit Warning] Reconciliation Mismatch</span>
+                      Transaction sum (Opening + Credits - Debits) differs from Closing Balance {parsedSummary.reconciliation_discrepancy ? `by ₹${Math.abs(parsedSummary.reconciliation_discrepancy).toFixed(2)}` : ''}. Review flagged entries below.
                     </div>
                   </div>
                 )}
 
-                {/* Analytics Metric Cards Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col justify-between">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Transactions</p>
-                    <p className="text-2xl font-bold font-mono text-slate-900 mt-2">{allTransactions.length || parsedSummary.transactions_count}</p>
-                    <span className="text-[11px] text-slate-400 font-medium mt-1">{parsedSummary.pages_count} PDF Pages</span>
+                {/* Analytics Metric Cards Grid (Tally Ruled Boxes) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 font-mono">
+                  <div className="bg-white p-4 rounded-lg border-2 border-slate-400 shadow-sm flex flex-col justify-between">
+                    <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">TOTAL TRANSACTIONS</p>
+                    <p className="text-2xl font-bold font-mono text-[#0b192c] mt-1">{allTransactions.length || parsedSummary.transactions_count}</p>
+                    <span className="text-[10px] text-slate-500 font-mono mt-1">{parsedSummary.pages_count} PDF Pages</span>
                   </div>
 
-                  <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col justify-between">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Opening Balance</p>
-                    <p className="text-xl font-bold font-mono text-slate-900 mt-2">₹{(parsedSummary.opening_balance || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
-                    <span className="text-[11px] text-slate-400 font-medium mt-1">Start of Period</span>
+                  <div className="bg-white p-4 rounded-lg border-2 border-slate-400 shadow-sm flex flex-col justify-between">
+                    <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">OPENING BALANCE</p>
+                    <p className="text-xl font-bold font-mono text-slate-900 mt-1">₹{(parsedSummary.opening_balance || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+                    <span className="text-[10px] text-slate-500 font-mono mt-1">Start of Period</span>
                   </div>
 
-                  <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col justify-between">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Closing Balance</p>
-                    <p className="text-xl font-bold font-mono text-slate-900 mt-2">₹{(parsedSummary.closing_balance || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
-                    <span className="text-[11px] text-slate-400 font-medium mt-1">End of Period</span>
+                  <div className="bg-white p-4 rounded-lg border-2 border-slate-400 shadow-sm flex flex-col justify-between">
+                    <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">CLOSING BALANCE</p>
+                    <p className="text-xl font-bold font-mono text-slate-900 mt-1">₹{(parsedSummary.closing_balance || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+                    <span className="text-[10px] text-slate-500 font-mono mt-1">End of Period</span>
                   </div>
 
-                  <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col justify-between">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Reconciliation Audit</p>
-                    <div className="mt-2">
+                  <div className="bg-white p-4 rounded-lg border-2 border-slate-400 shadow-sm flex flex-col justify-between">
+                    <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">RECONCILIATION AUDIT</p>
+                    <div className="mt-1">
                       {parsedSummary.reconciled ? (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                          Reconciled ✓
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                          AUDIT OK ✓
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
-                          <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                          Mismatch ✗
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-xs font-bold bg-rose-100 text-rose-800 border border-rose-300">
+                          MISMATCH ✗
                         </span>
                       )}
                     </div>
-                    <span className="text-[11px] text-slate-400 font-medium mt-1">
+                    <span className="text-[10px] text-slate-500 font-mono mt-1">
                       {allTransactions.filter(t => t.requires_review).length} items need review
                     </span>
                   </div>
                 </div>
 
                 {/* 2. Review Queue Filter Tabs & Action Toolbar */}
-                <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden">
+                <div className="bg-white rounded-lg border-2 border-slate-400 shadow-sm overflow-hidden font-mono">
                   
-                  {/* Top Bar with Queue Filter Tabs (Linear Segmented Control) */}
-                  <div className="p-3 bg-slate-50/70 border-b border-slate-200 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3">
-                    <div className="bg-slate-100/90 p-1 rounded-lg border border-slate-200/80 inline-flex flex-wrap gap-1">
+                  {/* Top Bar with Tally Pro Header Actions */}
+                  <div className="px-4 py-2.5 bg-[#0b192c] text-white flex flex-col lg:flex-row justify-between items-start lg:items-center gap-2 border-b-2 border-slate-400">
+                    <div className="font-bold text-xs uppercase text-amber-300 tracking-wider">
+                      BANK STATEMENT TRANSACTION VOUCHERS ({allTransactions.length} ENTRIES)
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          // Quick Auto-match rules trigger
+                          setExecuteError('');
+                          const updated = allTransactions.map((tx, idx) => {
+                            return tx;
+                          });
+                        }}
+                        className="px-3 py-1 bg-white border-2 border-slate-300 rounded text-xs font-bold text-slate-900 hover:bg-slate-100 transition-colors shadow-sm"
+                      >
+                        [Alt+A] AUTO-MATCH LEDGERS
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleExecuteConversion}
+                        disabled={executeLoading || user.page_credits < parsedSummary.pages_count}
+                        className="px-3 py-1 bg-[#008170] hover:bg-[#006e5f] text-white rounded text-xs font-bold transition-colors shadow-sm disabled:opacity-50"
+                      >
+                        [Ctrl+E] EXPORT TALLY XML
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Sub-bar: Review Queue Segmented Filters & Search */}
+                  <div className="p-2.5 bg-slate-100 border-b border-slate-300 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-2 text-xs">
+                    <div className="inline-flex flex-wrap gap-1">
                       <button
                         onClick={() => setFilterMode('ALL')}
-                        className={`px-3 py-1 rounded-md text-xs transition-colors ${filterMode === 'ALL' ? 'bg-white text-slate-900 font-semibold shadow-2xs border border-slate-200/90' : 'text-slate-600 hover:text-slate-900 font-medium'}`}
+                        className={`px-2.5 py-1 rounded text-xs transition-colors font-mono ${filterMode === 'ALL' ? 'bg-[#0b192c] text-amber-300 font-bold border border-[#1e3e62]' : 'bg-white text-slate-700 hover:text-slate-900 font-bold border border-slate-300'}`}
                       >
                         All ({allTransactions.length})
                       </button>
                       <button
                         onClick={() => setFilterMode('READY')}
-                        className={`px-3 py-1 rounded-md text-xs transition-colors ${filterMode === 'READY' ? 'bg-white text-slate-900 font-semibold shadow-2xs border border-slate-200/90' : 'text-slate-600 hover:text-slate-900 font-medium'}`}
+                        className={`px-2.5 py-1 rounded text-xs transition-colors font-mono ${filterMode === 'READY' ? 'bg-[#0b192c] text-amber-300 font-bold border border-[#1e3e62]' : 'bg-white text-slate-700 hover:text-slate-900 font-bold border border-slate-300'}`}
                       >
                         Ready ({allTransactions.filter(t => !t.requires_review).length})
                       </button>
                       <button
                         onClick={() => setFilterMode('REVIEW')}
-                        className={`px-3 py-1 rounded-md text-xs transition-colors ${filterMode === 'REVIEW' ? 'bg-rose-600 text-white font-semibold shadow-2xs' : allTransactions.filter(t => t.requires_review).length > 0 ? 'bg-rose-50 text-rose-700 font-semibold border border-rose-200' : 'text-slate-600 hover:text-slate-900 font-medium'}`}
+                        className={`px-2.5 py-1 rounded text-xs transition-colors font-mono ${filterMode === 'REVIEW' ? 'bg-rose-700 text-white font-bold border border-rose-800' : allTransactions.filter(t => t.requires_review).length > 0 ? 'bg-rose-100 text-rose-900 font-bold border border-rose-300' : 'bg-white text-slate-700 hover:text-slate-900 font-bold border border-slate-300'}`}
                       >
                         Needs Review ({allTransactions.filter(t => t.requires_review).length})
                       </button>
                       <button
                         onClick={() => setFilterMode('DUPLICATES')}
-                        className={`px-3 py-1 rounded-md text-xs transition-colors ${filterMode === 'DUPLICATES' ? 'bg-amber-500 text-slate-950 font-semibold shadow-2xs' : 'text-slate-600 hover:text-slate-900 font-medium'}`}
+                        className={`px-2.5 py-1 rounded text-xs transition-colors font-mono ${filterMode === 'DUPLICATES' ? 'bg-amber-400 text-slate-900 font-bold border border-amber-500' : 'bg-white text-slate-700 hover:text-slate-900 font-bold border border-slate-300'}`}
                       >
                         Duplicates ({allTransactions.filter(t => t.is_duplicate).length})
                       </button>
                       <button
                         onClick={() => setFilterMode('DEBIT')}
-                        className={`px-3 py-1 rounded-md text-xs transition-colors ${filterMode === 'DEBIT' ? 'bg-white text-slate-900 font-semibold shadow-2xs border border-slate-200/90' : 'text-slate-600 hover:text-slate-900 font-medium'}`}
+                        className={`px-2.5 py-1 rounded text-xs transition-colors font-mono ${filterMode === 'DEBIT' ? 'bg-[#0b192c] text-amber-300 font-bold border border-[#1e3e62]' : 'bg-white text-slate-700 hover:text-slate-900 font-bold border border-slate-300'}`}
                       >
                         Debits ({allTransactions.filter(t => (t.debit || 0) > 0).length})
                       </button>
                       <button
                         onClick={() => setFilterMode('CREDIT')}
-                        className={`px-3 py-1 rounded-md text-xs transition-colors ${filterMode === 'CREDIT' ? 'bg-white text-slate-900 font-semibold shadow-2xs border border-slate-200/90' : 'text-slate-600 hover:text-slate-900 font-medium'}`}
+                        className={`px-2.5 py-1 rounded text-xs transition-colors font-mono ${filterMode === 'CREDIT' ? 'bg-[#0b192c] text-amber-300 font-bold border border-[#1e3e62]' : 'bg-white text-slate-700 hover:text-slate-900 font-bold border border-slate-300'}`}
                       >
                         Credits ({allTransactions.filter(t => (t.credit || 0) > 0).length})
                       </button>
@@ -3906,7 +3952,7 @@ export default function App() {
                         placeholder="Search narration, ref, ledger... (Ctrl+F)"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="px-3.5 py-1.5 border border-slate-300 rounded-xl text-xs font-medium bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 w-full lg:w-64 placeholder:text-slate-400"
+                        className="px-2.5 py-1 border-2 border-slate-400 rounded text-xs font-mono bg-white focus:outline-none focus:border-[#008170] w-full lg:w-64 placeholder:text-slate-400"
                       />
                       {allTransactions.filter(t => t.requires_review).length > 0 && (
                         <button
@@ -3914,23 +3960,23 @@ export default function App() {
                             setCurrentReviewIdx(0);
                             setReviewModalOpen(true);
                           }}
-                          className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold text-xs rounded-lg whitespace-nowrap shadow-sm transition-all"
+                          className="px-2.5 py-1 bg-amber-100 hover:bg-amber-200 text-amber-950 font-bold text-xs rounded border border-amber-300 whitespace-nowrap shadow-sm transition-colors font-mono"
                         >
-                          ⚡ Review Next Issue
+                          [Review Next Issue]
                         </button>
                       )}
                     </div>
                   </div>
 
-                  {/* Bulk Actions Toolbar */}
-                  <div className="px-4 py-2.5 bg-slate-100/70 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs font-medium">
+                  {/* Bulk Actions Bar */}
+                  <div className="p-2 bg-slate-50 border-b border-slate-300 flex flex-wrap justify-between items-center gap-2 text-xs font-mono">
                     <div className="flex items-center space-x-3">
-                      <label className="flex items-center space-x-1.5 cursor-pointer font-semibold text-slate-700 select-none">
+                      <label className="flex items-center space-x-1.5 cursor-pointer font-bold text-slate-800">
                         <input
                           type="checkbox"
                           checked={selectedRowIds.size > 0 && selectedRowIds.size === allTransactions.length}
                           onChange={() => handleSelectAllRows(allTransactions)}
-                          className="w-4 h-4 border-slate-300 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                          className="w-3.5 h-3.5 border-slate-400 rounded text-[#008170] focus:ring-[#008170] cursor-pointer"
                         />
                         <span>Select All ({selectedRowIds.size} selected)</span>
                       </label>
@@ -3946,32 +3992,32 @@ export default function App() {
                               setUndoStack(prev => prev.slice(0, -1));
                             }
                           }}
-                          className="px-2 py-0.5 border border-slate-300 bg-white hover:bg-slate-50 rounded-md font-semibold text-[11px] shadow-sm text-slate-700"
+                          className="px-2 py-0.5 border border-slate-400 bg-white hover:bg-slate-100 rounded font-bold text-[11px] shadow-sm text-slate-800 font-mono"
                           title="Undo last narration edit (Ctrl+Z)"
                         >
-                          ↩ Undo ({undoStack.length})
+                          [Undo ({undoStack.length})]
                         </button>
                       )}
                     </div>
 
                     {selectedRowIds.size > 0 && (
-                      <div className="flex flex-wrap items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-1.5">
                         <input
                           type="text"
                           placeholder="Type Counter Ledger..."
                           value={bulkLedgerInput}
                           onChange={(e) => setBulkLedgerInput(e.target.value)}
-                          className="px-2.5 py-1 border border-slate-300 rounded-lg text-xs font-medium bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                          className="px-2 py-0.5 border border-slate-400 rounded text-xs font-mono bg-white focus:outline-none focus:border-[#008170]"
                         />
                         <button
                           onClick={handleBulkAssignLedger}
-                          className="px-3 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-semibold text-xs shadow-sm transition-all"
+                          className="px-2.5 py-1 bg-[#0b192c] hover:bg-[#1e3e62] text-white rounded font-bold text-xs shadow-sm transition-colors"
                         >
                           Assign Ledger
                         </button>
                         <button
                           onClick={handleBulkMarkReviewed}
-                          className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold text-xs shadow-sm transition-all"
+                          className="px-2.5 py-1 bg-[#008170] hover:bg-[#006e5f] text-white rounded font-bold text-xs shadow-sm transition-colors"
                         >
                           Mark Reviewed
                         </button>
@@ -3981,7 +4027,7 @@ export default function App() {
                             setAllTransactions(prev => prev.filter(t => !selectedRowIds.has(t.id)));
                             setSelectedRowIds(new Set());
                           }}
-                          className="px-3 py-1 bg-rose-600 hover:bg-rose-500 text-white rounded-lg font-semibold text-xs shadow-sm transition-all"
+                          className="px-2.5 py-1 bg-rose-700 hover:bg-rose-800 text-white rounded font-bold text-xs shadow-sm transition-colors"
                         >
                           Delete Selected
                         </button>
@@ -3989,31 +4035,31 @@ export default function App() {
                     )}
                   </div>
 
-                  {/* 3. Interactive Transactions Grid */}
-                  <div className="overflow-x-auto max-h-[460px] overflow-y-auto">
-                    <table className="min-w-full divide-y divide-slate-200 text-left">
-                      <thead className="bg-slate-50/95 sticky top-0 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider z-10 backdrop-blur-sm">
+                  {/* 3. Ruled High-Contrast Accounting Grid (Option 2: Tally Pro Terminal) */}
+                  <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
+                    <table className="min-w-full border-collapse text-left font-mono text-xs bg-white">
+                      <thead className="bg-[#0b192c] text-white sticky top-0 border-b-2 border-slate-400 text-[10px] font-bold uppercase tracking-wider z-10 select-none">
                         <tr>
-                          <th className="px-3 py-2.5 w-8 text-center">
+                          <th className="px-3 py-2 w-8 text-center border-r border-slate-400">
                             <input
                               type="checkbox"
                               checked={selectedRowIds.size > 0 && selectedRowIds.size === allTransactions.length}
                               onChange={() => handleSelectAllRows(allTransactions)}
-                              className="w-3.5 h-3.5 border-slate-300 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                              className="w-3.5 h-3.5 border-slate-400 rounded text-[#008170] focus:ring-[#008170] cursor-pointer"
                             />
                           </th>
-                          <th className="px-3 py-2.5 whitespace-nowrap">Date</th>
-                          <th className="px-4 py-2.5 w-1/3">Narration (Editable)</th>
-                          <th className="px-3 py-2.5">Ref / UTR</th>
-                          <th className="px-3 py-2.5 w-1/5">Counter Ledger</th>
-                          <th className="px-3 py-2.5 text-right">Debit (Out)</th>
-                          <th className="px-3 py-2.5 text-right">Credit (In)</th>
-                          <th className="px-3 py-2.5 text-right">Balance</th>
-                          <th className="px-3 py-2.5 text-center">Confidence</th>
-                          <th className="px-3 py-2.5 text-center">Audit</th>
+                          <th className="px-3 py-2 whitespace-nowrap border-r border-slate-400 font-bold">Date</th>
+                          <th className="px-4 py-2 w-1/3 border-r border-slate-400 font-bold">Narration / Particulars (Inline Edit)</th>
+                          <th className="px-3 py-2 border-r border-slate-400 font-bold">Ref / UTR</th>
+                          <th className="px-3 py-2 w-1/5 border-r border-slate-400 font-bold">Counter Ledger</th>
+                          <th className="px-3 py-2 text-right border-r border-slate-400 font-bold">Debit (₹)</th>
+                          <th className="px-3 py-2 text-right border-r border-slate-400 font-bold">Credit (₹)</th>
+                          <th className="px-3 py-2 text-right border-r border-slate-400 font-bold">Balance (₹)</th>
+                          <th className="px-3 py-2 text-center border-r border-slate-400 font-bold">Conf.</th>
+                          <th className="px-3 py-2 text-center font-bold">Audit</th>
                         </tr>
                       </thead>
-                      <tbody className="bg-white divide-y divide-slate-100 text-xs text-slate-800">
+                      <tbody className="bg-white divide-y divide-slate-200 text-xs text-slate-900">
                         {allTransactions
                           .filter((tx, idx) => {
                             if (filterMode === 'READY' && tx.requires_review) return false;
@@ -4037,59 +4083,59 @@ export default function App() {
                           .map((tx, idx) => (
                             <tr 
                               key={tx.id || idx} 
-                              className={`hover:bg-slate-50/80 transition-colors ${selectedRowIds.has(tx.id) ? 'bg-indigo-50/40' : ''} ${tx.requires_review ? 'bg-amber-50/40' : ''}`}
+                              className={`hover:bg-amber-50/60 transition-colors border-b border-slate-200 ${selectedRowIds.has(tx.id) ? 'bg-amber-100/40' : ''} ${tx.requires_review ? 'bg-amber-50/70' : ''}`}
                             >
-                              <td className="px-3 py-2 text-center">
+                              <td className="px-3 py-2 text-center border-r border-slate-200">
                                 <input
                                   type="checkbox"
                                   checked={selectedRowIds.has(tx.id)}
                                   onChange={() => handleToggleRowSelection(tx.id)}
-                                  className="w-3.5 h-3.5 border-slate-300 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                                  className="w-3.5 h-3.5 border-slate-400 rounded text-[#008170] focus:ring-[#008170] cursor-pointer"
                                 />
                               </td>
-                              <td className="px-3 py-2 whitespace-nowrap font-mono text-[11px] text-slate-700">
+                              <td className="px-3 py-2 whitespace-nowrap font-mono text-[11px] text-slate-800 border-r border-slate-200 font-medium">
                                 <div>{tx.txn_date}</div>
                                 {tx.source_file && (
-                                  <span className="inline-block mt-0.5 text-[8px] bg-slate-100 text-slate-600 rounded px-1.5 py-0.5 font-mono truncate max-w-[120px]" title={tx.source_file}>
+                                  <span className="inline-block mt-0.5 text-[8px] bg-slate-100 text-slate-700 rounded px-1.5 py-0.5 font-mono truncate max-w-[120px]" title={tx.source_file}>
                                     {tx.source_file}
                                   </span>
                                 )}
                               </td>
-                              <td className="px-3 py-2">
+                              <td className="px-3 py-2 border-r border-slate-200">
                                 <input
                                   type="text"
                                   value={editedNarrations[idx] !== undefined ? editedNarrations[idx] : tx.narration}
                                   onChange={(e) => handleNarrationEdit(idx, e.target.value)}
-                                  className="w-full px-2 py-1 rounded-md text-[11px] font-mono text-slate-900 bg-transparent hover:bg-slate-50 focus:bg-white border border-transparent hover:border-slate-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                                  className="w-full px-2 py-1 rounded text-[11px] font-mono text-slate-900 bg-white hover:bg-amber-50/50 focus:bg-white border border-slate-300 focus:border-[#008170] focus:ring-1 focus:ring-[#008170] transition-all"
                                 />
                               </td>
-                              <td className="px-3 py-2 text-slate-500 font-mono text-[11px] truncate max-w-[120px]">
+                              <td className="px-3 py-2 text-slate-600 font-mono text-[11px] truncate max-w-[120px] border-r border-slate-200">
                                 <div>{tx.ref_no || tx.utr || '-'}</div>
                                 {tx.category && (
-                                  <span className="text-[8px] bg-slate-100 text-slate-600 px-1 rounded uppercase font-sans font-semibold">
+                                  <span className="text-[8px] bg-slate-100 text-slate-700 px-1 rounded uppercase font-mono font-bold">
                                     {tx.category}
                                   </span>
                                 )}
                               </td>
-                              <td className="px-3 py-2">
+                              <td className="px-3 py-2 border-r border-slate-200">
                                 <input
                                   type="text"
                                   value={editedLedgers[idx] !== undefined ? editedLedgers[idx] : (tx.assigned_ledger || counterLedgerName)}
                                   onChange={(e) => handleLedgerEdit(idx, e.target.value)}
-                                  className="w-full px-2 py-1 rounded-md text-[11px] font-medium text-slate-900 bg-transparent hover:bg-slate-50 focus:bg-white border border-transparent hover:border-slate-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                                  className="w-full px-2 py-1 rounded text-[11px] font-mono font-medium text-slate-900 bg-white hover:bg-amber-50/50 focus:bg-white border border-slate-300 focus:border-[#008170] focus:ring-1 focus:ring-[#008170] transition-all"
                                 />
                               </td>
-                              <td className="px-3 py-2 text-right text-rose-600 font-mono tabular-nums font-semibold whitespace-nowrap">
-                                {tx.debit ? `₹${Number(tx.debit).toFixed(2)}` : ''}
+                              <td className="px-3 py-2 text-right text-rose-700 font-mono tabular-nums font-bold whitespace-nowrap border-r border-slate-200">
+                                {tx.debit ? `₹${Number(tx.debit).toFixed(2)}` : '-'}
                               </td>
-                              <td className="px-3 py-2 text-right text-emerald-600 font-mono tabular-nums font-semibold whitespace-nowrap">
-                                {tx.credit ? `₹${Number(tx.credit).toFixed(2)}` : ''}
+                              <td className="px-3 py-2 text-right text-emerald-700 font-mono tabular-nums font-bold whitespace-nowrap border-r border-slate-200">
+                                {tx.credit ? `₹${Number(tx.credit).toFixed(2)}` : '-'}
                               </td>
-                              <td className="px-3 py-2 text-right font-mono tabular-nums text-slate-800 whitespace-nowrap font-medium">
+                              <td className="px-3 py-2 text-right font-mono tabular-nums text-slate-900 whitespace-nowrap font-bold border-r border-slate-200">
                                 ₹{Number(tx.balance || 0).toFixed(2)}
                               </td>
-                              <td className="px-2 py-2 text-center whitespace-nowrap">
-                                <span className={`px-2 py-0.5 text-[9px] font-bold rounded-full uppercase ${tx.confidence_grade === 'HIGH' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : tx.confidence_grade === 'MEDIUM' ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}`}>
+                              <td className="px-2 py-2 text-center whitespace-nowrap border-r border-slate-200 font-mono">
+                                <span className={`px-2 py-0.5 text-[9px] font-bold rounded uppercase ${tx.confidence_grade === 'HIGH' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : tx.confidence_grade === 'MEDIUM' ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-rose-100 text-rose-800 border border-rose-300'}`}>
                                   {Math.round(tx.confidence_score || 95)}%
                                 </span>
                               </td>
@@ -4101,16 +4147,12 @@ export default function App() {
                                       setCurrentReviewIdx(issueIdx >= 0 ? issueIdx : 0);
                                       setReviewModalOpen(true);
                                     }}
-                                    className="px-2 py-0.5 bg-rose-50 text-rose-700 hover:bg-rose-100 rounded text-[9px] font-bold uppercase border border-rose-200 transition-colors"
+                                    className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-100 text-amber-900 border border-amber-300 hover:bg-amber-200 transition-colors"
                                   >
-                                    Review ⚠️
+                                    Review
                                   </button>
-                                ) : tx.is_duplicate ? (
-                                  <span className="px-1.5 py-0.5 bg-amber-100 text-amber-800 rounded text-[9px] font-bold uppercase">
-                                    DUP
-                                  </span>
                                 ) : (
-                                  <span className="text-emerald-600 font-bold text-xs">✓</span>
+                                  <span className="text-emerald-700 font-bold text-xs font-mono">OK</span>
                                 )}
                               </td>
                             </tr>
@@ -4120,102 +4162,115 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* 4. Actions & Tally XML Export Settings */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* 4. Bottom Configuration & Action Hub (Tally Pro Grid) */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 font-mono">
                   
-                  {/* Left: Customization Settings */}
-                  <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-6 space-y-4 lg:col-span-2">
-                    <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-                      <h4 className="text-sm font-bold text-slate-900 tracking-tight">Tally Prime / ERP 9 Integration Settings</h4>
-                      <span className="bg-emerald-50 text-emerald-700 text-[10px] font-semibold px-2.5 py-0.5 rounded-full border border-emerald-200">
-                        ✓ Tally XML 1.0 Compliant
+                  {/* Left 2 Cols: Tally Integration Parameters */}
+                  <div className="lg:col-span-2 bg-white rounded-lg border-2 border-slate-400 shadow-sm p-5 space-y-4">
+                    <div className="flex items-center justify-between border-b border-slate-300 pb-3">
+                      <div className="flex items-center space-x-2">
+                        <span className="px-2 py-0.5 bg-[#008170] text-white font-extrabold text-[10px] rounded tracking-wider font-mono">
+                          TALLY XML
+                        </span>
+                        <h4 className="text-xs font-bold text-[#0b192c] tracking-tight uppercase">
+                          Tally Prime / ERP 9 Integration Parameters
+                        </h4>
+                      </div>
+                      <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded border border-emerald-300">
+                        Voucher Schema 1.0 Compliant
                       </span>
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                       <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1.5">Tally Bank Ledger Name</label>
+                        <label className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wide">
+                          Tally Bank Ledger Name
+                        </label>
                         <input
                           type="text"
                           placeholder="e.g. State Bank of India"
                           value={tallyLedgerName}
                           onChange={(e) => setTallyLedgerName(e.target.value)}
-                          className="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-xs font-medium bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all"
+                          className="w-full px-3 py-1.5 border-2 border-slate-400 rounded text-xs font-mono font-bold bg-white focus:outline-none focus:border-[#008170] transition-colors"
                         />
                       </div>
                       <div>
-                        <div className="flex items-center justify-between mb-1.5">
-                          <label className="block text-xs font-semibold text-slate-700">Counter Ledger Mode</label>
-                          <div className="inline-flex border border-slate-200 bg-slate-100 p-0.5 rounded-lg">
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide">
+                            Counter Ledger Mode
+                          </label>
+                          <div className="inline-flex border-2 border-slate-400 bg-slate-100 p-0.5 rounded">
                             <button
                               type="button"
                               onClick={() => handleToggleCounterLedgerMode('AUTO')}
-                              className={`px-2.5 py-1 text-[11px] font-semibold rounded-md transition-all ${
+                              className={`px-2 py-0.5 text-[11px] font-bold font-mono rounded transition-colors ${
                                 counterLedgerMode === 'AUTO'
-                                  ? 'bg-white text-slate-900 shadow-sm'
-                                  : 'text-slate-600 hover:text-slate-900'
+                                  ? 'bg-[#008170] text-white shadow-sm'
+                                  : 'text-slate-700 hover:text-slate-900'
                               }`}
                             >
-                              ✨ Auto
+                              [Auto]
                             </button>
                             <button
                               type="button"
                               onClick={() => handleToggleCounterLedgerMode('CUSTOM')}
-                              className={`px-2.5 py-1 text-[11px] font-semibold rounded-md transition-all ${
+                              className={`px-2 py-0.5 text-[11px] font-bold font-mono rounded transition-colors ${
                                 counterLedgerMode === 'CUSTOM'
-                                  ? 'bg-slate-900 text-white shadow-sm'
-                                  : 'text-slate-600 hover:text-slate-900'
+                                  ? 'bg-[#0b192c] text-amber-300 shadow-sm'
+                                  : 'text-slate-700 hover:text-slate-900'
                               }`}
                             >
-                              ✍️ Custom
+                              [Custom]
                             </button>
                           </div>
                         </div>
 
                         {counterLedgerMode === 'AUTO' ? (
-                          <div className="bg-emerald-50/70 border border-emerald-200/90 rounded-xl p-3 text-xs font-medium text-slate-700 flex items-center justify-between">
+                          <div className="bg-emerald-50 border-2 border-emerald-300 rounded p-2.5 text-xs text-slate-800 flex items-center justify-between font-mono">
                             <div>
-                              <span className="font-bold text-emerald-950 block text-[11px]">✨ Smart Categorization Active</span>
-                              <span className="text-[10px] text-slate-500">ATM → Cash, Salary, Rent, Vendor, etc.</span>
+                              <span className="font-bold text-emerald-950 block text-[11px]">Auto Rules & AI Active</span>
+                              <span className="text-[10px] text-slate-600">Smart matching based on narration & rules</span>
                             </div>
-                            <span className="text-[9px] bg-white border border-emerald-200 px-2 py-0.5 rounded-full font-mono font-semibold text-emerald-800 uppercase">
-                              Rules/AI
+                            <span className="text-[9px] bg-white border border-emerald-300 px-2 py-0.5 rounded font-mono font-bold text-emerald-800 uppercase">
+                              RULES/AI
                             </span>
                           </div>
                         ) : (
-                          <div className="space-y-1.5">
+                          <div className="space-y-1 font-mono">
                             <div className="flex gap-1.5">
                               <input
                                 type="text"
                                 placeholder="e.g. Suspense Account or Cash"
                                 value={customCounterLedger || counterLedgerName}
                                 onChange={(e) => handleCustomCounterLedgerChange(e.target.value)}
-                                className="flex-1 px-3 py-1.5 border border-slate-300 rounded-xl text-xs font-medium bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
+                                className="flex-1 px-3 py-1.5 border-2 border-slate-400 rounded text-xs font-mono font-bold bg-white focus:outline-none focus:border-[#008170]"
                               />
                               <button
                                 type="button"
                                 onClick={() => handleApplyCustomLedgerToAll(customCounterLedger || counterLedgerName)}
-                                className="px-3 py-1.5 bg-slate-900 text-white hover:bg-slate-800 rounded-xl text-xs font-semibold shadow-sm transition-all"
+                                className="px-3 py-1.5 bg-[#0b192c] text-white hover:bg-[#1e3e62] rounded text-xs font-bold transition-colors shadow-sm"
                                 title="Apply this counter ledger to all transaction rows"
                               >
                                 Apply All
                               </button>
                             </div>
-                            <span className="text-[10px] text-slate-400 font-medium block">
-                              Sets a single uniform counter ledger for all vouchers in Tally.
+                            <span className="text-[10px] text-slate-500 font-mono block">
+                              Sets a uniform counter ledger for all vouchers in Tally.
                             </span>
                           </div>
                         )}
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-1">
                       <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1.5">Credit Voucher Type (Money In)</label>
+                        <label className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wide">
+                          Credit Voucher Type (Money In)
+                        </label>
                         <select
                           value={creditVoucherType}
                           onChange={(e) => setCreditVoucherType(e.target.value)}
-                          className="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-xs font-medium bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
+                          className="w-full px-3 py-1.5 border-2 border-slate-400 rounded text-xs font-mono font-bold bg-white focus:outline-none focus:border-[#008170]"
                         >
                           <option>Receipt</option>
                           <option>Contra</option>
@@ -4223,11 +4278,13 @@ export default function App() {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1.5">Debit Voucher Type (Money Out)</label>
+                        <label className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wide">
+                          Debit Voucher Type (Money Out)
+                        </label>
                         <select
                           value={debitVoucherType}
                           onChange={(e) => setDebitVoucherType(e.target.value)}
-                          className="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-xs font-medium bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
+                          className="w-full px-3 py-1.5 border-2 border-slate-400 rounded text-xs font-mono font-bold bg-white focus:outline-none focus:border-[#008170]"
                         >
                           <option>Payment</option>
                           <option>Contra</option>
@@ -4237,37 +4294,45 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Right: Conversion Billing & Trigger Actions (Linear Minimalist) */}
-                  <div className="bg-white text-slate-800 rounded-xl border border-slate-200/90 shadow-2xs p-5 flex flex-col justify-between">
-                    <div className="space-y-3.5">
-                      <h4 className="text-sm font-bold text-slate-900 tracking-tight">Run Conversion</h4>
-                      <div className="bg-slate-50 rounded-lg p-3.5 border border-slate-200 text-xs font-medium space-y-1.5 text-slate-600">
-                        <p className="flex justify-between"><span>Deduction:</span> <span className="font-semibold text-slate-900 font-mono">{parsedSummary.pages_count} credits</span></p>
-                        <p className="flex justify-between"><span>Your Balance:</span> <span className="font-semibold text-emerald-700 font-mono">{user.page_credits} credits</span></p>
+                  {/* Right Col: Conversion Billing & Trigger Actions (Tally Pro Grid) */}
+                  <div className="bg-white text-slate-900 rounded-lg border-2 border-slate-400 shadow-sm p-5 flex flex-col justify-between font-mono">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between border-b border-slate-300 pb-2">
+                        <h4 className="text-xs font-bold text-[#0b192c] tracking-tight uppercase">
+                          Execution Hub
+                        </h4>
+                        <span className="text-[10px] bg-[#0b192c] text-white px-2 py-0.2 rounded font-bold">
+                          [Ctrl+E]
+                        </span>
+                      </div>
+
+                      <div className="bg-slate-50 rounded border-2 border-slate-300 p-3 text-xs font-mono space-y-1 text-slate-700">
+                        <p className="flex justify-between"><span>Deduction:</span> <span className="font-bold text-[#0b192c]">{parsedSummary.pages_count} credits</span></p>
+                        <p className="flex justify-between"><span>Your Balance:</span> <span className="font-bold text-emerald-800">{user.page_credits} credits</span></p>
                         {user.page_credits < parsedSummary.pages_count && (
-                          <p className="text-rose-600 font-bold uppercase mt-1 text-[11px]">Insufficient credits to execute!</p>
+                          <p className="text-rose-700 font-bold uppercase mt-1 text-[11px]">[Alert]: Insufficient credits to execute!</p>
                         )}
                       </div>
                       
                       {executeError && (
-                        <div className="bg-rose-50 text-rose-700 p-2.5 rounded-lg border border-rose-200 font-medium text-xs">
+                        <div className="bg-rose-50 text-rose-900 p-2.5 rounded border-2 border-rose-300 font-bold text-xs">
                           {String(executeError)}
                         </div>
                       )}
                     </div>
 
-                    <div className="space-y-2.5 mt-6">
+                    <div className="space-y-2 mt-5">
                       <button
                         onClick={handleExecuteConversion}
                         disabled={executeLoading || user.page_credits < parsedSummary.pages_count}
-                        className="w-full py-3 px-4 rounded-xl font-semibold text-white bg-indigo-600 hover:bg-indigo-500 shadow-sm transition-all text-xs uppercase tracking-wide disabled:opacity-50"
+                        className="w-full py-2.5 px-4 rounded font-bold text-white bg-[#008170] hover:bg-[#006e5f] shadow-sm transition-colors text-xs uppercase tracking-wider disabled:opacity-50"
                       >
-                        {executeLoading ? 'GENERATING XML...' : 'CONVERT TO TALLY XML'}
+                        {executeLoading ? 'GENERATING XML...' : '[Ctrl+E] CONVERT TO TALLY XML'}
                       </button>
 
                       <button
                         onClick={handleDownloadExcel}
-                        className="w-full py-2.5 px-4 rounded-xl font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-all text-xs"
+                        className="w-full py-2 px-4 rounded font-bold text-white bg-[#0b192c] hover:bg-[#1e3e62] border border-[#1e3e62] transition-colors text-xs uppercase tracking-wider"
                       >
                         EXCEL RECONCILIATION EXPORT (FREE)
                       </button>
@@ -4279,42 +4344,47 @@ export default function App() {
             )}
           </div>
         )}
-        {/* --- TAB: CSV TO TALLY MULTI-VOUCHER CONVERTER --- */}
+{/* --- TAB: CSV TO TALLY MULTI-VOUCHER CONVERTER (Option 2: Tally Pro Terminal) --- */}
         {activeTab === 'csv' && (
-          <div className="space-y-6 max-w-7xl mx-auto">
-            {/* Top Brand Banner (Linear Minimalist) */}
-            <div className="bg-white text-slate-800 p-5 rounded-xl border border-slate-200/90 shadow-2xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="space-y-5 max-w-7xl mx-auto font-mono">
+            {/* Top Brand Banner */}
+            <div className="bg-white text-slate-800 p-4 rounded-lg border-2 border-slate-400 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4 font-mono">
               <div className="flex items-center space-x-3.5">
-                <div className="w-10 h-10 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center p-1.5 flex-shrink-0">
-                  <img src="/symbol_mark.svg" alt="CSV to Tally" className="w-full h-full object-contain" />
+                <div className="w-10 h-10 rounded bg-[#0b192c] border border-[#1e3e62] flex items-center justify-center p-1.5 flex-shrink-0">
+                  <img src="/symbol_mark.svg" alt="CSV to Tally" className="w-full h-full object-contain filter invert" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-slate-900 tracking-tight">
-                    CSV To Tally Prime Multi-Voucher Converter
-                  </h3>
-                  <p className="text-xs text-slate-500 font-medium mt-0.5">
-                    Import Payment, Receipt, Contra, Journal, Sales & Purchase entries from any CSV. Map columns, edit inline, and generate Tally XML.
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 bg-[#008170] text-white font-extrabold text-[10px] rounded tracking-wider">
+                      [F1:2]
+                    </span>
+                    <h3 className="text-sm font-bold text-[#0b192c] tracking-tight uppercase">
+                      CSV to Tally Prime Multi-Voucher Converter
+                    </h3>
+                  </div>
+                  <p className="text-xs text-slate-500 font-mono mt-0.5">
+                    Map Payment, Receipt, Contra, Journal, Sales & Purchase entries. Generate Tally XML 1.0.
                   </p>
                 </div>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2 font-mono">
                 <button
                   onClick={handleDownloadBlankCsv}
-                  className="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs rounded-lg border border-slate-200 shadow-2xs transition-colors flex items-center space-x-1.5"
+                  className="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-800 font-bold text-xs rounded border-2 border-slate-400 shadow-sm transition-colors flex items-center space-x-1"
                   title="Download clean blank CSV template"
                 >
                   <span>Blank CSV</span>
                 </button>
                 <button
                   onClick={handleDownloadSampleCsv}
-                  className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs rounded-lg shadow-2xs transition-colors flex items-center space-x-1.5"
+                  className="px-3 py-1.5 bg-[#0b192c] hover:bg-[#1e3e62] text-amber-300 font-bold text-xs rounded border border-[#1e3e62] shadow-sm transition-colors flex items-center space-x-1"
                   title="Download CSV pre-filled with Payment, Receipt, Contra & Journal examples"
                 >
                   <span>Sample CSV</span>
                 </button>
                 <button
                   onClick={handleOpenCreateMapping}
-                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-lg shadow-2xs transition-colors flex items-center space-x-1.5"
+                  className="px-3 py-1.5 bg-[#008170] hover:bg-[#006e5f] text-white font-bold text-xs rounded shadow-sm transition-colors flex items-center space-x-1"
                 >
                   <span>+ New Mapping</span>
                 </button>
@@ -4322,21 +4392,21 @@ export default function App() {
             </div>
 
             {/* Upload & Mapping Card */}
-            <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-6 space-y-6">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h4 className="text-sm font-bold text-slate-900 tracking-tight flex items-center space-x-2">
-                  <span className="w-2 h-2 rounded-full bg-indigo-600 inline-block"></span>
+            <div className="bg-white rounded-lg border-2 border-slate-400 shadow-sm p-5 space-y-4 font-mono">
+              <div className="flex items-center justify-between border-b border-slate-300 pb-2.5">
+                <h4 className="text-xs font-bold text-[#0b192c] tracking-tight uppercase flex items-center space-x-2">
+                  <span className="w-2 h-2 rounded-full bg-[#008170] inline-block"></span>
                   <span>1. Upload CSV & Choose Column Mapping Template</span>
                 </h4>
-                <div className="text-[11px] font-medium text-slate-400 bg-slate-100 px-2.5 py-0.5 rounded-full">
+                <div className="text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-300 uppercase">
                   Step 1 of 2
                 </div>
               </div>
 
-              <form onSubmit={handleUploadAndPreviewCsv} className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
+              <form onSubmit={handleUploadAndPreviewCsv} className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-end font-mono">
                 {/* File input */}
                 <div className="lg:col-span-5">
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  <label className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wide">
                     Select CSV File
                   </label>
                   <input
@@ -4348,10 +4418,10 @@ export default function App() {
                         setCsvError('');
                       }
                     }}
-                    className="w-full text-xs font-medium p-2 border border-slate-300 rounded-xl bg-slate-50/50 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-900 file:text-white file:cursor-pointer hover:file:bg-slate-800 cursor-pointer transition-all"
+                    className="w-full text-xs font-mono font-medium p-1.5 border-2 border-slate-400 rounded bg-slate-50 file:mr-3 file:py-1 file:px-2.5 file:rounded file:border-0 file:text-xs file:font-mono file:font-bold file:bg-[#0b192c] file:text-white file:cursor-pointer hover:file:bg-[#1e3e62] cursor-pointer transition-colors"
                   />
                   {csvFile && (
-                    <div className="text-[11px] font-medium text-emerald-700 mt-1.5 flex items-center space-x-1">
+                    <div className="text-[11px] font-mono font-bold text-emerald-800 mt-1 flex items-center space-x-1">
                       <span>✓ Ready: {csvFile.name} ({(csvFile.size / 1024).toFixed(1)} KB)</span>
                     </div>
                   )}
@@ -4359,22 +4429,22 @@ export default function App() {
 
                 {/* Mapping Selector */}
                 <div className="lg:col-span-4">
-                  <div className="flex justify-between items-center mb-1.5">
-                    <label className="text-xs font-semibold text-slate-700">
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wide">
                       Mapping Template
                     </label>
                     <button
                       type="button"
                       onClick={handleOpenCreateMapping}
-                      className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-500 hover:underline"
+                      className="text-[11px] font-bold text-[#008170] hover:underline"
                     >
-                      + Create Custom
+                      + Custom Template
                     </button>
                   </div>
                   <select
                     value={selectedCsvMappingId}
                     onChange={(e) => setSelectedCsvMappingId(e.target.value)}
-                    className="w-full px-3.5 py-2.5 text-xs font-medium border border-slate-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all"
+                    className="w-full px-3 py-1.5 text-xs font-mono font-bold border-2 border-slate-400 rounded bg-white focus:outline-none focus:border-[#008170] transition-colors"
                   >
                     <option value="default">Standard Sheet Buddy CSV (Default)</option>
                     {csvMappings.map(tmpl => (
@@ -4390,7 +4460,7 @@ export default function App() {
                   <button
                     type="submit"
                     disabled={csvUploading || !csvFile}
-                    className="flex-1 py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-semibold text-xs shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    className="flex-1 py-2 px-3 bg-[#0b192c] hover:bg-[#1e3e62] text-amber-300 rounded font-mono font-bold text-xs uppercase tracking-wider shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     {csvUploading ? 'Processing...' : 'Process & Preview'}
                   </button>
@@ -4403,17 +4473,17 @@ export default function App() {
                         if (targetTmpl) handleOpenEditMapping(targetTmpl);
                       }}
                       title="Edit this template"
-                      className="px-3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold text-xs border border-slate-200 transition-all"
+                      className="px-2.5 py-2 bg-white hover:bg-slate-100 text-slate-800 rounded font-bold text-xs border-2 border-slate-400 transition-colors"
                     >
-                      ✎
+                      Edit
                     </button>
                   )}
                 </div>
               </form>
 
               {csvError && (
-                <div className="p-3.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl font-medium text-xs flex items-center justify-between">
-                  <span>⚠ {csvError}</span>
+                <div className="p-3 bg-rose-50 border-2 border-rose-300 text-rose-900 rounded font-mono font-bold text-xs flex items-center justify-between">
+                  <span>[Warning]: {csvError}</span>
                   <button onClick={() => setCsvError('')} className="font-bold underline text-[11px] ml-2">Dismiss</button>
                 </div>
               )}
@@ -4421,42 +4491,42 @@ export default function App() {
 
             {/* Vouchers Preview & Interactive Spreadsheet */}
             {csvVouchers.length > 0 && (
-              <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-6 space-y-6">
+              <div className="bg-white rounded-lg border-2 border-slate-400 shadow-sm p-5 space-y-4 font-mono">
                 {/* Header Metrics */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-100 pb-4 gap-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-300 pb-3 gap-3">
                   <div>
-                    <h4 className="text-sm font-bold text-slate-900 tracking-tight flex items-center space-x-2">
-                      <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+                    <h4 className="text-xs font-bold text-[#0b192c] tracking-tight uppercase flex items-center space-x-2">
+                      <span className="w-2 h-2 rounded-full bg-[#008170] inline-block"></span>
                       <span>2. Interactive Vouchers Review & Multi-Voucher Grid</span>
                     </h4>
-                    <p className="text-xs text-slate-500 font-medium mt-0.5">
-                      Double-check dates, ledger accounts, and voucher types. Edit inline before converting to Tally Prime.
+                    <p className="text-xs text-slate-500 font-mono mt-0.5">
+                      Verify dates, ledgers and voucher types. Edit inline before generating Tally Prime XML.
                     </p>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
                     <button
                       onClick={handleAddVoucherRow}
-                      className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-semibold text-xs transition-all"
+                      className="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-800 rounded font-bold text-xs border-2 border-slate-400 shadow-sm transition-colors"
                     >
                       + Add Row
                     </button>
                     <button
                       onClick={handleExportCsvToExcel}
-                      className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-semibold text-xs border border-slate-700 transition-all"
+                      className="px-3 py-1.5 bg-[#0b192c] hover:bg-[#1e3e62] text-white rounded font-bold text-xs border border-[#1e3e62] shadow-sm transition-colors"
                     >
                       Export Excel (.xlsx)
                     </button>
                     <button
                       onClick={handleConvertCsvToXml}
                       disabled={csvConverting}
-                      className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-semibold text-xs shadow-sm disabled:opacity-50 flex items-center space-x-1.5 transition-all"
+                      className="px-3.5 py-1.5 bg-[#008170] hover:bg-[#006e5f] text-white rounded font-bold text-xs shadow-sm disabled:opacity-50 flex items-center space-x-1.5 transition-colors"
                     >
                       <span>{csvConverting ? 'Generating XML...' : 'Convert to Tally XML'}</span>
                       {(() => {
                         const pricing = getCsvCreditPricing(csvVouchers.length);
                         return (
-                          <span className="text-[10px] bg-indigo-950 text-indigo-300 px-1.5 py-0.5 font-bold rounded">
+                          <span className="text-[10px] bg-[#0b192c] text-amber-300 px-1.5 py-0.2 font-bold rounded">
                             {pricing} {pricing === 1 ? 'Credit' : 'Credits'}
                           </span>
                         );
@@ -4465,64 +4535,64 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Metric Summary Badges */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-7 gap-3">
-                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 text-center">
-                    <div className="text-[10px] font-semibold uppercase text-slate-500">Total Vouchers</div>
-                    <div className="text-xl font-bold font-mono text-slate-900 mt-0.5">{csvVouchers.length}</div>
+                {/* Metric Summary Badges (Ruled High-Contrast Grid) */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-7 gap-2.5 font-mono">
+                  <div className="p-2.5 bg-slate-50 rounded border-2 border-slate-400 text-center">
+                    <div className="text-[10px] font-bold uppercase text-slate-500">Total Vouchers</div>
+                    <div className="text-lg font-bold font-mono text-[#0b192c] mt-0.5">{csvVouchers.length}</div>
                   </div>
-                  <div className="p-3 bg-emerald-50/70 rounded-xl border border-emerald-200 text-center">
-                    <div className="text-[10px] font-semibold uppercase text-emerald-800">Valid Entries</div>
-                    <div className="text-xl font-bold font-mono text-emerald-700 mt-0.5">
+                  <div className="p-2.5 bg-emerald-50 rounded border-2 border-emerald-300 text-center">
+                    <div className="text-[10px] font-bold uppercase text-emerald-800">Valid Entries</div>
+                    <div className="text-lg font-bold font-mono text-emerald-700 mt-0.5">
                       {csvVouchers.filter(v => v.is_valid).length}
                     </div>
                   </div>
-                  <div className={`p-3 rounded-xl border text-center ${csvVouchers.filter(v => !v.is_valid).length > 0 ? 'bg-rose-50 border-rose-200 text-rose-700' : 'bg-slate-50 border-slate-200/80 text-slate-400'}`}>
-                    <div className="text-[10px] font-semibold uppercase">Validation Errors</div>
-                    <div className="text-xl font-bold font-mono mt-0.5">
+                  <div className={`p-2.5 rounded border-2 text-center ${csvVouchers.filter(v => !v.is_valid).length > 0 ? 'bg-rose-50 border-rose-300 text-rose-800' : 'bg-slate-50 border-slate-400 text-slate-500'}`}>
+                    <div className="text-[10px] font-bold uppercase">Validation Issues</div>
+                    <div className="text-lg font-bold font-mono mt-0.5">
                       {csvVouchers.filter(v => !v.is_valid).length}
                     </div>
                   </div>
-                  <div className="p-3 bg-blue-50/70 rounded-xl border border-blue-200 text-center">
-                    <div className="text-[10px] font-semibold uppercase text-blue-800">Payments</div>
-                    <div className="text-xl font-bold font-mono text-blue-700 mt-0.5">
+                  <div className="p-2.5 bg-slate-50 rounded border-2 border-slate-400 text-center">
+                    <div className="text-[10px] font-bold uppercase text-slate-600">Payment</div>
+                    <div className="text-lg font-bold font-mono text-slate-800 mt-0.5">
                       {csvVouchers.filter(v => v.voucher_type === 'Payment').length}
                     </div>
                   </div>
-                  <div className="p-3 bg-teal-50/70 rounded-xl border border-teal-200 text-center">
-                    <div className="text-[10px] font-semibold uppercase text-teal-800">Receipts</div>
-                    <div className="text-xl font-bold font-mono text-teal-700 mt-0.5">
+                  <div className="p-2.5 bg-slate-50 rounded border-2 border-slate-400 text-center">
+                    <div className="text-[10px] font-bold uppercase text-slate-600">Receipt</div>
+                    <div className="text-lg font-bold font-mono text-slate-800 mt-0.5">
                       {csvVouchers.filter(v => v.voucher_type === 'Receipt').length}
                     </div>
                   </div>
-                  <div className="p-3 bg-purple-50/70 rounded-xl border border-purple-200 text-center">
-                    <div className="text-[10px] font-semibold uppercase text-purple-800">Contra / Journal</div>
-                    <div className="text-xl font-bold font-mono text-purple-700 mt-0.5">
+                  <div className="p-2.5 bg-slate-50 rounded border-2 border-slate-400 text-center">
+                    <div className="text-[10px] font-bold uppercase text-slate-600">Contra/Jrn</div>
+                    <div className="text-lg font-bold font-mono text-slate-800 mt-0.5">
                       {csvVouchers.filter(v => ['Contra', 'Journal'].includes(v.voucher_type)).length}
                     </div>
                   </div>
-                  <div className="p-3 bg-slate-900 rounded-xl border border-slate-800 text-center text-white">
-                    <div className="text-[10px] font-semibold uppercase text-slate-400">Total ₹</div>
-                    <div className="text-sm font-bold font-mono tabular-nums text-white truncate mt-1" title={`₹${csvVouchers.reduce((acc, v) => acc + (parseFloat(v.amount) || 0), 0).toLocaleString('en-IN')}`}>
+                  <div className="p-2.5 bg-[#0b192c] text-white rounded border-2 border-[#1e3e62] text-center">
+                    <div className="text-[10px] font-bold uppercase text-slate-400">Total ₹</div>
+                    <div className="text-sm font-bold font-mono tabular-nums text-amber-300 truncate mt-0.5" title={`₹${csvVouchers.reduce((acc, v) => acc + (parseFloat(v.amount) || 0), 0).toLocaleString('en-IN')}`}>
                       ₹{csvVouchers.reduce((acc, v) => acc + (parseFloat(v.amount) || 0), 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
                     </div>
                   </div>
                 </div>
 
                 {csvConvertError && (
-                  <div className="p-3.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl font-medium text-xs">
-                    ⚠ {csvConvertError}
+                  <div className="p-3 bg-rose-50 border-2 border-rose-300 text-rose-900 rounded font-mono font-bold text-xs">
+                    [Error]: {csvConvertError}
                   </div>
                 )}
 
                 {/* Filters & Search Toolbar */}
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-1">
-                  <div className="flex flex-wrap items-center gap-1.5">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-1 font-mono">
+                  <div className="flex flex-wrap items-center gap-1">
                     {['ALL', 'Payment', 'Receipt', 'Contra', 'Journal', 'Sales', 'Purchase'].map(vt => (
                       <button
                         key={vt}
                         onClick={() => setCsvFilterType(vt)}
-                        className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${csvFilterType === vt ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
+                        className={`px-2.5 py-1 rounded text-xs font-bold transition-colors ${csvFilterType === vt ? 'bg-[#0b192c] text-amber-300 border border-[#1e3e62]' : 'bg-white text-slate-700 hover:text-slate-900 border border-slate-300'}`}
                       >
                         {vt}
                       </button>
@@ -4530,9 +4600,9 @@ export default function App() {
                     {csvVouchers.some(v => !v.is_valid) && (
                       <button
                         onClick={() => setCsvFilterType('INVALID')}
-                        className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${csvFilterType === 'INVALID' ? 'bg-rose-600 text-white shadow-sm' : 'bg-rose-50 text-rose-700 hover:bg-rose-100'}`}
+                        className={`px-2.5 py-1 rounded text-xs font-bold transition-colors ${csvFilterType === 'INVALID' ? 'bg-rose-700 text-white border border-rose-800' : 'bg-rose-100 text-rose-900 hover:bg-rose-200 border border-rose-300'}`}
                       >
-                        ⚠ Issues Only ({csvVouchers.filter(v => !v.is_valid).length})
+                        Issues Only ({csvVouchers.filter(v => !v.is_valid).length})
                       </button>
                     )}
                   </div>
@@ -4543,168 +4613,165 @@ export default function App() {
                       placeholder="Search ledgers, narration, voucher..."
                       value={csvSearchQuery}
                       onChange={(e) => setCsvSearchQuery(e.target.value)}
-                      className="w-full px-3.5 py-1.5 text-xs font-medium border border-slate-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 placeholder:text-slate-400"
+                      className="w-full px-3 py-1 text-xs font-mono font-medium border-2 border-slate-400 rounded bg-white focus:outline-none focus:border-[#008170] placeholder:text-slate-400"
                     />
                     {csvSearchQuery && (
                       <button
                         onClick={() => setCsvSearchQuery('')}
-                        className="absolute right-2.5 top-1.5 text-xs font-bold text-slate-400 hover:text-slate-700"
+                        className="absolute right-2.5 top-1 text-xs font-bold text-slate-500 hover:text-slate-900"
                       >
-                        ✕
+                        [X]
                       </button>
                     )}
                   </div>
                 </div>
 
-                {/* Spreadsheet Table */}
-                <div className="overflow-x-auto rounded-xl border border-slate-200 max-h-[500px]">
-                  <table className="min-w-[1050px] w-full text-left text-xs border-collapse">
-                    <thead className="bg-slate-50/95 sticky top-0 z-10 select-none border-b border-slate-200 text-slate-600 font-semibold uppercase text-[11px] backdrop-blur-sm">
+                {/* Ruled High-Contrast Accounting Grid Table */}
+                <div className="overflow-x-auto rounded-lg border-2 border-slate-400 max-h-[500px]">
+                  <table className="min-w-[1050px] w-full text-left text-xs border-collapse font-mono bg-white">
+                    <thead className="bg-[#0b192c] text-white sticky top-0 z-10 select-none border-b-2 border-slate-400 font-bold uppercase text-[10px] tracking-wide">
                       <tr>
-                        <th className="p-2.5 w-10 text-center font-bold">#</th>
-                        <th className="p-2.5 w-28 font-bold">Date</th>
-                        <th className="p-2.5 w-28 font-bold">Voucher Type</th>
-                        <th className="p-2.5 w-28 font-bold">Voucher No</th>
-                        <th className="p-2.5 font-bold">
-                          <span className="bg-rose-100 text-rose-800 px-1.5 py-0.5 rounded text-[9px] mr-1.5 font-bold">Dr</span>
+                        <th className="p-2 w-10 text-center font-bold border-r border-slate-400">#</th>
+                        <th className="p-2 w-28 font-bold border-r border-slate-400">Date</th>
+                        <th className="p-2 w-28 font-bold border-r border-slate-400">Voucher Type</th>
+                        <th className="p-2 w-28 font-bold border-r border-slate-400">Voucher No</th>
+                        <th className="p-2 font-bold border-r border-slate-400">
+                          <span className="bg-rose-100 text-rose-900 px-1.5 py-0.2 rounded text-[9px] mr-1.5 font-bold">Dr</span>
                           Debit Ledger
                         </th>
-                        <th className="p-2.5 font-bold">
-                          <span className="bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded text-[9px] mr-1.5 font-bold">Cr</span>
+                        <th className="p-2 font-bold border-r border-slate-400">
+                          <span className="bg-emerald-100 text-emerald-900 px-1.5 py-0.2 rounded text-[9px] mr-1.5 font-bold">Cr</span>
                           Credit Ledger
                         </th>
-                        <th className="p-2.5 w-28 text-right font-bold">Amount (₹)</th>
-                        <th className="p-2.5 font-bold">Narration</th>
-                        <th className="p-2.5 w-24 font-bold">Ref / Cheque</th>
-                        <th className="p-2.5 w-16 text-center font-bold">Status</th>
-                        <th className="p-2.5 w-10 text-center font-bold">✕</th>
+                        <th className="p-2 w-28 text-right font-bold border-r border-slate-400">Amount (₹)</th>
+                        <th className="p-2 font-bold border-r border-slate-400">Narration</th>
+                        <th className="p-2 w-16 text-center font-bold border-r border-slate-400">Status</th>
+                        <th className="p-2 w-10 text-center font-bold">Del</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 text-xs text-slate-800">
+                    <tbody className="divide-y divide-slate-200">
                       {csvVouchers
-                        .map((vch, originalIdx) => ({ vch, originalIdx }))
-                        .filter(({ vch }) => {
-                          if (csvFilterType === 'INVALID') {
-                            if (vch.is_valid) return false;
-                          } else if (csvFilterType !== 'ALL') {
-                            if (vch.voucher_type !== csvFilterType) return false;
-                          }
-                          if (csvSearchQuery) {
+                        .map((v, originalIdx) => ({ voucher: v, originalIdx }))
+                        .filter(({ voucher: v }) => {
+                          if (csvFilterType === 'INVALID' && v.is_valid) return false;
+                          if (csvFilterType !== 'ALL' && csvFilterType !== 'INVALID' && v.voucher_type !== csvFilterType) return false;
+                          if (csvSearchQuery.trim()) {
                             const q = csvSearchQuery.toLowerCase();
-                            const match = (
-                              (vch.narration && vch.narration.toLowerCase().includes(q)) ||
-                              (vch.debit_ledger && vch.debit_ledger.toLowerCase().includes(q)) ||
-                              (vch.credit_ledger && vch.credit_ledger.toLowerCase().includes(q)) ||
-                              (vch.voucher_number && vch.voucher_number.toLowerCase().includes(q)) ||
-                              (vch.ref_no && vch.ref_no.toLowerCase().includes(q))
-                            );
-                            if (!match) return false;
+                            const matches =
+                              (v.debit_ledger || '').toLowerCase().includes(q) ||
+                              (v.credit_ledger || '').toLowerCase().includes(q) ||
+                              (v.narration || '').toLowerCase().includes(q) ||
+                              (v.voucher_no || '').toLowerCase().includes(q) ||
+                              (v.voucher_type || '').toLowerCase().includes(q);
+                            if (!matches) return false;
                           }
                           return true;
                         })
-                        .map(({ vch, originalIdx }) => (
-                          <tr key={originalIdx} className={`hover:bg-slate-50/80 transition-colors ${!vch.is_valid ? 'bg-rose-50/40' : originalIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'}`}>
-                            <td className="p-2 text-center text-slate-400 font-mono text-[11px]">
+                        .map(({ voucher: v, originalIdx }) => (
+                          <tr
+                            key={v.id || originalIdx}
+                            className={`hover:bg-amber-50/60 transition-colors border-b border-slate-200 ${!v.is_valid ? 'bg-rose-50/60' : ''}`}
+                          >
+                            <td className="p-2 text-center text-slate-500 font-mono text-[11px] border-r border-slate-200">
                               {originalIdx + 1}
                             </td>
-                            <td className="p-1">
+
+                            <td className="p-1 border-r border-slate-200">
                               <input
                                 type="text"
-                                value={vch.date || ''}
-                                onChange={(e) => handleUpdateVoucherCell(originalIdx, 'date', e.target.value)}
-                                className="w-full px-2 py-1 text-xs rounded-md font-mono border border-transparent hover:border-slate-300 focus:border-indigo-500 focus:bg-white focus:outline-none transition-all"
+                                value={v.date || ''}
                                 placeholder="YYYY-MM-DD"
+                                onChange={(e) => handleUpdateVoucherCell(originalIdx, 'date', e.target.value)}
+                                className="w-full px-2 py-1 text-xs font-mono border border-slate-300 rounded bg-white focus:outline-none focus:border-[#008170]"
                               />
                             </td>
-                            <td className="p-1">
+
+                            <td className="p-1 border-r border-slate-200">
                               <select
-                                value={vch.voucher_type || 'Payment'}
+                                value={v.voucher_type || 'Payment'}
                                 onChange={(e) => handleUpdateVoucherCell(originalIdx, 'voucher_type', e.target.value)}
-                                className="w-full px-2 py-1 text-xs font-semibold rounded-md border border-transparent hover:border-slate-300 focus:border-indigo-500 focus:bg-white focus:outline-none transition-all"
+                                className="w-full px-2 py-1 text-xs font-mono font-bold border border-slate-300 rounded bg-white focus:outline-none focus:border-[#008170]"
                               >
-                                <option value="Payment">Payment</option>
-                                <option value="Receipt">Receipt</option>
-                                <option value="Contra">Contra</option>
-                                <option value="Journal">Journal</option>
-                                <option value="Sales">Sales</option>
-                                <option value="Purchase">Purchase</option>
+                                <option>Payment</option>
+                                <option>Receipt</option>
+                                <option>Contra</option>
+                                <option>Journal</option>
+                                <option>Sales</option>
+                                <option>Purchase</option>
                               </select>
                             </td>
-                            <td className="p-1">
+
+                            <td className="p-1 border-r border-slate-200">
                               <input
                                 type="text"
-                                value={vch.voucher_number || ''}
-                                onChange={(e) => handleUpdateVoucherCell(originalIdx, 'voucher_number', e.target.value)}
-                                className="w-full px-2 py-1 text-xs rounded-md font-mono border border-transparent hover:border-slate-300 focus:border-indigo-500 focus:bg-white focus:outline-none transition-all"
-                                placeholder="Auto / No"
+                                value={v.voucher_no || ''}
+                                placeholder="Auto"
+                                onChange={(e) => handleUpdateVoucherCell(originalIdx, 'voucher_no', e.target.value)}
+                                className="w-full px-2 py-1 text-xs font-mono border border-slate-300 rounded bg-white focus:outline-none focus:border-[#008170]"
                               />
                             </td>
-                            <td className="p-1">
+
+                            <td className="p-1 border-r border-slate-200">
                               <input
                                 type="text"
-                                value={vch.debit_ledger || ''}
-                                onChange={(e) => handleUpdateVoucherCell(originalIdx, 'debit_ledger', e.target.value)}
-                                className={`w-full px-2 py-1 text-xs font-medium rounded-md border ${!vch.debit_ledger ? 'border-rose-300 bg-rose-50/50' : 'border-transparent hover:border-slate-300 focus:border-indigo-500 focus:bg-white'} focus:outline-none transition-all`}
+                                value={v.debit_ledger || ''}
                                 placeholder="Debit Ledger Name"
+                                onChange={(e) => handleUpdateVoucherCell(originalIdx, 'debit_ledger', e.target.value)}
+                                className={`w-full px-2 py-1 text-xs font-mono border rounded bg-white focus:outline-none focus:border-[#008170] ${!v.debit_ledger ? 'border-rose-400 bg-rose-50' : 'border-slate-300'}`}
                               />
                             </td>
-                            <td className="p-1">
+
+                            <td className="p-1 border-r border-slate-200">
                               <input
                                 type="text"
-                                value={vch.credit_ledger || ''}
-                                onChange={(e) => handleUpdateVoucherCell(originalIdx, 'credit_ledger', e.target.value)}
-                                className={`w-full px-2 py-1 text-xs font-medium rounded-md border ${!vch.credit_ledger ? 'border-rose-300 bg-rose-50/50' : 'border-transparent hover:border-slate-300 focus:border-indigo-500 focus:bg-white'} focus:outline-none transition-all`}
+                                value={v.credit_ledger || ''}
                                 placeholder="Credit Ledger Name"
+                                onChange={(e) => handleUpdateVoucherCell(originalIdx, 'credit_ledger', e.target.value)}
+                                className={`w-full px-2 py-1 text-xs font-mono border rounded bg-white focus:outline-none focus:border-[#008170] ${!v.credit_ledger ? 'border-rose-400 bg-rose-50' : 'border-slate-300'}`}
                               />
                             </td>
-                            <td className="p-1">
+
+                            <td className="p-1 border-r border-slate-200">
                               <input
                                 type="number"
                                 step="0.01"
-                                value={vch.amount}
+                                value={v.amount || ''}
+                                placeholder="0.00"
                                 onChange={(e) => handleUpdateVoucherCell(originalIdx, 'amount', e.target.value)}
-                                className={`w-full px-2 py-1 text-xs text-right font-mono tabular-nums font-semibold rounded-md border ${!vch.amount || vch.amount <= 0 ? 'border-rose-300 bg-rose-50 text-rose-700' : 'border-transparent hover:border-slate-300 focus:border-indigo-500 focus:bg-white'} focus:outline-none transition-all`}
+                                className={`w-full px-2 py-1 text-xs font-mono text-right font-bold border rounded bg-white focus:outline-none focus:border-[#008170] ${parseFloat(v.amount) <= 0 || !v.amount ? 'border-rose-400 bg-rose-50 text-rose-700' : 'border-slate-300 text-slate-900'}`}
                               />
                             </td>
-                            <td className="p-1">
+
+                            <td className="p-1 border-r border-slate-200">
                               <input
                                 type="text"
-                                value={vch.narration || ''}
+                                value={v.narration || ''}
+                                placeholder="Narration text..."
                                 onChange={(e) => handleUpdateVoucherCell(originalIdx, 'narration', e.target.value)}
-                                className="w-full px-2 py-1 text-xs rounded-md border border-transparent hover:border-slate-300 focus:border-indigo-500 focus:bg-white focus:outline-none transition-all"
-                                placeholder="Narration description"
+                                className="w-full px-2 py-1 text-xs font-mono border border-slate-300 rounded bg-white focus:outline-none focus:border-[#008170]"
                               />
                             </td>
-                            <td className="p-1">
-                              <input
-                                type="text"
-                                value={vch.ref_no || ''}
-                                onChange={(e) => handleUpdateVoucherCell(originalIdx, 'ref_no', e.target.value)}
-                                className="w-full px-2 py-1 text-xs font-mono text-slate-600 rounded-md border border-transparent hover:border-slate-300 focus:border-indigo-500 focus:bg-white focus:outline-none transition-all"
-                                placeholder="Ref/Chq"
-                              />
-                            </td>
-                            <td className="p-1 text-center">
-                              {vch.is_valid ? (
-                                <span className="text-[9px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-bold uppercase">
-                                  OK
-                                </span>
+
+                            <td className="p-2 text-center border-r border-slate-200 font-mono">
+                              {v.is_valid ? (
+                                <span className="text-emerald-700 font-bold text-xs">OK</span>
                               ) : (
                                 <span
-                                  className="text-[9px] bg-rose-50 text-rose-700 border border-rose-200 px-2 py-0.5 rounded-full font-bold uppercase cursor-help"
-                                  title={(vch.error_reasons && vch.error_reasons.length > 0) ? vch.error_reasons.join(', ') : (vch.validation_error || 'Missing required ledger, date or amount')}
+                                  className="text-rose-700 font-bold text-xs cursor-help"
+                                  title={v.validation_errors?.join(', ') || 'Validation error'}
                                 >
                                   ERR
                                 </span>
                               )}
                             </td>
+
                             <td className="p-1 text-center">
                               <button
                                 onClick={() => handleDeleteVoucherRow(originalIdx)}
-                                className="text-slate-400 hover:text-rose-600 font-bold text-xs px-1 transition-colors"
-                                title="Remove row"
+                                className="text-slate-400 hover:text-rose-700 font-bold text-xs p-1"
+                                title="Delete row"
                               >
-                                ✕
+                                [X]
                               </button>
                             </td>
                           </tr>
@@ -4712,118 +4779,75 @@ export default function App() {
                     </tbody>
                   </table>
                 </div>
-
-                {/* Bottom Conversion Call to Action */}
-                <div className="flex flex-col sm:flex-row items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200 gap-3">
-                  <div className="text-xs font-medium text-slate-700">
-                    Ready to post to Tally? Click below to generate XML for your company data.
-                  </div>
-                  <div className="flex items-center space-x-2.5">
-                    <button
-                      onClick={handleExportCsvToExcel}
-                      className="px-3.5 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-xl font-semibold text-xs transition-all shadow-sm"
-                    >
-                      Export Excel
-                    </button>
-                    <button
-                      onClick={handleConvertCsvToXml}
-                      disabled={csvConverting}
-                      className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-semibold text-xs shadow-sm disabled:opacity-50 flex items-center space-x-2 transition-all"
-                    >
-                      <span>{csvConverting ? 'Generating...' : 'CONVERT TO TALLY PRIME XML'}</span>
-                      {(() => {
-                        const pricing = getCsvCreditPricing(csvVouchers.length);
-                        return (
-                          <span className="text-[10px] bg-indigo-600 text-white px-2 py-0.5 rounded-full font-bold">
-                            {pricing} {pricing === 1 ? 'Credit' : 'Credits'}
-                          </span>
-                        );
-                      })()}
-                    </button>
-                  </div>
-                </div>
               </div>
             )}
 
-            {/* Saved Mapping Templates Section */}
-            <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-6 space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h4 className="text-sm font-bold text-slate-900 tracking-tight">
-                  Saved CSV Column Mapping Templates ({csvMappings.length})
-                </h4>
+            {/* Saved Templates Directory */}
+            <div className="bg-white rounded-lg border-2 border-slate-400 shadow-sm p-5 space-y-4 font-mono">
+              <div className="flex items-center justify-between border-b border-slate-300 pb-2.5">
+                <div>
+                  <h4 className="text-xs font-bold text-[#0b192c] tracking-tight uppercase">
+                    Saved CSV Column Mapping Templates ({csvMappings.length})
+                  </h4>
+                  <p className="text-xs text-slate-500 font-mono mt-0.5">
+                    Save mappings once for client formats or accounting software exports.
+                  </p>
+                </div>
                 <button
                   onClick={handleOpenCreateMapping}
-                  className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-semibold text-xs shadow-sm transition-all"
+                  className="px-3 py-1.5 bg-[#008170] hover:bg-[#006e5f] text-white rounded font-bold text-xs shadow-sm transition-colors"
                 >
                   + Add Template
                 </button>
               </div>
 
               {csvMappings.length === 0 ? (
-                <div className="text-center py-8 text-xs font-medium text-slate-400">
-                  No custom mapping templates saved yet. You can use the standard Sheet Buddy template or click "+ Add Template" to map your custom ERP/bank CSV columns.
+                <div className="p-6 text-center text-slate-500 font-mono text-xs">
+                  No custom mappings saved yet. Click "+ Add Template" to create one.
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {csvMappings.map((tmpl) => (
-                    <div key={tmpl.id} className="rounded-xl border border-slate-200 p-4.5 bg-slate-50/60 shadow-sm space-y-3 hover:border-slate-300 transition-all">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <div className="font-bold text-xs text-slate-900">{tmpl.name}</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {csvMappings.map(tmpl => (
+                    <div
+                      key={tmpl.id}
+                      className={`p-3.5 rounded-lg border-2 transition-colors ${selectedCsvMappingId === String(tmpl.id) ? 'border-[#008170] bg-emerald-50/30' : 'border-slate-300 bg-white hover:border-slate-400'}`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="truncate">
+                          <div className="text-xs font-bold text-[#0b192c] truncate">{tmpl.name}</div>
                           {tmpl.description && (
-                            <div className="text-[11px] text-slate-500 font-medium mt-0.5">{tmpl.description}</div>
+                            <div className="text-[11px] text-slate-500 truncate mt-0.5">{tmpl.description}</div>
                           )}
                         </div>
-                        <div className="flex items-center space-x-1">
+                        <div className="flex items-center space-x-1 ml-2">
                           <button
                             onClick={() => handleOpenEditMapping(tmpl)}
-                            className="p-1.5 rounded-md hover:bg-slate-200/80 text-slate-600 text-xs transition-colors"
-                            title="Edit template"
+                            className="text-slate-600 hover:text-slate-900 p-1 text-xs font-bold"
+                            title="Edit"
                           >
-                            ✎
+                            [Edit]
                           </button>
                           <button
                             onClick={() => handleDeleteMapping(tmpl.id)}
-                            className="p-1.5 rounded-md hover:bg-rose-50 text-slate-400 hover:text-rose-600 text-xs transition-colors"
-                            title="Delete template"
+                            className="text-slate-400 hover:text-rose-700 p-1 text-xs font-bold"
+                            title="Delete"
                           >
-                            ✕
+                            [X]
                           </button>
                         </div>
                       </div>
 
-                      <div className="text-xs font-medium space-y-1.5 divide-y divide-slate-200/60">
-                        <div className="flex justify-between pt-1 text-slate-600">
-                          <span className="text-slate-400 text-[11px]">Date Column:</span>
-                          <span className="font-mono font-semibold text-slate-800 text-[11px]">{tmpl.date_column} ({tmpl.date_format})</span>
-                        </div>
-                        <div className="flex justify-between pt-1 text-slate-600">
-                          <span className="text-slate-400 text-[11px]">Voucher Type:</span>
-                          <span className="text-slate-800 text-[11px] font-medium">{tmpl.voucher_type_column || tmpl.default_voucher_type}</span>
-                        </div>
-                        <div className="flex justify-between pt-1 text-slate-600">
-                          <span className="text-slate-400 text-[11px]">Dr Ledger:</span>
-                          <span className="truncate max-w-[150px] text-slate-800 text-[11px]">{tmpl.debit_ledger_column || tmpl.default_debit_ledger || 'Unassigned'}</span>
-                        </div>
-                        <div className="flex justify-between pt-1 text-slate-600">
-                          <span className="text-slate-400 text-[11px]">Cr Ledger:</span>
-                          <span className="truncate max-w-[150px] text-slate-800 text-[11px]">{tmpl.credit_ledger_column || tmpl.default_credit_ledger || 'Unassigned'}</span>
-                        </div>
-                        <div className="flex justify-between pt-1 text-slate-600">
-                          <span className="text-slate-400 text-[11px]">Amount Column:</span>
-                          <span className="text-slate-800 text-[11px]">{tmpl.amount_column || `${tmpl.debit_amount_column || ''} / ${tmpl.credit_amount_column || ''}`}</span>
-                        </div>
+                      <div className="mt-3 pt-2.5 border-t border-slate-200">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedCsvMappingId(String(tmpl.id));
+                          }}
+                          className={`w-full py-1 text-center text-xs font-bold rounded transition-colors ${selectedCsvMappingId === String(tmpl.id) ? 'bg-[#008170] text-white shadow-sm' : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300'}`}
+                        >
+                          {selectedCsvMappingId === String(tmpl.id) ? '✓ Active Template' : 'Use This Template'}
+                        </button>
                       </div>
-
-                      <button
-                        onClick={() => {
-                          setSelectedCsvMappingId(String(tmpl.id));
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }}
-                        className={`w-full py-1.5 text-center text-xs font-semibold rounded-lg transition-all ${selectedCsvMappingId === String(tmpl.id) ? 'bg-slate-900 text-white shadow-sm' : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-300'}`}
-                      >
-                        {selectedCsvMappingId === String(tmpl.id) ? '✓ Currently Selected' : 'Use This Template'}
-                      </button>
                     </div>
                   ))}
                 </div>
@@ -4831,62 +4855,71 @@ export default function App() {
             </div>
           </div>
         )}
+
         {activeTab === 'rules' && (
-          <div className="space-y-6 max-w-6xl mx-auto">
+          <div className="space-y-5 max-w-6xl mx-auto font-mono">
             
-            {/* Header Banner (Linear Minimalist) */}
-            <div className="bg-white text-slate-800 p-5 rounded-xl border border-slate-200/90 shadow-2xs flex items-center justify-between">
+            {/* Header Banner */}
+            <div className="bg-white text-slate-900 p-4 rounded-lg border-2 border-slate-400 shadow-sm flex items-center justify-between">
               <div className="flex items-center space-x-3.5">
-                <div className="w-10 h-10 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center p-1.5 flex-shrink-0">
-                  <img src="/symbol_mark.svg" alt="Rules" className="w-full h-full object-contain" />
+                <div className="w-10 h-10 rounded bg-[#0b192c] border border-[#1e3e62] flex items-center justify-center p-1.5 flex-shrink-0">
+                  <img src="/symbol_mark.svg" alt="Rules" className="w-full h-full object-contain filter invert" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-slate-900 tracking-tight">
-                    Smart Ledger Suggestion & Categorization Rules
-                  </h3>
-                  <p className="text-xs text-slate-500 font-medium mt-0.5">
-                    Define keyword rules to automatically categorize narrations and assign specific Tally counter-ledgers.
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 bg-[#008170] text-white font-extrabold text-[10px] rounded tracking-wider">
+                      [F2:2]
+                    </span>
+                    <h3 className="text-sm font-bold text-[#0b192c] tracking-tight uppercase">
+                      Smart Ledger Suggestion & Categorization Rules
+                    </h3>
+                  </div>
+                  <p className="text-xs text-slate-500 font-mono mt-0.5">
+                    Define keyword rules to automatically categorize bank narrations and assign Tally counter-ledgers.
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
               
               {/* Left: Create Rule Form */}
-              <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-6 space-y-4">
-                <h4 className="text-sm font-bold text-slate-900 tracking-tight border-b border-slate-100 pb-2.5">Add New Rule</h4>
-                <form onSubmit={handleCreateRule} className="space-y-3.5 text-xs font-medium">
+              <div className="bg-white rounded-lg border-2 border-slate-400 shadow-sm p-5 space-y-3.5">
+                <div className="flex items-center justify-between border-b border-slate-300 pb-2">
+                  <h4 className="text-xs font-bold text-[#0b192c] tracking-tight uppercase">Add New Rule</h4>
+                  <span className="text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded border border-slate-300 font-bold">Auto-Matcher</span>
+                </div>
+                <form onSubmit={handleCreateRule} className="space-y-3 text-xs font-mono">
                   <div>
-                    <label className="block text-slate-700 font-semibold mb-1">Rule Name</label>
+                    <label className="block text-slate-700 font-bold mb-1 uppercase tracking-wide">Rule Name</label>
                     <input
                       type="text"
                       placeholder="e.g. Electricity Bill Rule"
                       value={ruleNameInput}
                       onChange={(e) => setRuleNameInput(e.target.value)}
-                      className="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-xs font-medium bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all"
+                      className="w-full px-3 py-1.5 border-2 border-slate-400 rounded text-xs font-mono bg-white focus:outline-none focus:border-[#008170] transition-colors"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-slate-700 font-semibold mb-1">Narration Match Pattern / Keyword</label>
+                    <label className="block text-slate-700 font-bold mb-1 uppercase tracking-wide">Narration Keyword / Pattern</label>
                     <input
                       type="text"
                       required
                       placeholder="e.g. BESCOM or SALARY or SWIGGY"
                       value={rulePatternInput}
                       onChange={(e) => setRulePatternInput(e.target.value)}
-                      className="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-xs font-mono uppercase bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all"
+                      className="w-full px-3 py-1.5 border-2 border-slate-400 rounded text-xs font-mono uppercase bg-white focus:outline-none focus:border-[#008170] transition-colors"
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="block text-slate-700 font-semibold mb-1">Match Type</label>
+                      <label className="block text-slate-700 font-bold mb-1 uppercase tracking-wide">Match Type</label>
                       <select
                         value={ruleMatchType}
                         onChange={(e) => setRuleMatchType(e.target.value)}
-                        className="w-full px-2.5 py-2 border border-slate-300 rounded-xl text-xs font-medium bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
+                        className="w-full px-2 py-1.5 border-2 border-slate-400 rounded text-xs font-mono font-bold bg-white focus:outline-none focus:border-[#008170]"
                       >
                         <option value="CONTAINS">CONTAINS</option>
                         <option value="STARTS_WITH">STARTS WITH</option>
@@ -4897,11 +4930,11 @@ export default function App() {
                     </div>
 
                     <div>
-                      <label className="block text-slate-700 font-semibold mb-1">Voucher Type</label>
+                      <label className="block text-slate-700 font-bold mb-1 uppercase tracking-wide">Voucher Type</label>
                       <select
                         value={ruleVoucherType}
                         onChange={(e) => setRuleVoucherType(e.target.value)}
-                        className="w-full px-2.5 py-2 border border-slate-300 rounded-xl text-xs font-medium bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
+                        className="w-full px-2 py-1.5 border-2 border-slate-400 rounded text-xs font-mono font-bold bg-white focus:outline-none focus:border-[#008170]"
                       >
                         <option value="Payment">Payment</option>
                         <option value="Receipt">Receipt</option>
@@ -4912,84 +4945,84 @@ export default function App() {
                   </div>
 
                   <div>
-                    <label className="block text-slate-700 font-semibold mb-1">Target Counter Ledger Name</label>
+                    <label className="block text-slate-700 font-bold mb-1 uppercase tracking-wide">Target Counter Ledger Name</label>
                     <input
                       type="text"
                       required
                       placeholder="e.g. Electricity Expenses"
                       value={ruleLedgerInput}
                       onChange={(e) => setRuleLedgerInput(e.target.value)}
-                      className="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-xs font-medium bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all"
+                      className="w-full px-3 py-1.5 border-2 border-slate-400 rounded text-xs font-mono font-bold bg-white focus:outline-none focus:border-[#008170] transition-colors"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-slate-700 font-semibold mb-1">Category</label>
+                    <label className="block text-slate-700 font-bold mb-1 uppercase tracking-wide">Category</label>
                     <input
                       type="text"
                       placeholder="e.g. Utilities, Vendor, Salary"
                       value={ruleCategoryInput}
                       onChange={(e) => setRuleCategoryInput(e.target.value)}
-                      className="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-xs font-medium bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all"
+                      className="w-full px-3 py-1.5 border-2 border-slate-400 rounded text-xs font-mono bg-white focus:outline-none focus:border-[#008170] transition-colors"
                     />
                   </div>
 
                   <button
                     type="submit"
-                    className="w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-semibold text-xs shadow-sm transition-all mt-2"
+                    className="w-full py-2 px-3 bg-[#008170] hover:bg-[#006e5f] text-white rounded font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-colors mt-1"
                   >
-                    Save Ledger Rule
+                    + Save Ledger Rule
                   </button>
                 </form>
               </div>
 
               {/* Right: Existing Rules Directory */}
-              <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-6 space-y-4 lg:col-span-2">
-                <div className="flex justify-between items-center border-b border-slate-100 pb-2.5">
-                  <h4 className="text-sm font-bold text-slate-900 tracking-tight">Active Rules Directory ({userRules.length})</h4>
+              <div className="bg-white rounded-lg border-2 border-slate-400 shadow-sm p-5 space-y-3.5 lg:col-span-2 font-mono">
+                <div className="flex justify-between items-center border-b border-slate-300 pb-2">
+                  <h4 className="text-xs font-bold text-[#0b192c] tracking-tight uppercase">Active Rules Directory ({userRules.length})</h4>
                   <button
                     onClick={fetchUserRules}
-                    className="text-xs font-semibold text-indigo-600 hover:text-indigo-500 hover:underline"
+                    className="text-xs font-mono font-bold text-[#008170] hover:underline"
                   >
-                    Refresh
+                    [Refresh Rules]
                   </button>
                 </div>
 
                 {userRules.length === 0 ? (
-                  <div className="py-10 text-center text-slate-400 font-medium text-xs">
-                    No custom ledger rules created yet. Add rules on the left to automate ledger mapping!
+                  <div className="py-10 text-center text-slate-500 font-mono text-xs">
+                    No custom ledger rules created yet. Add rules on the left to automate ledger mapping.
                   </div>
                 ) : (
-                  <div className="overflow-x-auto rounded-xl border border-slate-200 max-h-[380px]">
-                    <table className="min-w-full divide-y divide-slate-100 text-xs">
-                      <thead className="bg-slate-50 text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200 sticky top-0">
+                  <div className="overflow-x-auto rounded border-2 border-slate-400 max-h-[380px]">
+                    <table className="min-w-full divide-y divide-slate-200 text-xs font-mono bg-white">
+                      <thead className="bg-[#0b192c] text-white text-[10px] font-bold uppercase tracking-wider border-b-2 border-slate-400 sticky top-0">
                         <tr>
-                          <th className="px-3.5 py-2.5 text-left font-bold">Rule Name</th>
-                          <th className="px-3.5 py-2.5 text-left font-bold">Pattern</th>
-                          <th className="px-3.5 py-2.5 text-center font-bold">Type</th>
-                          <th className="px-3.5 py-2.5 text-left font-bold">Assigned Ledger</th>
-                          <th className="px-3.5 py-2.5 text-center font-bold">Voucher</th>
-                          <th className="px-3.5 py-2.5 text-center font-bold">Action</th>
+                          <th className="px-3 py-2 text-left font-bold border-r border-slate-400">Rule Name</th>
+                          <th className="px-3 py-2 text-left font-bold border-r border-slate-400">Pattern</th>
+                          <th className="px-3 py-2 text-center font-bold border-r border-slate-400">Type</th>
+                          <th className="px-3 py-2 text-left font-bold border-r border-slate-400">Assigned Ledger</th>
+                          <th className="px-3 py-2 text-center font-bold border-r border-slate-400">Voucher</th>
+                          <th className="px-3 py-2 text-center font-bold">Action</th>
                         </tr>
                       </thead>
-                      <tbody className="bg-white divide-y divide-slate-100 font-medium text-slate-800">
+                      <tbody className="divide-y divide-slate-200 text-slate-900">
                         {userRules.map((rule) => (
-                          <tr key={rule.id} className="hover:bg-slate-50/80 transition-colors">
-                            <td className="px-3.5 py-2.5 font-semibold text-slate-900">{rule.rule_name}</td>
-                            <td className="px-3.5 py-2.5 font-mono uppercase text-slate-600 text-[11px]">{rule.pattern}</td>
-                            <td className="px-3.5 py-2.5 text-center">
-                              <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-[10px] font-mono">
+                          <tr key={rule.id} className="hover:bg-amber-50/60 transition-colors border-b border-slate-200">
+                            <td className="px-3 py-2 font-bold text-[#0b192c] border-r border-slate-200">{rule.rule_name}</td>
+                            <td className="px-3 py-2 font-mono uppercase text-slate-700 text-[11px] border-r border-slate-200">{rule.pattern}</td>
+                            <td className="px-3 py-2 text-center border-r border-slate-200">
+                              <span className="bg-slate-100 text-slate-700 px-1.5 py-0.2 rounded text-[10px] font-mono border border-slate-300">
                                 {rule.match_type}
                               </span>
                             </td>
-                            <td className="px-3.5 py-2.5 text-emerald-700 font-semibold">{rule.ledger_name}</td>
-                            <td className="px-3.5 py-2.5 text-center text-[11px] text-slate-600">{rule.voucher_type}</td>
-                            <td className="px-3.5 py-2.5 text-center">
+                            <td className="px-3 py-2 text-emerald-800 font-bold border-r border-slate-200">{rule.ledger_name}</td>
+                            <td className="px-3 py-2 text-center text-[11px] text-slate-700 border-r border-slate-200">{rule.voucher_type}</td>
+                            <td className="px-3 py-2 text-center">
                               <button
                                 onClick={() => handleDeleteRule(rule.id)}
-                                className="text-slate-400 hover:text-rose-600 text-xs font-semibold transition-colors"
+                                className="text-slate-500 hover:text-rose-700 text-xs font-bold transition-colors font-mono"
                               >
-                                Delete
+                                [Del]
                               </button>
                             </td>
                           </tr>
@@ -5005,120 +5038,119 @@ export default function App() {
           </div>
         )}
 
-        {/* --- TAB: CLIENT DOSSIER & CA PRACTICE WORKSPACE --- */}
         {activeTab === 'clients' && (
-          <div className="space-y-6 max-w-6xl mx-auto">
+          <div className="space-y-5 max-w-6xl mx-auto font-mono">
             {selectedDossierClient ? (
               /* --- 1. INDIVIDUAL CLIENT DOSSIER VIEW --- */
-              <div className="space-y-6">
-                {/* Back Navigation & Client Header (Linear Minimalist) */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white text-slate-800 p-5 rounded-xl border border-slate-200/90 shadow-2xs">
+              <div className="space-y-5">
+                {/* Back Navigation & Client Header */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white text-slate-900 p-4 rounded-lg border-2 border-slate-400 shadow-sm font-mono">
                   <div>
                     <button
                       type="button"
                       onClick={() => setSelectedDossierClient(null)}
-                      className="inline-flex items-center text-xs font-semibold text-indigo-600 hover:text-indigo-700 hover:underline mb-2 transition-colors"
+                      className="inline-flex items-center text-xs font-mono font-bold text-[#008170] hover:underline mb-1.5 transition-colors"
                     >
-                      ← Back to All Clients
+                      ← Back to All Companies
                     </button>
-                    <div className="flex flex-wrap items-center gap-2.5">
-                      <h2 className="text-xl font-bold tracking-tight text-slate-900">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="text-lg font-bold tracking-tight text-[#0b192c]">
                         {selectedDossierClient.name}
                       </h2>
-                      <span className="bg-slate-100 text-slate-700 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-slate-200">
+                      <span className="bg-[#0b192c] text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded font-mono">
                         FY {selectedDossierClient.financial_year || '2024-25'}
                       </span>
-                      <span className="bg-emerald-50 text-emerald-700 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-emerald-200">
+                      <span className="bg-slate-100 text-slate-800 text-[10px] font-bold px-2 py-0.5 rounded border border-slate-300 uppercase font-mono">
                         {selectedDossierClient.business_type || 'Proprietorship'}
                       </span>
                     </div>
                     {selectedDossierClient.notes && (
-                      <p className="text-xs text-slate-500 mt-1 max-w-xl truncate font-medium">
+                      <p className="text-xs text-slate-500 mt-1 max-w-xl truncate font-mono">
                         {selectedDossierClient.notes}
                       </p>
                     )}
                   </div>
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2 font-mono">
                     <button
                       type="button"
                       onClick={() => {
                         setActiveClientId(selectedDossierClient.id);
                         setActiveTab('convert');
                       }}
-                      className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-xl shadow-sm transition-all"
+                      className="px-3 py-1.5 bg-[#008170] hover:bg-[#006e5f] text-white font-bold text-xs rounded shadow-sm transition-colors"
                     >
                       + Import Statement PDF
                     </button>
                     <button
                       type="button"
                       onClick={() => handleOpenClientModal(selectedDossierClient)}
-                      className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs rounded-xl border border-slate-700 transition-all"
+                      className="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-800 font-bold text-xs rounded border-2 border-slate-400 shadow-sm transition-colors"
                     >
-                      Edit ✏️
+                      Edit Company
                     </button>
                   </div>
                 </div>
 
                 {/* Dossier Meta KPI Bar */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-white rounded-2xl border border-slate-200/90 p-4.5 shadow-sm">
-                    <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Tax Identifiers</span>
-                    <span className="text-sm font-bold font-mono text-slate-900 block mt-1">
-                      {selectedDossierClient.pan || 'NO PAN'}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 font-mono">
+                  <div className="bg-white rounded-lg border-2 border-slate-400 p-3.5 shadow-sm">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Tax Identifiers</span>
+                    <span className="text-xs font-bold font-mono text-[#0b192c] block mt-1">
+                      PAN: {selectedDossierClient.pan || 'NO PAN'}
                     </span>
-                    <span className="text-[11px] font-mono text-slate-500 truncate block mt-0.5">
-                      {selectedDossierClient.gstin || 'Unregistered / No GST'}
+                    <span className="text-[10px] font-mono text-slate-600 truncate block mt-0.5">
+                      GST: {selectedDossierClient.gstin || 'Unregistered'}
                     </span>
                   </div>
-                  <div className="bg-white rounded-2xl border border-slate-200/90 p-4.5 shadow-sm">
-                    <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Statements Converted</span>
-                    <span className="text-2xl font-bold font-mono text-slate-900 block mt-1">
+                  <div className="bg-white rounded-lg border-2 border-slate-400 p-3.5 shadow-sm">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Statements Converted</span>
+                    <span className="text-xl font-bold font-mono text-[#0b192c] block mt-0.5">
                       {dossierData ? dossierData.total_statements : (selectedDossierClient.conversions_count || 0)}
                     </span>
                   </div>
-                  <div className="bg-white rounded-2xl border border-slate-200/90 p-4.5 shadow-sm">
-                    <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Vouchers Generated</span>
-                    <span className="text-2xl font-bold font-mono text-emerald-600 block mt-1">
+                  <div className="bg-white rounded-lg border-2 border-slate-400 p-3.5 shadow-sm">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Vouchers Generated</span>
+                    <span className="text-xl font-bold font-mono text-emerald-800 block mt-0.5">
                       {dossierData ? dossierData.total_vouchers : (selectedDossierClient.vouchers_count || 0)}
                     </span>
                   </div>
-                  <div className="bg-white rounded-2xl border border-slate-200/90 p-4.5 shadow-sm">
-                    <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Associated Bank Accounts</span>
-                    <span className="text-xs font-semibold text-slate-800 block mt-1 truncate" title={dossierData?.bank_accounts?.join(', ')}>
+                  <div className="bg-white rounded-lg border-2 border-slate-400 p-3.5 shadow-sm">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Associated Bank A/C</span>
+                    <span className="text-xs font-bold font-mono text-slate-800 block mt-1 truncate" title={dossierData?.bank_accounts?.join(', ')}>
                       {dossierData?.bank_accounts?.length > 0 ? dossierData.bank_accounts.join(', ') : 'Statements Pending'}
                     </span>
                   </div>
                 </div>
 
                 {/* Financial Year Monthly Reconciliation Tracker (April - March) */}
-                <div className="bg-white rounded-2xl border border-slate-200/90 p-6 shadow-sm space-y-4">
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-100 pb-3">
+                <div className="bg-white rounded-lg border-2 border-slate-400 p-5 shadow-sm space-y-4 font-mono">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-300 pb-2.5">
                     <div>
-                      <h3 className="text-base font-bold text-slate-900 tracking-tight flex items-center space-x-2">
-                        <span className="flex items-center gap-2"><svg className="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg><span>Financial Year Reconciliation Tracker (April to March)</span></span>
+                      <h3 className="text-xs font-bold text-[#0b192c] tracking-tight uppercase flex items-center space-x-2">
+                        <span>Financial Year Reconciliation Tracker (April to March)</span>
                       </h3>
-                      <p className="text-xs text-slate-500 font-medium mt-0.5">
-                        Audit completion checklist for FY {selectedDossierClient.financial_year || '2024-25'}. Green signifies completed statement imports; yellow indicates missing months.
+                      <p className="text-xs text-slate-500 font-mono mt-0.5">
+                        Audit checklist for FY {selectedDossierClient.financial_year || '2024-25'}. Green signifies imported statement; yellow indicates missing months.
                       </p>
                     </div>
-                    <span className="bg-emerald-50 text-emerald-700 text-[10px] font-semibold px-2.5 py-1 rounded-full border border-emerald-200 uppercase">
-                      ✓ Audit Matrix Active
+                    <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded border border-emerald-300 uppercase">
+                      AUDIT MATRIX ACTIVE
                     </span>
                   </div>
 
                   {dossierLoading ? (
-                    <div className="py-12 text-center text-xs font-medium text-slate-400">
+                    <div className="py-10 text-center text-xs font-mono text-slate-500">
                       Loading financial year dossier...
                     </div>
                   ) : (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5 font-mono">
                       {(dossierData?.monthly_matrix || []).map((m, idx) => (
                         <div
                           key={idx}
-                          className={`p-3.5 rounded-xl border flex flex-col justify-between h-32 transition-all shadow-sm ${
+                          className={`p-3 rounded border-2 flex flex-col justify-between h-28 transition-colors ${
                             m.is_completed
-                              ? 'bg-emerald-50/60 border-emerald-200 hover:border-emerald-300'
-                              : 'bg-slate-50/80 border-slate-200 hover:border-slate-300'
+                              ? 'bg-emerald-50/70 border-emerald-400'
+                              : 'bg-slate-50 border-slate-300 hover:border-slate-400'
                           }`}
                         >
                           <div>
@@ -5126,34 +5158,34 @@ export default function App() {
                               <span className="text-xs font-bold text-slate-900 uppercase">
                                 {m.month}
                               </span>
-                              <span className="text-[10px] font-mono text-slate-400 font-medium">
+                              <span className="text-[10px] font-mono text-slate-500 font-bold">
                                 '{String(m.year).slice(-2)}
                               </span>
                             </div>
-                            <div className="mt-2">
+                            <div className="mt-1.5">
                               {m.is_completed ? (
-                                <span className="inline-block bg-emerald-100 text-emerald-800 text-[9px] font-bold uppercase px-2 py-0.5 rounded-full">
-                                  ✓ Converted
+                                <span className="inline-block bg-emerald-100 text-emerald-900 text-[9px] font-bold uppercase px-1.5 py-0.2 rounded border border-emerald-300">
+                                  AUDIT OK ✓
                                 </span>
                               ) : (
-                                <span className="inline-block bg-amber-100 text-amber-800 text-[9px] font-semibold uppercase px-2 py-0.5 rounded-full">
-                                  ⏳ Pending
+                                <span className="inline-block bg-amber-100 text-amber-900 text-[9px] font-bold uppercase px-1.5 py-0.2 rounded border border-amber-300">
+                                  PENDING
                                 </span>
                               )}
                             </div>
                           </div>
 
-                          <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between text-xs">
+                          <div className="pt-1.5 border-t border-slate-300 flex items-center justify-between text-xs">
                             {m.is_completed ? (
-                              <div className="text-[11px] font-medium text-slate-600">
+                              <div className="text-[11px] font-bold text-slate-700">
                                 <div>{m.vouchers_count} Vouchers</div>
                                 {m.latest_conversion_id && (
                                   <button
                                     type="button"
                                     onClick={() => handleDownloadCachedXml(m.latest_conversion_id, selectedDossierClient.name, m.month)}
-                                    className="text-[10px] text-indigo-600 font-semibold hover:underline"
+                                    className="text-[10px] text-[#008170] font-bold hover:underline"
                                   >
-                                    Get XML
+                                    [Get XML]
                                   </button>
                                 )}
                               </div>
@@ -5164,7 +5196,7 @@ export default function App() {
                                   setActiveClientId(selectedDossierClient.id);
                                   setActiveTab('convert');
                                 }}
-                                className="text-[10px] bg-slate-900 hover:bg-slate-800 text-white px-2 py-0.5 rounded-md font-semibold transition-all"
+                                className="text-[10px] bg-[#0b192c] hover:bg-[#1e3e62] text-white px-2 py-0.5 rounded font-bold transition-colors"
                               >
                                 + Upload
                               </button>
@@ -5177,67 +5209,70 @@ export default function App() {
                 </div>
 
                 {/* Client's Cloud XML Vault Table */}
-                <div className="bg-white rounded-2xl border border-slate-200/90 p-6 shadow-sm space-y-4">
-                  <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-                    <h3 className="text-base font-bold text-slate-900 tracking-tight">
-                      ☁️ Client Cloud XML Vault ({dossierData?.conversions?.length || 0} Files)
+                <div className="bg-white rounded-lg border-2 border-slate-400 p-5 shadow-sm space-y-4 font-mono">
+                  <div className="flex justify-between items-center border-b border-slate-300 pb-2.5">
+                    <h3 className="text-xs font-bold text-[#0b192c] tracking-tight uppercase flex items-center gap-2">
+                      <svg className="w-4 h-4 text-slate-600 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 00-9.78 2.096A4.001 4.001 0 003 15z" />
+                      </svg>
+                      <span>Client Cloud XML Vault ({dossierData?.conversions?.length || 0} Files)</span>
                     </h3>
-                    <span className="text-xs text-slate-500 font-medium">
-                      Permanent cloud archive for this client. Download anytime on any device.
+                    <span className="text-xs text-slate-500 font-mono">
+                      Cloud archive for this company. Re-download anytime.
                     </span>
                   </div>
 
                   {(!dossierData?.conversions || dossierData.conversions.length === 0) ? (
-                    <p className="text-slate-400 font-medium text-xs py-8 text-center">
-                      No converted Tally XML files for this client yet. Convert a bank statement or CSV to automatically store it in the cloud vault.
+                    <p className="text-slate-500 font-mono text-xs py-8 text-center">
+                      No converted Tally XML files for this company yet. Convert a bank statement or CSV to store it here.
                     </p>
                   ) : (
-                    <div className="overflow-x-auto rounded-xl border border-slate-200">
-                      <table className="min-w-full divide-y divide-slate-100 text-xs">
-                        <thead className="bg-slate-50 text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200">
+                    <div className="overflow-x-auto rounded border-2 border-slate-400">
+                      <table className="min-w-full divide-y divide-slate-200 text-xs font-mono bg-white">
+                        <thead className="bg-[#0b192c] text-white text-[10px] font-bold uppercase tracking-wider border-b-2 border-slate-400">
                           <tr>
-                            <th className="px-4 py-2.5 text-left font-bold">Date Converted</th>
-                            <th className="px-4 py-2.5 text-left font-bold">File Name / Bank</th>
-                            <th className="px-4 py-2.5 text-left font-bold">Statement Period</th>
-                            <th className="px-4 py-2.5 text-center font-bold">Vouchers</th>
-                            <th className="px-4 py-2.5 text-center font-bold">Size</th>
-                            <th className="px-4 py-2.5 text-right font-bold">Actions</th>
+                            <th className="px-3 py-2 text-left font-bold border-r border-slate-400">Date Converted</th>
+                            <th className="px-3 py-2 text-left font-bold border-r border-slate-400">File Name / Bank</th>
+                            <th className="px-3 py-2 text-left font-bold border-r border-slate-400">Statement Period</th>
+                            <th className="px-3 py-2 text-center font-bold border-r border-slate-400">Vouchers</th>
+                            <th className="px-3 py-2 text-center font-bold border-r border-slate-400">Size</th>
+                            <th className="px-3 py-2 text-right font-bold">Actions</th>
                           </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-slate-100 font-medium text-slate-800">
+                        <tbody className="divide-y divide-slate-200 text-slate-900">
                           {dossierData.conversions.map((conv) => (
-                            <tr key={conv.id} className="hover:bg-slate-50/80 transition-colors">
-                              <td className="px-4 py-3 whitespace-nowrap font-mono text-[11px] text-slate-600">
+                            <tr key={conv.id} className="hover:bg-amber-50/60 transition-colors border-b border-slate-200">
+                              <td className="px-3 py-2 whitespace-nowrap font-mono text-[11px] text-slate-700 border-r border-slate-200">
                                 {formatDisplayDate(conv.created_at)}
                               </td>
-                              <td className="px-4 py-3">
-                                <div className="font-bold text-slate-900">{conv.bank_name}</div>
-                                <div className="text-[11px] font-mono text-slate-400 mt-0.5">{conv.file_name}</div>
+                              <td className="px-3 py-2 border-r border-slate-200">
+                                <div className="font-bold text-[#0b192c]">{conv.bank_name}</div>
+                                <div className="text-[10px] font-mono text-slate-500 mt-0.5">{conv.file_name}</div>
                               </td>
-                              <td className="px-4 py-3 text-slate-600">
+                              <td className="px-3 py-2 text-slate-700 border-r border-slate-200">
                                 {conv.statement_period || 'Consolidated'}
                               </td>
-                              <td className="px-4 py-3 text-center font-mono font-semibold">
+                              <td className="px-3 py-2 text-center font-mono font-bold border-r border-slate-200">
                                 {conv.transactions_count}
                               </td>
-                              <td className="px-4 py-3 text-center font-mono text-slate-500">
+                              <td className="px-3 py-2 text-center font-mono text-slate-600 border-r border-slate-200">
                                 {conv.xml_size_kb ? `${conv.xml_size_kb} KB` : '-'}
                               </td>
-                              <td className="px-4 py-3 text-right whitespace-nowrap space-x-2">
+                              <td className="px-3 py-2 text-right whitespace-nowrap space-x-1.5">
                                 <button
                                   type="button"
                                   onClick={() => handleDownloadCachedXml(conv.id, conv.bank_name, conv.statement_period)}
-                                  className="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
+                                  className="px-2.5 py-1 bg-[#008170] hover:bg-[#006e5f] text-white rounded text-xs font-bold transition-colors shadow-sm"
                                 >
                                   Download XML
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => handleDeleteHistoryXml(conv.id)}
-                                  className="px-2 py-1 text-slate-400 hover:text-rose-600 rounded-lg text-xs font-semibold transition-colors"
+                                  className="px-2 py-1 text-slate-400 hover:text-rose-700 text-xs font-bold transition-colors"
                                   title="Delete from vault"
                                 >
-                                  <svg className="w-3.5 h-3.5 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                  [Del]
                                 </button>
                               </td>
                             </tr>
@@ -5250,64 +5285,62 @@ export default function App() {
               </div>
             ) : (
               /* --- 2. ALL CLIENTS DIRECTORY & KPI GRID --- */
-              <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-6 sm:p-8 space-y-6">
+              <div className="bg-white rounded-lg border-2 border-slate-400 shadow-sm p-5 space-y-4 font-mono">
                 {/* Header */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-5">
-                  <div className="flex items-center space-x-3.5">
-                    <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center p-1.5 text-xl flex-shrink-0">
-                      <svg className="w-5 h-5 text-indigo-600 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-300 pb-3">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 rounded bg-[#0b192c] border border-[#1e3e62] flex items-center justify-center p-1.5 flex-shrink-0">
+                      <svg className="w-5 h-5 text-amber-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
                     </div>
                     <div>
-                      <h3 className="text-base font-bold text-slate-900 tracking-tight">Multi-Client Practice Workspace</h3>
-                      <p className="text-xs text-slate-500 font-medium mt-0.5">
-                        Manage client companies, track monthly April to March financial year progress, and archive Tally XML files in the cloud.
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 bg-[#008170] text-white font-extrabold text-[10px] rounded tracking-wider">
+                          [F2:1]
+                        </span>
+                        <h3 className="text-sm font-bold text-[#0b192c] tracking-tight uppercase">Multi-Client Practice Workspace</h3>
+                      </div>
+                      <p className="text-xs text-slate-500 font-mono mt-0.5">
+                        Manage companies, track monthly FY progress, and archive Tally XML vouchers.
                       </p>
                     </div>
                   </div>
-                  <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
+                  <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto font-mono">
                     <input
                       type="text"
-                      placeholder="Search clients by name, PAN, GSTIN..."
+                      placeholder="Search by name, PAN, GSTIN..."
                       value={clientSearchQuery}
                       onChange={(e) => setClientSearchQuery(e.target.value)}
-                      className="px-3.5 py-2 border border-slate-300 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 w-full sm:w-64 placeholder:text-slate-400"
+                      className="px-3 py-1.5 border-2 border-slate-400 rounded text-xs font-mono font-medium focus:outline-none focus:border-[#008170] w-full sm:w-64 placeholder:text-slate-400 bg-white"
                     />
                     <button
                       type="button"
                       onClick={() => handleOpenClientModal()}
-                      className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-sm transition-all whitespace-nowrap"
+                      className="px-3.5 py-1.5 bg-[#008170] hover:bg-[#006e5f] text-white rounded font-mono font-bold text-xs shadow-sm transition-colors whitespace-nowrap"
                     >
-                      + Add New Client
+                      + Add Company
                     </button>
                   </div>
                 </div>
 
                 {/* Clients Grid */}
                 {clientsList.length === 0 ? (
-                  <div className="py-14 text-center space-y-3">
-                    <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 mx-auto shadow-sm"><svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg></div>
-                    <p className="text-base font-bold text-slate-900">No Clients Added Yet</p>
-                    <p className="text-xs text-slate-500 max-w-md mx-auto font-medium">
-                      Add your client companies to organize statements, track April to March financial year completion, and keep their Tally XML files saved in the cloud.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => handleOpenClientModal()}
-                      className="mt-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-semibold text-xs shadow-sm transition-all"
-                    >
-                      Create First Client
-                    </button>
+                  <div className="py-12 text-center space-y-2 font-mono">
+                    <p className="text-sm font-bold text-slate-700">No client companies added yet.</p>
+                    <p className="text-xs text-slate-500">Create your first client profile to associate bank accounts & dossiers.</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 font-mono">
                     {clientsList
                       .filter(c => {
                         if (!clientSearchQuery.trim()) return true;
                         const q = clientSearchQuery.toLowerCase();
                         return (
-                          (c.name || '').toLowerCase().includes(q) ||
-                          (c.pan || '').toLowerCase().includes(q) ||
-                          (c.gstin || '').toLowerCase().includes(q)
+                          c.name?.toLowerCase().includes(q) ||
+                          c.pan?.toLowerCase().includes(q) ||
+                          c.gstin?.toLowerCase().includes(q) ||
+                          c.business_type?.toLowerCase().includes(q)
                         );
                       })
                       .map((client) => {
@@ -5315,35 +5348,35 @@ export default function App() {
                         return (
                           <div
                             key={client.id}
-                            className={`rounded-2xl border p-5 flex flex-col justify-between space-y-4 transition-all shadow-sm ${
+                            className={`rounded-lg border-2 p-4 flex flex-col justify-between transition-colors bg-white shadow-sm ${
                               isCurrentActive
-                                ? 'bg-indigo-50/30 border-indigo-500 ring-2 ring-indigo-500/20'
-                                : 'bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-md'
+                                ? 'border-[#008170] bg-emerald-50/20 shadow-md'
+                                : 'border-slate-300 hover:border-slate-400'
                             }`}
                           >
-                            <div>
-                              <div className="flex items-start justify-between gap-2">
-                                <div>
-                                  <h4 className="text-sm font-bold text-slate-900 tracking-tight">
+                            <div className="space-y-2">
+                              <div className="flex items-start justify-between">
+                                <div className="truncate">
+                                  <h4 className="text-xs font-bold text-[#0b192c] truncate">
                                     {client.name}
                                   </h4>
-                                  <span className="text-[11px] font-medium text-slate-500 block mt-0.5">
-                                    {client.business_type || 'Proprietorship'}
+                                  <span className="text-[10px] text-slate-500 font-mono block">
+                                    {client.business_type || 'General Business'}
                                   </span>
                                 </div>
-                                <span className="bg-slate-100 text-slate-700 text-[10px] font-semibold px-2 py-0.5 rounded-full border border-slate-200 whitespace-nowrap">
+                                <span className="bg-[#0b192c] text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded font-mono">
                                   FY {client.financial_year || '2024-25'}
                                 </span>
                               </div>
 
-                              <div className="flex flex-wrap gap-1.5 mt-3">
+                              <div className="flex flex-wrap gap-1 pt-1 font-mono">
                                 {client.pan && (
-                                  <span className="bg-slate-100 text-slate-700 text-[10px] font-mono font-medium px-2 py-0.5 rounded border border-slate-200">
+                                  <span className="bg-slate-100 text-slate-800 text-[10px] font-bold px-1.5 py-0.2 rounded border border-slate-300">
                                     PAN: {client.pan}
                                   </span>
                                 )}
                                 {client.gstin && (
-                                  <span className="bg-slate-100 text-slate-700 text-[10px] font-mono font-medium px-2 py-0.5 rounded border border-slate-200">
+                                  <span className="bg-slate-100 text-slate-800 text-[10px] font-bold px-1.5 py-0.2 rounded border border-slate-300">
                                     GST: {client.gstin}
                                   </span>
                                 )}
@@ -5351,57 +5384,57 @@ export default function App() {
                             </div>
 
                             {/* Stats */}
-                            <div className="grid grid-cols-2 gap-2 pt-3 border-t border-slate-100 text-center">
-                              <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-200/70">
-                                <span className="text-[10px] font-semibold uppercase text-slate-400 block">Statements</span>
-                                <span className="text-sm font-bold font-mono text-slate-900">{client.conversions_count || 0}</span>
+                            <div className="grid grid-cols-2 gap-2 pt-2.5 mt-2.5 border-t border-slate-200 text-center font-mono">
+                              <div className="bg-slate-50 rounded p-1.5 border border-slate-300">
+                                <span className="text-[9px] font-bold uppercase text-slate-500 block">Statements</span>
+                                <span className="text-xs font-bold text-[#0b192c]">{client.conversions_count || 0}</span>
                               </div>
-                              <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-200/70">
-                                <span className="text-[10px] font-semibold uppercase text-slate-400 block">Vouchers</span>
-                                <span className="text-sm font-bold font-mono text-emerald-600">{client.vouchers_count || 0}</span>
+                              <div className="bg-slate-50 rounded p-1.5 border border-slate-300">
+                                <span className="text-[9px] font-bold uppercase text-slate-500 block">Vouchers</span>
+                                <span className="text-xs font-bold text-emerald-800">{client.vouchers_count || 0}</span>
                               </div>
                             </div>
 
                             {/* Actions */}
-                            <div className="space-y-2 pt-1">
+                            <div className="space-y-1.5 pt-2.5">
                               <button
                                 type="button"
                                 onClick={() => {
                                   setSelectedDossierClient(client);
                                   fetchClientDossier(client.id);
                                 }}
-                                className="w-full py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-sm transition-all"
+                                className="w-full py-1.5 bg-[#008170] hover:bg-[#006e5f] text-white rounded text-xs font-bold shadow-sm transition-colors font-mono"
                               >
                                 Open Dossier & XML Vault
                               </button>
 
-                              <div className="flex gap-2">
+                              <div className="flex gap-1.5 font-mono">
                                 <button
                                   type="button"
                                   onClick={() => setActiveClientId(isCurrentActive ? '' : client.id)}
-                                  className={`flex-1 py-1.5 text-[11px] font-semibold rounded-lg border transition-all ${
+                                  className={`flex-1 py-1 text-[11px] font-bold rounded border-2 transition-colors ${
                                     isCurrentActive
-                                      ? 'bg-emerald-50 text-emerald-800 border-emerald-300 font-bold'
-                                      : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-300'
+                                      ? 'bg-emerald-100 text-emerald-900 border-emerald-400'
+                                      : 'bg-white hover:bg-slate-100 text-slate-800 border-slate-400'
                                   }`}
                                 >
-                                  {isCurrentActive ? '✓ Active Workspace' : 'Set Active'}
+                                  {isCurrentActive ? 'ACTIVE WORKSPACE' : 'Set Active'}
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => handleOpenClientModal(client)}
-                                  className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 text-xs transition-colors"
+                                  className="px-2 py-1 bg-white hover:bg-slate-100 border-2 border-slate-400 rounded text-slate-800 text-xs font-bold transition-colors"
                                   title="Edit Client"
                                 >
-                                  ✏️
+                                  Edit
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => handleDeleteClient(client.id, client.name)}
-                                  className="px-2.5 py-1.5 bg-slate-100 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg text-xs transition-colors"
+                                  className="px-2 py-1 bg-white hover:bg-rose-50 border-2 border-slate-400 hover:border-rose-300 text-slate-600 hover:text-rose-700 rounded text-xs font-bold transition-colors"
                                   title="Delete Client"
                                 >
-                                  <svg className="w-3.5 h-3.5 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                  [Del]
                                 </button>
                               </div>
                             </div>
@@ -5414,33 +5447,40 @@ export default function App() {
             )}
           </div>
         )}
-        {/* --- TAB: CLOUD XML VAULT & CONVERSION ARCHIVE --- */}
+
         {activeTab === 'history' && (
-          <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-6 sm:p-8 space-y-6 max-w-6xl mx-auto">
+          <div className="bg-white rounded-lg border-2 border-slate-400 shadow-sm p-5 space-y-4 max-w-6xl mx-auto font-mono">
             
             {/* Header, Search and Filter */}
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b border-slate-100 pb-5">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 border-b border-slate-300 pb-4">
               <div className="flex items-center space-x-3.5">
-                <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center p-1.5 text-xl flex-shrink-0">
-                  ☁️
+                <div className="w-10 h-10 rounded bg-[#0b192c] border border-[#1e3e62] flex items-center justify-center p-1.5 flex-shrink-0">
+                  <svg className="w-5 h-5 text-amber-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 00-9.78 2.096A4.001 4.001 0 003 15z" />
+                  </svg>
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-slate-900 tracking-tight">Cloud XML Vault & Archive</h3>
-                  <p className="text-xs text-slate-500 font-medium mt-0.5">
-                    All generated Tally Prime XML files are securely preserved in the cloud. Re-download anytime on any device.
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 bg-[#008170] text-white font-extrabold text-[10px] rounded tracking-wider">
+                      [F2:3]
+                    </span>
+                    <h3 className="text-sm font-bold text-[#0b192c] tracking-tight uppercase">Cloud XML Vault & Archive</h3>
+                  </div>
+                  <p className="text-xs text-slate-500 font-mono mt-0.5">
+                    All generated Tally XML files are securely stored in the cloud. Re-download anytime on any workstation.
                   </p>
                 </div>
               </div>
               
-              <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+              <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto font-mono">
                 <div className="w-full sm:w-48">
-                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Filter By Client</label>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">Filter By Company</label>
                   <select
                     value={historyClientFilter}
                     onChange={(e) => setHistoryClientFilter(e.target.value)}
-                    className="w-full px-3 py-1.5 border border-slate-300 rounded-xl text-xs font-medium bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
+                    className="w-full px-2.5 py-1.5 border-2 border-slate-400 rounded text-xs font-mono font-bold bg-white focus:outline-none focus:border-[#008170]"
                   >
-                    <option value="">All Clients</option>
+                    <option value="">All Companies</option>
                     {clientsList.map(c => (
                       <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
@@ -5448,13 +5488,13 @@ export default function App() {
                 </div>
 
                 <div className="w-full sm:w-64">
-                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Search Archives</label>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">Search Archives</label>
                   <input
                     type="text"
                     placeholder="Search bank, period, file name..."
                     value={historySearch}
                     onChange={(e) => setHistorySearch(e.target.value)}
-                    className="w-full px-3.5 py-1.5 border border-slate-300 rounded-xl text-xs font-medium bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 placeholder:text-slate-400"
+                    className="w-full px-3 py-1.5 border-2 border-slate-400 rounded text-xs font-mono bg-white focus:outline-none focus:border-[#008170] placeholder:text-slate-400"
                   />
                 </div>
               </div>
@@ -5462,74 +5502,74 @@ export default function App() {
 
             {/* Table */}
             {filteredHistory.length === 0 ? (
-              <p className="text-slate-400 font-medium text-xs py-10 text-center">
+              <p className="text-slate-500 font-mono text-xs py-10 text-center">
                 No XML files matching the filter criteria found in Cloud Vault.
               </p>
             ) : (
-              <div className="overflow-x-auto rounded-xl border border-slate-200">
-                <table className="min-w-full divide-y divide-slate-100 text-xs">
-                  <thead className="bg-slate-50 text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200">
+              <div className="overflow-x-auto rounded border-2 border-slate-400">
+                <table className="min-w-full divide-y divide-slate-200 text-xs font-mono bg-white">
+                  <thead className="bg-[#0b192c] text-white text-[10px] font-bold uppercase tracking-wider border-b-2 border-slate-400">
                     <tr>
-                      <th className="px-4 py-2.5 text-left font-bold">Date Converted</th>
-                      <th className="px-4 py-2.5 text-left font-bold">Client Company</th>
-                      <th className="px-4 py-2.5 text-left font-bold">Bank / Source</th>
-                      <th className="px-4 py-2.5 text-left font-bold">Statement Period</th>
-                      <th className="px-4 py-2.5 text-center font-bold">Vouchers</th>
-                      <th className="px-4 py-2.5 text-center font-bold">File Size</th>
-                      <th className="px-4 py-2.5 text-right font-bold">Actions</th>
+                      <th className="px-3 py-2 text-left font-bold border-r border-slate-400">Date Converted</th>
+                      <th className="px-3 py-2 text-left font-bold border-r border-slate-400">Client Company</th>
+                      <th className="px-3 py-2 text-left font-bold border-r border-slate-400">Bank / Source</th>
+                      <th className="px-3 py-2 text-left font-bold border-r border-slate-400">Statement Period</th>
+                      <th className="px-3 py-2 text-center font-bold border-r border-slate-400">Vouchers</th>
+                      <th className="px-3 py-2 text-center font-bold border-r border-slate-400">File Size</th>
+                      <th className="px-3 py-2 text-right font-bold">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-slate-100 font-medium text-slate-800">
+                  <tbody className="divide-y divide-slate-200 text-slate-900">
                     {filteredHistory.map((conv) => (
-                      <tr key={conv.id} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="px-4 py-3 whitespace-nowrap font-mono text-[11px] text-slate-600">
+                      <tr key={conv.id} className="hover:bg-amber-50/60 transition-colors border-b border-slate-200">
+                        <td className="px-3 py-2.5 whitespace-nowrap font-mono text-[11px] text-slate-700 border-r border-slate-200">
                           {formatDisplayDate(conv.created_at)}
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-3 py-2.5 border-r border-slate-200">
                           {conv.client_name ? (
-                            <span className="bg-indigo-50 text-indigo-700 border border-indigo-200/80 px-2 py-0.5 rounded-full text-[10px] font-semibold">
+                            <span className="bg-slate-100 text-slate-800 border border-slate-300 px-2 py-0.5 rounded text-[10px] font-bold">
                               {conv.client_name}
                             </span>
                           ) : (
-                            <span className="text-slate-400 text-[11px]">General / Unassigned</span>
+                            <span className="text-slate-500 text-[11px]">General / Unassigned</span>
                           )}
                         </td>
-                        <td className="px-4 py-3">
-                          <div className="font-bold text-slate-900">{conv.bank_name}</div>
+                        <td className="px-3 py-2.5 border-r border-slate-200">
+                          <div className="font-bold text-[#0b192c]">{conv.bank_name}</div>
                           {conv.source_type === 'CSV_TALLY' ? (
-                            <span className="text-[9px] bg-purple-50 text-purple-700 border border-purple-200 px-1.5 py-0.2 rounded font-mono uppercase inline-block mt-0.5">
+                            <span className="text-[9px] bg-slate-100 text-slate-700 border border-slate-300 px-1.5 py-0.2 rounded font-mono uppercase inline-block mt-0.5">
                               CSV Import
                             </span>
                           ) : (
-                            <span className="text-[9px] bg-slate-100 text-slate-600 border border-slate-200 px-1.5 py-0.2 rounded font-mono uppercase inline-block mt-0.5">
+                            <span className="text-[9px] bg-slate-100 text-slate-700 border border-slate-300 px-1.5 py-0.2 rounded font-mono uppercase inline-block mt-0.5">
                               PDF Statement
                             </span>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-slate-600">
+                        <td className="px-3 py-2.5 text-slate-700 border-r border-slate-200">
                           {conv.statement_period || 'Consolidated Period'}
                         </td>
-                        <td className="px-4 py-3 text-center font-mono font-semibold">
+                        <td className="px-3 py-2.5 text-center font-mono font-bold border-r border-slate-200">
                           {conv.transactions_count}
                         </td>
-                        <td className="px-4 py-3 text-center font-mono text-slate-500">
+                        <td className="px-3 py-2.5 text-center font-mono text-slate-600 border-r border-slate-200">
                           {conv.xml_size_kb ? `${conv.xml_size_kb} KB` : '-'}
                         </td>
-                        <td className="px-4 py-3 text-right whitespace-nowrap space-x-2">
+                        <td className="px-3 py-2.5 text-right whitespace-nowrap space-x-1.5">
                           <button
                             type="button"
                             onClick={() => handleDownloadCachedXml(conv.id, conv.bank_name, conv.statement_period)}
-                            className="inline-flex items-center px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
+                            className="px-2.5 py-1 bg-[#008170] hover:bg-[#006e5f] text-white rounded text-xs font-bold transition-colors shadow-sm"
                           >
-                            GET XML
+                            Download XML
                           </button>
                           <button
                             type="button"
                             onClick={() => handleDeleteHistoryXml(conv.id)}
-                            className="px-2 py-1 text-slate-400 hover:text-rose-600 rounded-lg text-xs font-semibold transition-colors"
-                            title="Delete from cloud vault"
+                            className="px-2 py-1 text-slate-400 hover:text-rose-700 text-xs font-bold transition-colors"
+                            title="Delete from vault"
                           >
-                            <svg className="w-3.5 h-3.5 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            [Del]
                           </button>
                         </td>
                       </tr>
@@ -5541,158 +5581,164 @@ export default function App() {
           </div>
         )}
 
-          {/* --- TAB 3: WALLET & PLANS --- */}
-          {activeTab === 'wallet' && (
-            <div className="space-y-6 max-w-6xl mx-auto">
-              
-              {/* Purchase plans */}
-              <div className="space-y-6">
-                <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-6 sm:p-8 space-y-6">
-                  <div className="flex items-center space-x-3.5 border-b border-slate-100 pb-4">
-                    <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center p-1.5 flex-shrink-0">
-                      <img src="/symbol_mark.svg" alt="SB" className="w-full h-full object-contain" />
-                    </div>
-                    <div>
-                      <h3 className="text-base font-bold text-slate-900 tracking-tight">Buy Credit Vouchers</h3>
-                      <p className="text-xs text-slate-500 font-medium mt-0.5">Purchase page credits directly. Base pricing is 25 paise per page with bulk volume extra credits. Failed conversions are never charged.</p>
-                    </div>
+        {/* --- TAB 3: WALLET & PLANS --- */}
+        {activeTab === 'wallet' && (
+          <div className="space-y-5 max-w-6xl mx-auto font-mono">
+            
+            {/* Purchase plans */}
+            <div className="space-y-5">
+              <div className="bg-white rounded-lg border-2 border-slate-400 shadow-sm p-5 space-y-4">
+                <div className="flex items-center space-x-3.5 border-b border-slate-300 pb-3">
+                  <div className="w-10 h-10 rounded bg-[#0b192c] border border-[#1e3e62] flex items-center justify-center p-1.5 flex-shrink-0">
+                    <img src="/symbol_mark.svg" alt="SB" className="w-full h-full object-contain filter invert" />
                   </div>
-
-                  {purchaseMessage && (
-                    <div className="bg-indigo-50 text-indigo-700 border border-indigo-200 p-3.5 rounded-xl text-xs font-semibold">
-                      {String(purchaseMessage)}
-                    </div>
-                  )}
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* Pack 1 */}
-                    <div className="rounded-2xl border border-slate-200/90 p-6 text-center flex flex-col justify-between bg-slate-50/60 shadow-sm hover:border-slate-300 transition-all">
-                      <div>
-                        <h4 className="font-bold text-slate-900 text-sm">Starter Pack</h4>
-                        <p className="text-[11px] font-medium text-slate-400 mt-0.5">₹0.25 per page</p>
-                        <div className="mt-4 text-3xl font-extrabold font-mono text-slate-900">100</div>
-                        <p className="text-[11px] font-semibold text-slate-500 mt-0.5">Page Credits</p>
-                      </div>
-                      <div className="mt-6">
-                        <button
-                          onClick={() => setCheckoutSession({ planName: 'Starter Pack', pages: 100, amount: 25.0 })}
-                          className="w-full py-2.5 px-3 bg-white hover:bg-slate-100 border border-slate-300 rounded-xl font-semibold text-slate-800 text-xs shadow-sm transition-all"
-                        >
-                          Buy for ₹25
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Pack 2 */}
-                    <div className="rounded-2xl border border-slate-200/90 p-6 text-center flex flex-col justify-between bg-white shadow-sm hover:border-slate-300 transition-all relative">
-                      <span className="absolute top-0 right-1/2 translate-x-1/2 -translate-y-1/2 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/80 shadow-sm">
-                        +100 EXTRA FREE
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 bg-[#008170] text-white font-extrabold text-[10px] rounded tracking-wider">
+                        [F3]
                       </span>
-                      <div>
-                        <h4 className="font-bold text-slate-900 text-sm">Standard Pack</h4>
-                        <p className="text-[11px] font-medium text-slate-400 mt-0.5">₹0.21 per page value</p>
-                        <div className="mt-4 text-3xl font-extrabold font-mono text-slate-900">600</div>
-                        <p className="text-[11px] font-semibold text-slate-500 mt-0.5">Pages (500 + 100 Free)</p>
-                      </div>
-                      <div className="mt-6">
-                        <button
-                          onClick={() => setCheckoutSession({ planName: 'Standard Pack', pages: 500, amount: 125.0 })}
-                          className="w-full py-2.5 px-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-semibold text-xs shadow-sm transition-all"
-                        >
-                          Buy for ₹125
-                        </button>
-                      </div>
+                      <h3 className="text-sm font-bold text-[#0b192c] tracking-tight uppercase">Buy Credit Vouchers</h3>
                     </div>
-
-                    {/* Pack 3 */}
-                    <div className="rounded-2xl border-2 border-indigo-600 p-6 text-center flex flex-col justify-between bg-indigo-50/30 shadow-md relative">
-                      <span className="absolute top-0 right-1/2 translate-x-1/2 -translate-y-1/2 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-600 text-white shadow-sm">
-                        +250 EXTRA FREE
-                      </span>
-                      <div>
-                        <h4 className="font-bold text-slate-900 text-sm">Business Pack</h4>
-                        <p className="text-[11px] font-medium text-slate-500 mt-0.5">₹0.20 per page value</p>
-                        <div className="mt-4 text-3xl font-extrabold font-mono text-indigo-600">1,250</div>
-                        <p className="text-[11px] font-semibold text-slate-600 mt-0.5">Pages (1000 + 250 Free)</p>
-                      </div>
-                      <div className="mt-6">
-                        <button
-                          onClick={() => setCheckoutSession({ planName: 'Business Pack', pages: 1000, amount: 250.0 })}
-                          className="w-full py-2.5 px-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-semibold text-xs shadow-sm transition-all"
-                        >
-                          Buy for ₹250
-                        </button>
-                      </div>
-                    </div>
+                    <p className="text-xs text-slate-500 font-mono mt-0.5">Base pricing is 25 paise per page with bulk volume extra credits. Failed conversions are never charged.</p>
                   </div>
                 </div>
 
-                {/* Promo Code Redemption Card */}
-                <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-6 sm:p-8">
-                  <h4 className="text-sm font-bold text-slate-900 tracking-tight">Redeem Promo Code</h4>
-                  <p className="text-xs text-slate-500 font-medium mt-0.5 mb-4">Enter a promo code below to claim free page credits (once per user account).</p>
-                  
-                  <div className="flex space-x-2.5 max-w-md">
-                    <input
-                      type="text"
-                      placeholder="e.g. SHEETBUDDY50"
-                      value={promoCode}
-                      onChange={(e) => setPromoCode(e.target.value)}
-                      className="flex-1 px-3.5 py-2.5 border border-slate-300 rounded-xl text-xs font-medium uppercase font-mono bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
-                    />
-                    <button
-                      onClick={handleClaimPromoCode}
-                      disabled={redeemLoading || !promoCode.trim()}
-                      className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-sm transition-all disabled:opacity-50"
-                    >
-                      {redeemLoading ? 'Redeeming...' : 'Redeem Code'}
-                    </button>
+                {purchaseMessage && (
+                  <div className="bg-emerald-50 text-emerald-900 border-2 border-emerald-300 p-3 rounded text-xs font-bold font-mono">
+                    {String(purchaseMessage)}
                   </div>
-                  
-                  {redeemStatusMsg && (
-                    <div className="mt-3.5 p-3 rounded-xl border border-indigo-200 text-xs font-semibold text-indigo-800 bg-indigo-50 max-w-md">
-                      {String(redeemStatusMsg)}
+                )}
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono">
+                  {/* Pack 1 */}
+                  <div className="rounded-lg border-2 border-slate-400 p-5 text-center flex flex-col justify-between bg-white shadow-sm hover:border-[#1e3e62] transition-colors">
+                    <div>
+                      <h4 className="font-bold text-[#0b192c] text-sm uppercase">Starter Pack</h4>
+                      <p className="text-[11px] font-mono text-slate-500 mt-0.5">₹0.25 per page</p>
+                      <div className="mt-3 text-3xl font-extrabold font-mono text-[#0b192c]">100</div>
+                      <p className="text-[11px] font-bold text-slate-600 mt-0.5 uppercase">Page Credits</p>
                     </div>
-                  )}
+                    <div className="mt-5">
+                      <button
+                        onClick={() => setCheckoutSession({ planName: 'Starter Pack', pages: 100, amount: 25.0 })}
+                        className="w-full py-2 px-3 bg-white hover:bg-slate-100 border-2 border-slate-400 rounded font-bold text-slate-900 text-xs shadow-sm transition-colors uppercase"
+                      >
+                        Buy for ₹25
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Pack 2 */}
+                  <div className="rounded-lg border-2 border-[#0b192c] p-5 text-center flex flex-col justify-between bg-slate-50 shadow-sm relative">
+                    <span className="absolute top-0 right-1/2 translate-x-1/2 -translate-y-1/2 px-2.5 py-0.5 rounded text-[10px] font-bold bg-[#0b192c] text-amber-300 border border-[#1e3e62]">
+                      +100 EXTRA FREE
+                    </span>
+                    <div>
+                      <h4 className="font-bold text-[#0b192c] text-sm uppercase">Standard Pack</h4>
+                      <p className="text-[11px] font-mono text-slate-500 mt-0.5">₹0.21 per page value</p>
+                      <div className="mt-3 text-3xl font-extrabold font-mono text-[#0b192c]">600</div>
+                      <p className="text-[11px] font-bold text-slate-600 mt-0.5 uppercase">Pages (500 + 100 Free)</p>
+                    </div>
+                    <div className="mt-5">
+                      <button
+                        onClick={() => setCheckoutSession({ planName: 'Standard Pack', pages: 500, amount: 125.0 })}
+                        className="w-full py-2 px-3 bg-[#0b192c] hover:bg-[#1e3e62] text-amber-300 rounded font-bold text-xs shadow-sm transition-colors uppercase"
+                      >
+                        Buy for ₹125
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Pack 3 */}
+                  <div className="rounded-lg border-2 border-[#008170] p-5 text-center flex flex-col justify-between bg-emerald-50/20 shadow-sm relative">
+                    <span className="absolute top-0 right-1/2 translate-x-1/2 -translate-y-1/2 px-2.5 py-0.5 rounded text-[10px] font-bold bg-[#008170] text-white">
+                      +400 EXTRA FREE • BEST VALUE
+                    </span>
+                    <div>
+                      <h4 className="font-bold text-emerald-950 text-sm uppercase">Enterprise Practice</h4>
+                      <p className="text-[11px] font-mono text-slate-500 mt-0.5">₹0.18 per page value</p>
+                      <div className="mt-3 text-3xl font-extrabold font-mono text-emerald-800">1,400</div>
+                      <p className="text-[11px] font-bold text-slate-600 mt-0.5 uppercase">Pages (1,000 + 400 Free)</p>
+                    </div>
+                    <div className="mt-5">
+                      <button
+                        onClick={() => setCheckoutSession({ planName: 'Enterprise Practice', pages: 1000, amount: 250.0 })}
+                        className="w-full py-2 px-3 bg-[#008170] hover:bg-[#006e5f] text-white rounded font-bold text-xs shadow-sm transition-colors uppercase"
+                      >
+                        Buy for ₹250
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Wallet Ledger */}
-              <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-6 sm:p-8 flex flex-col">
-                <h3 className="text-sm font-bold text-slate-900 tracking-tight border-b border-slate-100 pb-3 mb-4">Wallet Activity Log</h3>
+              {/* Promo Code Redemption Card */}
+              <div className="bg-white rounded-lg border-2 border-slate-400 shadow-sm p-5 font-mono">
+                <h4 className="text-xs font-bold text-[#0b192c] tracking-tight uppercase">Redeem Promo Code</h4>
+                <p className="text-xs text-slate-500 font-mono mt-0.5 mb-3">Enter a promo code below to claim free page credits.</p>
                 
-                {walletTransactions.length === 0 ? (
-                  <p className="text-slate-400 text-xs py-6 text-center font-medium">No transactions found.</p>
-                ) : (
-                  <div className="space-y-3.5 max-h-[350px] overflow-y-auto pr-1 divide-y divide-slate-100">
-                    {walletTransactions.map((tx) => (
-                      <div key={tx.id} className="flex justify-between items-start text-xs pt-3.5 first:pt-0">
-                        <div>
-                          <div className="flex items-center space-x-2">
-                            <p className="font-bold text-slate-900">{tx.description || tx.type}</p>
-                            {tx.type === 'PURCHASE' && (
-                              <span className={`inline-block px-2 py-0.5 text-[9px] font-bold rounded-full uppercase ${tx.status === 'APPROVED' || tx.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : tx.status === 'REJECTED' ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
-                                {tx.status}
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-slate-400 text-[11px] font-mono mt-0.5">{formatDisplayDate(tx.created_at, false)}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className={`font-mono font-bold text-sm ${tx.pages_purchased > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                            {tx.pages_purchased > 0 ? `+${tx.pages_purchased}` : tx.pages_purchased}
-                          </p>
-                          {tx.amount_in_inr > 0 && <p className="text-[11px] font-mono text-slate-400">₹{tx.amount_in_inr}</p>}
-                        </div>
-                      </div>
-                    ))}
+                <div className="flex space-x-2 max-w-md">
+                  <input
+                    type="text"
+                    placeholder="e.g. SHEETBUDDY50"
+                    value={promoCode}
+                    onChange={(e) => setPromoCode(e.target.value)}
+                    className="flex-1 px-3 py-1.5 border-2 border-slate-400 rounded text-xs font-bold uppercase font-mono bg-white focus:outline-none focus:border-[#008170]"
+                  />
+                  <button
+                    onClick={handleClaimPromoCode}
+                    disabled={redeemLoading || !promoCode.trim()}
+                    className="px-4 py-1.5 bg-[#0b192c] hover:bg-[#1e3e62] text-amber-300 rounded text-xs font-bold shadow-sm transition-colors disabled:opacity-50"
+                  >
+                    {redeemLoading ? 'Redeeming...' : 'Redeem Code'}
+                  </button>
+                </div>
+                
+                {redeemStatusMsg && (
+                  <div className="mt-3 p-2.5 rounded border-2 border-emerald-300 text-xs font-bold text-emerald-900 bg-emerald-50 max-w-md">
+                    {String(redeemStatusMsg)}
                   </div>
                 )}
               </div>
-
             </div>
-          )}
-          {activeTab === 'admin' && user.is_admin && (
+
+            {/* Wallet Ledger */}
+            <div className="bg-white rounded-lg border-2 border-slate-400 shadow-sm p-5 flex flex-col font-mono">
+              <h3 className="text-xs font-bold text-[#0b192c] tracking-tight uppercase border-b border-slate-300 pb-2.5 mb-3">Wallet Activity Log</h3>
+              
+              {walletTransactions.length === 0 ? (
+                <p className="text-slate-500 text-xs py-6 text-center font-mono">No transactions found.</p>
+              ) : (
+                <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1 divide-y divide-slate-200">
+                  {walletTransactions.map((tx) => (
+                    <div key={tx.id} className="flex justify-between items-start text-xs pt-3 first:pt-0 font-mono">
+                      <div>
+                        <div className="flex items-center space-x-2">
+                          <p className="font-bold text-[#0b192c]">{tx.description || tx.type}</p>
+                          {tx.type === 'PURCHASE' && (
+                            <span className={`inline-block px-1.5 py-0.2 text-[9px] font-bold rounded uppercase ${tx.status === 'APPROVED' || tx.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' : tx.status === 'REJECTED' ? 'bg-rose-100 text-rose-900 border border-rose-300' : 'bg-amber-100 text-amber-900 border border-amber-300'}`}>
+                              {tx.status}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-slate-500 text-[10px] font-mono mt-0.5">{formatDisplayDate(tx.created_at, false)}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className={`font-mono font-bold text-sm ${tx.pages_purchased > 0 ? 'text-emerald-800' : 'text-rose-700'}`}>
+                          {tx.pages_purchased > 0 ? `+${tx.pages_purchased}` : tx.pages_purchased}
+                        </p>
+                        {tx.amount_in_inr > 0 && <p className="text-[10px] font-mono text-slate-500">₹{tx.amount_in_inr}</p>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+          </div>
+        )}
+
+        {activeTab === 'admin' && user.is_admin && (
             <div className="space-y-8 max-w-6xl mx-auto">
               
               {/* Analytics Header Grid */}
@@ -5830,7 +5876,7 @@ export default function App() {
                               onClick={() => handleToggleAdmin(u.id)}
                               className={`px-3 py-1.5 border border-slate-200 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all shadow-sm ${u.is_admin ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-white text-slate-700 hover:bg-slate-50'}`}
                             >
-                              {u.is_admin ? 'ADMIN ✓' : 'USER'}
+                              {u.is_admin ? '[ADMIN]' : 'USER'}
                             </button>
                           </td>
                           <td className="px-4 py-3 text-center flex items-center justify-center space-x-2">
@@ -6303,12 +6349,16 @@ export default function App() {
 
           {/* --- TAB 6: SUPPORT PAGE --- */}
           {activeTab === 'support' && (
-            <div className="space-y-6 max-w-2xl mx-auto bg-white p-8 border border-slate-200/90 rounded-2xl shadow-sm">
-              <div className="flex items-center space-x-4 mb-2 border-b border-slate-100 pb-3">
-                <img src="/social_square.svg" alt="Support" className="w-14 h-14 border border-slate-200 rounded-xl shadow-sm flex-shrink-0" />
-                <div>
-                  <h3 className="text-xl font-bold text-black uppercase">Support & Assistance</h3>
-                  <p className="text-xs font-bold text-slate-600">Technical help, statement format requests & custom Tally ledgers</p>
+            <div className="space-y-5 max-w-2xl mx-auto bg-white p-6 border-2 border-slate-400 rounded-lg shadow-sm font-mono">
+              <div className="flex items-center justify-between border-b border-slate-300 pb-3">
+                <div className="flex items-center space-x-3">
+                  <span className="px-2 py-0.5 bg-[#008170] text-white font-extrabold text-[10px] rounded tracking-wider">
+                    [F4]
+                  </span>
+                  <div>
+                    <h3 className="text-sm font-bold text-[#0b192c] tracking-tight uppercase">Support & Client Assistance</h3>
+                    <p className="text-xs text-slate-500 font-mono mt-0.5">Direct priority desk for CA practice support and statement parsing assistance.</p>
+                  </div>
                 </div>
               </div>
               <p className="text-xs font-bold text-slate-700 leading-relaxed">
@@ -6403,10 +6453,14 @@ export default function App() {
 
           {/* --- TAB 7: PROFILE SECURITY PAGE --- */}
           {activeTab === 'settings' && (
-            <div className="space-y-6 max-w-md mx-auto bg-white p-8 border border-slate-200/90 rounded-2xl shadow-sm">
-              <div className="flex items-center space-x-3 mb-2 border-b border-slate-100 pb-2">
-                <img src="/app_icon_yellow.svg" alt="Profile" className="w-8 h-8 border border-slate-200 rounded-xl" />
-                <h3 className="text-xl font-bold text-black uppercase">Profile Security</h3>
+            <div className="space-y-5 max-w-md mx-auto bg-white p-6 border-2 border-slate-400 rounded-lg shadow-sm font-mono">
+              <div className="flex items-center justify-between border-b border-slate-300 pb-3">
+                <div className="flex items-center space-x-3">
+                  <span className="px-2 py-0.5 bg-[#008170] text-white font-extrabold text-[10px] rounded tracking-wider">
+                    [F5]
+                  </span>
+                  <h3 className="text-sm font-bold text-[#0b192c] tracking-tight uppercase">Profile & Security Settings</h3>
+                </div>
               </div>
               
               <div className="space-y-4">
@@ -6488,7 +6542,12 @@ export default function App() {
           {/* --- Review Next Issue Stepper Modal --- */}
           {reviewModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-              <div className="bg-white border border-slate-200/90 rounded-2xl shadow-2xl max-w-xl w-full p-6 space-y-5">
+              <div className="bg-white border-2 border-[#1e3e62] rounded-lg shadow-2xl max-w-xl w-full overflow-hidden font-mono">
+                <div className="bg-[#0b192c] text-white px-4 py-2.5 flex items-center justify-between border-b-2 border-[#1e3e62]">
+                  <span className="font-bold text-xs uppercase tracking-wider text-amber-300">[Review] Transaction Issue Inspector</span>
+                  <button onClick={() => setReviewModalOpen(false)} className="text-slate-400 hover:text-white font-bold text-xs">[Esc]</button>
+                </div>
+                <div className="p-5 space-y-4">
                 {(() => {
                   const reviewList = allTransactions.filter(t => t.requires_review);
                   const currentItem = reviewList[currentReviewIdx];
@@ -6522,7 +6581,7 @@ export default function App() {
                           onClick={() => setReviewModalOpen(false)}
                           className="text-white font-bold text-sm px-2 py-0.5 border border-white hover:bg-white hover:text-black"
                         >
-                          ✕ ESC
+                          [Esc]
                         </button>
                       </div>
 
@@ -6604,12 +6663,13 @@ export default function App() {
                           }}
                           className="px-4 py-2 border border-slate-200 rounded-xl font-bold text-xs bg-emerald-600 text-white hover:bg-emerald-500 hover:bg-emerald-400 shadow-sm uppercase"
                         >
-                          ACCEPT & RESOLVE ✓
+                          [Enter] ACCEPT & RESOLVE
                         </button>
                       </div>
                     </>
                   );
                 })()}
+                </div>
               </div>
             </div>
           )}
@@ -6617,22 +6677,25 @@ export default function App() {
           {/* --- Custom CSV Column Mapping Modal --- */}
           {mappingModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 overflow-y-auto">
-              <div className="bg-white border border-slate-200/90 rounded-2xl shadow-2xl max-w-2xl w-full p-6 space-y-5 my-8">
-                {/* Modal Header */}
-                <div className="flex justify-between items-center bg-indigo-600 text-white hover:bg-indigo-500 p-3 border border-slate-200 rounded-xl shadow-sm">
+              <div className="bg-white border-2 border-[#1e3e62] rounded-lg shadow-2xl max-w-2xl w-full my-8 overflow-hidden font-mono">
+                {/* Modal Header (Tally Pro Terminal) */}
+                <div className="bg-[#0b192c] text-white px-4 py-3 flex justify-between items-center border-b-2 border-[#1e3e62]">
                   <div className="flex items-center space-x-2">
-                    <span className="text-base font-bold">⚙</span>
-                    <h3 className="text-xs font-bold uppercase text-black">
+                    <span className="px-2 py-0.5 bg-[#008170] text-white text-[10px] font-bold rounded font-mono">
+                      [MAP]
+                    </span>
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-amber-300">
                       {editingMappingId ? 'Edit CSV Column Mapping Template' : 'New Custom CSV Column Mapping Template'}
                     </h3>
                   </div>
                   <button
                     onClick={() => setMappingModalOpen(false)}
-                    className="text-slate-400 hover:text-slate-700 rounded-lg p-1 hover:bg-slate-100 transition-colors text-sm font-bold"
+                    className="text-slate-400 hover:text-white font-bold text-xs"
                   >
-                    ✕
+                    [Esc]
                   </button>
                 </div>
+                <div className="p-5 space-y-4">
 
                 {/* Auto-Detect Helper */}
                 <div className="p-3 bg-slate-100 border border-slate-200 rounded-xl space-y-2">
@@ -6655,7 +6718,7 @@ export default function App() {
                   />
                   {detectedHeaders.length > 0 && (
                     <div className="text-[11px] font-bold text-green-700">
-                      ✓ Detected {detectedHeaders.length} columns: {detectedHeaders.slice(0, 8).join(', ')}{detectedHeaders.length > 8 ? '...' : ''}
+                      Detected {detectedHeaders.length} columns: {detectedHeaders.slice(0, 8).join(', ')}{detectedHeaders.length > 8 ? '...' : ''}
                     </div>
                   )}
                 </div>
@@ -6915,32 +6978,39 @@ export default function App() {
                     </button>
                     <button
                       type="submit"
-                      className="px-6 py-2 bg-indigo-600 text-white hover:bg-indigo-500 text-black border border-slate-200 rounded-xl font-bold uppercase text-xs shadow-sm hover:bg-yellow-400"
+                      className="px-6 py-2 bg-[#008170] hover:bg-[#006e5f] text-white rounded font-mono font-bold uppercase text-xs shadow-sm transition-colors"
                     >
                       {editingMappingId ? 'Update Mapping Template' : 'Save Mapping Template'}
                     </button>
                   </div>
                 </form>
+                </div>
               </div>
             </div>
           )}
 
-          {/* --- Client Create/Edit Modal --- */}
+          {/* --- Client Create/Edit Modal (Tally Pro Terminal) --- */}
           {clientModalOpen && (
-            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-              <div className="bg-white border border-slate-200/90 rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-4">
-                <div className="flex justify-between items-center bg-indigo-600 text-white hover:bg-indigo-500 p-3 border border-slate-200 rounded-xl shadow-sm">
-                  <h3 className="text-sm font-bold uppercase text-black">
-                    {editingClient ? 'Edit Client Company' : 'Add Client Company'}
-                  </h3>
+            <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 font-mono">
+              <div className="bg-white border-2 border-[#1e3e62] rounded-lg shadow-2xl max-w-lg w-full overflow-hidden">
+                <div className="bg-[#0b192c] text-white px-4 py-3 flex justify-between items-center border-b-2 border-[#1e3e62]">
+                  <div className="flex items-center space-x-2">
+                    <span className="px-2 py-0.5 bg-[#008170] text-white text-[10px] font-bold rounded">
+                      [F2]
+                    </span>
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-amber-300">
+                      {editingClient ? 'Edit Company Profile' : 'Add New Company Profile'}
+                    </h3>
+                  </div>
                   <button
                     type="button"
                     onClick={() => setClientModalOpen(false)}
-                    className="text-slate-400 hover:text-slate-700 rounded-lg p-1 hover:bg-slate-100 transition-colors text-sm font-bold"
+                    className="text-slate-400 hover:text-white font-bold text-xs"
                   >
-                    ✕
+                    [Esc]
                   </button>
                 </div>
+                <div className="p-5 space-y-3.5">
 
                 {clientError && (
                   <div className="bg-rose-600 text-white hover:bg-rose-500 text-white p-2.5 text-xs font-bold border border-slate-200 rounded-xl shadow-sm">
@@ -7064,53 +7134,83 @@ export default function App() {
                       disabled={clientSaving}
                       className="px-5 py-2 bg-indigo-600 text-white hover:bg-indigo-500 hover:bg-yellow-400 border border-slate-200 rounded-xl text-xs font-bold uppercase shadow-sm active:translate-x-[1px] active:translate-y-[1px]"
                     >
-                      {clientSaving ? 'Saving...' : (editingClient ? 'Update Client' : 'Save Client')}
+                      {clientSaving ? 'Saving...' : (editingClient ? 'Update Company' : 'Save Company')}
                     </button>
                   </div>
                 </form>
+                </div>
               </div>
             </div>
           )}
           
-          {/* --- Keyboard Shortcuts Helper Modal --- */}
+          {/* --- Keyboard Shortcuts Helper Modal (Tally Pro Terminal) --- */}
           {shortcutsModalOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-              <div className="bg-white border border-slate-200/90 rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4">
-                <div className="flex justify-between items-center bg-indigo-600 text-white hover:bg-indigo-500 p-3 border border-slate-200 rounded-xl shadow-sm">
-                  <h3 className="text-sm font-bold uppercase text-black">⌨️ Keyboard Shortcuts</h3>
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 font-mono">
+              <div className="bg-white border-2 border-[#1e3e62] rounded-lg shadow-2xl max-w-lg w-full overflow-hidden">
+                <div className="bg-[#0b192c] text-white px-4 py-3 flex justify-between items-center border-b-2 border-[#1e3e62]">
+                  <div className="flex items-center space-x-2">
+                    <span className="px-2 py-0.5 bg-[#008170] text-white text-[10px] font-bold rounded">
+                      HOTKEYS
+                    </span>
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-amber-300">
+                      Tally Prime Keyboard Hotkeys
+                    </h3>
+                  </div>
                   <button
                     onClick={() => setShortcutsModalOpen(false)}
-                    className="text-slate-400 hover:text-slate-700 rounded-lg p-1 hover:bg-slate-100 transition-colors text-sm font-bold"
+                    className="text-slate-400 hover:text-white font-bold text-xs"
                   >
-                    ✕
+                    [Esc]
                   </button>
                 </div>
 
-                <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl text-xs font-bold">
-                  <div className="flex justify-between p-2.5 bg-slate-50">
-                    <span>Search Transactions / History</span>
-                    <kbd className="px-2 py-1 bg-slate-100 border border-slate-200 rounded-md font-mono font-bold text-[11px] text-slate-700 shadow-xs">Ctrl + F</kbd>
+                <div className="p-5 space-y-3">
+                  <div className="divide-y divide-slate-200 border-2 border-slate-400 rounded text-xs font-mono">
+                    <div className="flex justify-between items-center p-2 bg-slate-50">
+                      <span className="font-bold text-[#0b192c]">Import PDF Statement</span>
+                      <kbd className="px-2 py-0.5 bg-[#0b192c] text-amber-300 rounded font-bold text-[11px] border border-[#1e3e62]">F1</kbd>
+                    </div>
+                    <div className="flex justify-between items-center p-2 bg-white">
+                      <span className="font-bold text-[#0b192c]">Client Dossier / Company Matrix</span>
+                      <kbd className="px-2 py-0.5 bg-[#0b192c] text-amber-300 rounded font-bold text-[11px] border border-[#1e3e62]">F2</kbd>
+                    </div>
+                    <div className="flex justify-between items-center p-2 bg-slate-50">
+                      <span className="font-bold text-[#0b192c]">Page Credits & Plans</span>
+                      <kbd className="px-2 py-0.5 bg-[#0b192c] text-amber-300 rounded font-bold text-[11px] border border-[#1e3e62]">F3</kbd>
+                    </div>
+                    <div className="flex justify-between items-center p-2 bg-white">
+                      <span className="font-bold text-[#0b192c]">Support & CA Assistance</span>
+                      <kbd className="px-2 py-0.5 bg-[#0b192c] text-amber-300 rounded font-bold text-[11px] border border-[#1e3e62]">F4</kbd>
+                    </div>
+                    <div className="flex justify-between items-center p-2 bg-slate-50">
+                      <span className="font-bold text-[#0b192c]">Profile & Security</span>
+                      <kbd className="px-2 py-0.5 bg-[#0b192c] text-amber-300 rounded font-bold text-[11px] border border-[#1e3e62]">F5</kbd>
+                    </div>
+                    <div className="flex justify-between items-center p-2 bg-white">
+                      <span className="font-bold text-[#0b192c]">Export Tally XML</span>
+                      <kbd className="px-2 py-0.5 bg-[#008170] text-white rounded font-bold text-[11px]">Ctrl + E</kbd>
+                    </div>
+                    <div className="flex justify-between items-center p-2 bg-slate-50">
+                      <span className="font-bold text-[#0b192c]">Search Transactions</span>
+                      <kbd className="px-2 py-0.5 bg-slate-200 border border-slate-300 text-slate-800 rounded font-bold text-[11px]">Ctrl + F</kbd>
+                    </div>
+                    <div className="flex justify-between items-center p-2 bg-white">
+                      <span className="font-bold text-[#0b192c]">Undo Narration Edit</span>
+                      <kbd className="px-2 py-0.5 bg-slate-200 border border-slate-300 text-slate-800 rounded font-bold text-[11px]">Ctrl + Z</kbd>
+                    </div>
+                    <div className="flex justify-between items-center p-2 bg-slate-50">
+                      <span className="font-bold text-[#0b192c]">Close Active Modal / Exit</span>
+                      <kbd className="px-2 py-0.5 bg-slate-200 border border-slate-300 text-slate-800 rounded font-bold text-[11px]">Esc</kbd>
+                    </div>
                   </div>
-                  <div className="flex justify-between p-2.5 bg-white">
-                    <span>Undo Narration Edit</span>
-                    <kbd className="px-2 py-1 bg-slate-100 border border-slate-200 rounded-md font-mono font-bold text-[11px] text-slate-700 shadow-xs">Ctrl + Z</kbd>
-                  </div>
-                  <div className="flex justify-between p-2.5 bg-slate-50">
-                    <span>Close Open Dialog / Modal</span>
-                    <kbd className="px-2 py-1 bg-slate-100 border border-slate-200 rounded-md font-mono font-bold text-[11px] text-slate-700 shadow-xs">Esc</kbd>
-                  </div>
-                  <div className="flex justify-between p-2.5 bg-white">
-                    <span>Navigate Between Fields</span>
-                    <kbd className="px-2 py-1 bg-slate-100 border border-slate-200 rounded-md font-mono font-bold text-[11px] text-slate-700 shadow-xs">Tab / Shift + Tab</kbd>
-                  </div>
-                </div>
 
-                <button
-                  onClick={() => setShortcutsModalOpen(false)}
-                  className="w-full py-2 bg-black text-white border border-slate-200 rounded-xl font-bold text-xs uppercase shadow-sm"
-                >
-                  GOT IT
-                </button>
+                  <button
+                    onClick={() => setShortcutsModalOpen(false)}
+                    className="w-full py-2 bg-[#0b192c] hover:bg-[#1e3e62] text-amber-300 rounded font-bold text-xs uppercase shadow-sm font-mono mt-2"
+                  >
+                    [Esc] CLOSE SHORTCUTS
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -7158,7 +7258,7 @@ export default function App() {
         </div>
 
         <p className="text-slate-600 font-bold">
-          Build with ❤️ by{" "}
+          Sheet Buddy Pro • Engineered for Chartered Accountants •{" "}
           <a
             href="https://www.instagram.com/verx_mysterio?igsi=MzliODFvcWt0emhn"
             target="_blank"
