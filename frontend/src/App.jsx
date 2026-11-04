@@ -290,7 +290,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('convert'); // 'convert' | 'history' | 'wallet' | 'rules' | 'settings' | 'admin'
 
   // --- Upload / Convert State ---
-  const [bankName, setBankName] = useState('auto');
+  const [bankName, setBankName] = useState('sbi');
   const [supportedBanks, setSupportedBanks] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploadLoading, setUploadLoading] = useState(false);
@@ -604,7 +604,10 @@ export default function App() {
         const data = await res.json();
         setSupportedBanks(data);
         if (data.length > 0) {
-          setBankName(prev => prev || data[0].bank_key);
+          setBankName(prev => {
+            if (prev && data.some(b => b.bank_key === prev)) return prev;
+            return data[0].bank_key;
+          });
         }
       }
     } catch (e) {
@@ -1397,8 +1400,14 @@ export default function App() {
     setParsedSummary(null);
     setEditedNarrations({});
 
+    const isAutoSupported = supportedBanks.some(b => b.bank_key === 'auto');
+    let effectiveBank = bankName;
+    if ((!effectiveBank || effectiveBank === 'auto') && !isAutoSupported) {
+      effectiveBank = 'sbi';
+    }
+
     const formData = new FormData();
-    formData.append('bank_name', bankName);
+    formData.append('bank_name', effectiveBank);
     formData.append('file', selectedFile);
 
     try {
@@ -2491,7 +2500,7 @@ export default function App() {
                   <div>
                     <label className="block text-sm font-black text-black uppercase mb-1">Select Bank Statement Format</label>
                     <select
-                      value={bankName}
+                      value={supportedBanks.some(b => b.bank_key === bankName) ? bankName : (supportedBanks[0]?.bank_key || 'sbi')}
                       onChange={(e) => setBankName(e.target.value)}
                       className="w-full pl-3 pr-10 py-2.5 text-sm border-2 border-black font-bold focus:outline-none focus:bg-yellow-50 bg-white"
                     >
