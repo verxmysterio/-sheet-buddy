@@ -514,36 +514,7 @@ export default function App() {
   };
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  // Tally Prime Functional Hotkeys [F1] - [F5]
-  useEffect(() => {
-    const handleTallyHotkeys = (e) => {
-      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
-      if (e.key === 'F1') {
-        e.preventDefault();
-        setActiveTab('convert');
-        setExecuteError('');
-      } else if (e.key === 'F2') {
-        e.preventDefault();
-        setActiveTab('clients');
-        setSelectedDossierClient(null);
-        setExecuteError('');
-      } else if (e.key === 'F3') {
-        e.preventDefault();
-        setActiveTab('wallet');
-        setExecuteError('');
-      } else if (e.key === 'F4') {
-        e.preventDefault();
-        setActiveTab('support');
-        setExecuteError('');
-      } else if (e.key === 'F5') {
-        e.preventDefault();
-        setActiveTab('settings');
-        setExecuteError('');
-      }
-    };
-    window.addEventListener('keydown', handleTallyHotkeys);
-    return () => window.removeEventListener('keydown', handleTallyHotkeys);
-  }, []);
+
   const [importDropdownOpen, setImportDropdownOpen] = useState(false);
   const [configDropdownOpen, setConfigDropdownOpen] = useState(false);
   const importMenuRef = useRef(null);
@@ -638,43 +609,237 @@ export default function App() {
     }
   }, [token]);
 
-  // Keyboard shortcut listener for productivity
+  // Comprehensive Tally Prime Keyboard Hotkeys
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      // Ctrl + F / Cmd + F -> Focus search input in convert or history table
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
-        const searchEl = document.getElementById('table-search-input') || document.getElementById('history-search-input');
-        if (searchEl) {
+    const handleGlobalKeyDown = (e) => {
+      // 1. Esc: close active modals or dropdown menus
+      if (e.key === 'Escape') {
+        if (reviewModalOpen || shortcutsModalOpen || mappingModalOpen || clientModalOpen || mobileMenuOpen) {
           e.preventDefault();
-          searchEl.focus();
-          searchEl.select();
+          setReviewModalOpen(false);
+          setShortcutsModalOpen(false);
+          setMappingModalOpen(false);
+          setClientModalOpen(false);
+          setMobileMenuOpen(false);
+          return;
+        }
+        if (importDropdownOpen || configDropdownOpen) {
+          e.preventDefault();
+          setImportDropdownOpen(false);
+          setConfigDropdownOpen(false);
+          return;
         }
       }
-      // Ctrl + Z -> Undo last narration change
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) {
-        if (undoStack.length > 0) {
-          e.preventDefault();
-          const lastUndo = undoStack[undoStack.length - 1];
-          if (lastUndo && lastUndo.type === 'NARRATION') {
-            setEditedNarrations(prev => ({
-              ...prev,
-              [lastUndo.idx]: lastUndo.oldText
-            }));
-            setUndoStack(prev => prev.slice(0, -1));
+
+      // Check if user is typing inside an editable text element
+      const isInputActive = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName) || document.activeElement?.isContentEditable;
+
+      // 2. Modifiers with Ctrl / Cmd
+      if (e.ctrlKey || e.metaKey) {
+        // Ctrl + F -> Focus search input
+        if (e.key.toLowerCase() === 'f') {
+          const searchEl = document.getElementById('table-search-input') || 
+                           document.getElementById('history-search-input') ||
+                           document.querySelector('input[placeholder*="Search"]');
+          if (searchEl) {
+            e.preventDefault();
+            searchEl.focus();
+            searchEl.select();
+          }
+          return;
+        }
+
+        // Ctrl + Z -> Undo narration edit
+        if (e.key.toLowerCase() === 'z' && !e.shiftKey) {
+          if (undoStack && undoStack.length > 0) {
+            e.preventDefault();
+            const lastUndo = undoStack[undoStack.length - 1];
+            if (lastUndo && lastUndo.type === 'NARRATION') {
+              setEditedNarrations(prev => ({
+                ...prev,
+                [lastUndo.idx]: lastUndo.oldText
+              }));
+              setUndoStack(prev => prev.slice(0, -1));
+            }
+          }
+          return;
+        }
+
+        // Ctrl + E -> Export / Convert to Tally XML
+        if (e.key.toLowerCase() === 'e') {
+          const exportBtn = document.getElementById('btn-export-tally-xml') || 
+                            document.getElementById('btn-convert-tally-xml') || 
+                            document.getElementById('btn-convert-csv-xml');
+          if (exportBtn && !exportBtn.disabled) {
+            e.preventDefault();
+            exportBtn.click();
+            return;
           }
         }
       }
-      // Esc -> Close modals
-      if (e.key === 'Escape') {
-        setReviewModalOpen(false);
-        setShortcutsModalOpen(false);
-        setMappingModalOpen(false);
-        setClientModalOpen(false);
+
+      // 3. Modifiers with Alt
+      if (e.altKey) {
+        // Alt + S -> Toggle Shortcuts Modal
+        if (e.key.toLowerCase() === 's') {
+          e.preventDefault();
+          setShortcutsModalOpen(prev => !prev);
+          return;
+        }
+
+        // Alt + A -> Auto-match Ledgers
+        if (e.key.toLowerCase() === 'a') {
+          const matchBtn = document.getElementById('btn-auto-match-ledgers');
+          if (matchBtn && !matchBtn.disabled) {
+            e.preventDefault();
+            matchBtn.click();
+            return;
+          }
+        }
+
+        // Alt + D -> Open Dossier
+        if (e.key.toLowerCase() === 'd') {
+          const dossierBtn = document.getElementById('btn-open-dossier');
+          if (dossierBtn && !dossierBtn.disabled) {
+            e.preventDefault();
+            dossierBtn.click();
+            return;
+          } else {
+            e.preventDefault();
+            setActiveTab('clients');
+            return;
+          }
+        }
+
+        // Alt + 1 -> PDF to Tally
+        if (e.key === '1') {
+          e.preventDefault();
+          setActiveTab('convert');
+          setImportDropdownOpen(false);
+          setConfigDropdownOpen(false);
+          setExecuteError('');
+          return;
+        }
+
+        // Alt + 2 -> CSV to Tally
+        if (e.key === '2') {
+          e.preventDefault();
+          setActiveTab('csv');
+          setImportDropdownOpen(false);
+          setConfigDropdownOpen(false);
+          setExecuteError('');
+          return;
+        }
+
+        // Alt + 3 -> Cloud XML Vault
+        if (e.key === '3') {
+          e.preventDefault();
+          setActiveTab('history');
+          setImportDropdownOpen(false);
+          setConfigDropdownOpen(false);
+          setExecuteError('');
+          return;
+        }
+      }
+
+      // 4. Function keys [F1] - [F5] (Toggle dropdowns or switch primary tabs)
+      if (e.key === 'F1') {
+        e.preventDefault();
+        setImportDropdownOpen(prev => !prev);
+        setConfigDropdownOpen(false);
+        setExecuteError('');
+        return;
+      }
+
+      if (e.key === 'F2') {
+        e.preventDefault();
+        setConfigDropdownOpen(prev => !prev);
+        setImportDropdownOpen(false);
+        setExecuteError('');
+        return;
+      }
+
+      if (e.key === 'F3') {
+        e.preventDefault();
+        setActiveTab('wallet');
+        setImportDropdownOpen(false);
+        setConfigDropdownOpen(false);
+        setExecuteError('');
+        return;
+      }
+
+      if (e.key === 'F4') {
+        e.preventDefault();
+        setActiveTab('support');
+        setImportDropdownOpen(false);
+        setConfigDropdownOpen(false);
+        setExecuteError('');
+        return;
+      }
+
+      if (e.key === 'F5') {
+        e.preventDefault();
+        setActiveTab('settings');
+        setImportDropdownOpen(false);
+        setConfigDropdownOpen(false);
+        setExecuteError('');
+        return;
+      }
+
+      // If user is currently typing inside an input/textarea, do NOT intercept numeric keys
+      if (isInputActive) return;
+
+      // 5. Numeric keys [1], [2], [3] (Tally menu selection)
+      if (e.key === '1') {
+        e.preventDefault();
+        if (configDropdownOpen || activeTab === 'clients' || activeTab === 'rules' || activeTab === 'history') {
+          setActiveTab('clients');
+          setSelectedDossierClient(null);
+        } else {
+          setActiveTab('convert');
+        }
+        setImportDropdownOpen(false);
+        setConfigDropdownOpen(false);
+        setExecuteError('');
+        return;
+      }
+
+      if (e.key === '2') {
+        e.preventDefault();
+        if (configDropdownOpen || activeTab === 'clients' || activeTab === 'rules' || activeTab === 'history') {
+          setActiveTab('rules');
+        } else {
+          setActiveTab('csv');
+        }
+        setImportDropdownOpen(false);
+        setConfigDropdownOpen(false);
+        setExecuteError('');
+        return;
+      }
+
+      if (e.key === '3') {
+        e.preventDefault();
+        setActiveTab('history');
+        setImportDropdownOpen(false);
+        setConfigDropdownOpen(false);
+        setExecuteError('');
+        return;
+      }
+
+      // '?' key opens Shortcuts Modal
+      if (e.key === '?' || (e.shiftKey && e.key === '/')) {
+        e.preventDefault();
+        setShortcutsModalOpen(prev => !prev);
+        return;
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [undoStack, parsedSummary]);
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [
+    importDropdownOpen, configDropdownOpen, activeTab, undoStack,
+    reviewModalOpen, shortcutsModalOpen, mappingModalOpen, clientModalOpen, mobileMenuOpen
+  ]);
 
   // --- API Functions ---
   const fetchUserProfile = async () => {
@@ -3388,6 +3553,7 @@ export default function App() {
             </select>
             {activeClientId && (
               <button
+                id="btn-open-dossier"
                 type="button"
                 onClick={() => {
                   const clientObj = clientsList.find(c => c.id === activeClientId);
@@ -3537,7 +3703,7 @@ export default function App() {
                 <div className="flex items-center justify-between bg-[#0b192c] text-white p-3.5 rounded border border-[#1e3e62]">
                   <div className="flex items-center space-x-3">
                     <span className="px-2 py-0.5 bg-[#008170] text-white font-extrabold text-[10px] rounded tracking-wider">
-                      [F1]
+                      [F1:1]
                     </span>
                     <div>
                       <h2 className="text-sm font-bold tracking-tight">Import Bank Statement PDF</h2>
@@ -3875,6 +4041,7 @@ export default function App() {
 
                     <div className="flex flex-wrap items-center gap-2">
                       <button
+                        id="btn-auto-match-ledgers"
                         type="button"
                         onClick={() => {
                           // Quick Auto-match rules trigger
@@ -3888,6 +4055,7 @@ export default function App() {
                         [Alt+A] AUTO-MATCH LEDGERS
                       </button>
                       <button
+                        id="btn-export-tally-xml"
                         type="button"
                         onClick={handleExecuteConversion}
                         disabled={executeLoading || user.page_credits < parsedSummary.pages_count}
@@ -4317,6 +4485,7 @@ export default function App() {
 
                     <div className="space-y-2 mt-5">
                       <button
+                        id="btn-convert-tally-xml"
                         onClick={handleExecuteConversion}
                         disabled={executeLoading || user.page_credits < parsedSummary.pages_count}
                         className="w-full py-2.5 px-4 rounded font-bold text-white bg-[#008170] hover:bg-[#006e5f] shadow-sm transition-colors text-xs uppercase tracking-wider disabled:opacity-50"
@@ -4512,11 +4681,12 @@ export default function App() {
                       Export Excel (.xlsx)
                     </button>
                     <button
+                      id="btn-convert-csv-xml"
                       onClick={handleConvertCsvToXml}
                       disabled={csvConverting}
-                      className="px-3.5 py-1.5 bg-[#008170] hover:bg-[#006e5f] text-white rounded font-bold text-xs shadow-sm disabled:opacity-50 flex items-center space-x-1.5 transition-colors"
+                      className="px-3.5 py-1.5 bg-[#008170] hover:bg-[#006e5f] text-white rounded font-bold text-xs shadow-sm disabled:opacity-50 flex items-center space-x-1.5 transition-colors font-mono"
                     >
-                      <span>{csvConverting ? 'Generating XML...' : 'Convert to Tally XML'}</span>
+                      <span>{csvConverting ? 'Generating XML...' : '[Ctrl+E] Convert to Tally XML'}</span>
                       {(() => {
                         const pricing = getCsvCreditPricing(csvVouchers.length);
                         return (
@@ -7159,17 +7329,41 @@ export default function App() {
                 </div>
 
                 <div className="p-5 space-y-3">
-                  <div className="divide-y divide-slate-200 border-2 border-slate-400 rounded text-xs font-mono">
+                  <div className="divide-y divide-slate-200 border-2 border-slate-400 rounded text-xs font-mono max-h-[380px] overflow-y-auto">
+                    <div className="flex justify-between items-center p-2 bg-[#0b192c] text-white">
+                      <span className="font-bold text-amber-300 uppercase tracking-wide">Primary Action / Navigation</span>
+                      <span className="text-[10px] text-slate-400 uppercase">Shortcut Key</span>
+                    </div>
                     <div className="flex justify-between items-center p-2 bg-slate-50">
-                      <span className="font-bold text-[#0b192c]">Import PDF Statement</span>
+                      <span className="font-bold text-[#0b192c]">Import Menu (Toggle Dropdown)</span>
                       <kbd className="px-2 py-0.5 bg-[#0b192c] text-amber-300 rounded font-bold text-[11px] border border-[#1e3e62]">F1</kbd>
                     </div>
-                    <div className="flex justify-between items-center p-2 bg-white">
-                      <span className="font-bold text-[#0b192c]">Client Dossier / Company Matrix</span>
-                      <kbd className="px-2 py-0.5 bg-[#0b192c] text-amber-300 rounded font-bold text-[11px] border border-[#1e3e62]">F2</kbd>
+                    <div className="flex justify-between items-center p-2 bg-white pl-5 text-slate-700">
+                      <span>↳ [1] PDF to Tally Statement</span>
+                      <kbd className="px-2 py-0.5 bg-slate-100 border border-slate-300 text-slate-800 rounded font-bold text-[11px]">1  or  Alt+1</kbd>
+                    </div>
+                    <div className="flex justify-between items-center p-2 bg-white pl-5 text-slate-700">
+                      <span>↳ [2] CSV to Tally Converter</span>
+                      <kbd className="px-2 py-0.5 bg-slate-100 border border-slate-300 text-slate-800 rounded font-bold text-[11px]">2  or  Alt+2</kbd>
                     </div>
                     <div className="flex justify-between items-center p-2 bg-slate-50">
-                      <span className="font-bold text-[#0b192c]">Page Credits & Plans</span>
+                      <span className="font-bold text-[#0b192c]">Configuration Menu (Toggle Dropdown)</span>
+                      <kbd className="px-2 py-0.5 bg-[#0b192c] text-amber-300 rounded font-bold text-[11px] border border-[#1e3e62]">F2</kbd>
+                    </div>
+                    <div className="flex justify-between items-center p-2 bg-white pl-5 text-slate-700">
+                      <span>↳ [1] Client Dossiers & Company Matrix</span>
+                      <kbd className="px-2 py-0.5 bg-slate-100 border border-slate-300 text-slate-800 rounded font-bold text-[11px]">1</kbd>
+                    </div>
+                    <div className="flex justify-between items-center p-2 bg-white pl-5 text-slate-700">
+                      <span>↳ [2] Smart Ledger Rules Engine</span>
+                      <kbd className="px-2 py-0.5 bg-slate-100 border border-slate-300 text-slate-800 rounded font-bold text-[11px]">2</kbd>
+                    </div>
+                    <div className="flex justify-between items-center p-2 bg-white pl-5 text-slate-700">
+                      <span>↳ [3] Cloud XML Vault & Audit History</span>
+                      <kbd className="px-2 py-0.5 bg-slate-100 border border-slate-300 text-slate-800 rounded font-bold text-[11px]">3  or  Alt+3</kbd>
+                    </div>
+                    <div className="flex justify-between items-center p-2 bg-slate-50">
+                      <span className="font-bold text-[#0b192c]">Page Credits & Pricing</span>
                       <kbd className="px-2 py-0.5 bg-[#0b192c] text-amber-300 rounded font-bold text-[11px] border border-[#1e3e62]">F3</kbd>
                     </div>
                     <div className="flex justify-between items-center p-2 bg-white">
@@ -7177,23 +7371,35 @@ export default function App() {
                       <kbd className="px-2 py-0.5 bg-[#0b192c] text-amber-300 rounded font-bold text-[11px] border border-[#1e3e62]">F4</kbd>
                     </div>
                     <div className="flex justify-between items-center p-2 bg-slate-50">
-                      <span className="font-bold text-[#0b192c]">Profile & Security</span>
+                      <span className="font-bold text-[#0b192c]">Practitioner Profile & Security</span>
                       <kbd className="px-2 py-0.5 bg-[#0b192c] text-amber-300 rounded font-bold text-[11px] border border-[#1e3e62]">F5</kbd>
                     </div>
                     <div className="flex justify-between items-center p-2 bg-white">
-                      <span className="font-bold text-[#0b192c]">Export Tally XML</span>
+                      <span className="font-bold text-[#0b192c]">Export / Convert to Tally XML</span>
                       <kbd className="px-2 py-0.5 bg-[#008170] text-white rounded font-bold text-[11px]">Ctrl + E</kbd>
                     </div>
                     <div className="flex justify-between items-center p-2 bg-slate-50">
-                      <span className="font-bold text-[#0b192c]">Search Transactions</span>
+                      <span className="font-bold text-[#0b192c]">Auto-Match Ledger Rules</span>
+                      <kbd className="px-2 py-0.5 bg-slate-200 border border-slate-300 text-slate-800 rounded font-bold text-[11px]">Alt + A</kbd>
+                    </div>
+                    <div className="flex justify-between items-center p-2 bg-white">
+                      <span className="font-bold text-[#0b192c]">Open Active Company Dossier</span>
+                      <kbd className="px-2 py-0.5 bg-slate-200 border border-slate-300 text-slate-800 rounded font-bold text-[11px]">Alt + D</kbd>
+                    </div>
+                    <div className="flex justify-between items-center p-2 bg-slate-50">
+                      <span className="font-bold text-[#0b192c]">Search Transactions & Entries</span>
                       <kbd className="px-2 py-0.5 bg-slate-200 border border-slate-300 text-slate-800 rounded font-bold text-[11px]">Ctrl + F</kbd>
                     </div>
                     <div className="flex justify-between items-center p-2 bg-white">
-                      <span className="font-bold text-[#0b192c]">Undo Narration Edit</span>
+                      <span className="font-bold text-[#0b192c]">Undo Last Narration Edit</span>
                       <kbd className="px-2 py-0.5 bg-slate-200 border border-slate-300 text-slate-800 rounded font-bold text-[11px]">Ctrl + Z</kbd>
                     </div>
                     <div className="flex justify-between items-center p-2 bg-slate-50">
-                      <span className="font-bold text-[#0b192c]">Close Active Modal / Exit</span>
+                      <span className="font-bold text-[#0b192c]">Toggle Shortcuts Quick Reference</span>
+                      <kbd className="px-2 py-0.5 bg-slate-200 border border-slate-300 text-slate-800 rounded font-bold text-[11px]">Alt + S  or  ?</kbd>
+                    </div>
+                    <div className="flex justify-between items-center p-2 bg-white">
+                      <span className="font-bold text-[#0b192c]">Close Active Modal / Dropdown Menu</span>
                       <kbd className="px-2 py-0.5 bg-slate-200 border border-slate-300 text-slate-800 rounded font-bold text-[11px]">Esc</kbd>
                     </div>
                   </div>
