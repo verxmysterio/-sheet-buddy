@@ -2681,97 +2681,113 @@ export default function App() {
     return bName.includes(q) || cName.includes(q) || period.includes(q) || acc.includes(q) || fName.includes(q);
   });
 
-  // --- Auth View ---
+  // --- Auth View (Tally Prime Terminal Edition) ---
   if (!token || !user) {
     return (
-      <div className="min-h-screen flex flex-col justify-between bg-slate-50 antialiased font-sans">
+      <div className="min-h-screen flex flex-col justify-between bg-slate-100 antialiased font-mono text-slate-800">
         <div className="flex-grow flex flex-col justify-center py-10 px-4 sm:px-6">
+          
+          {/* Top Brand & Tally Prime Badge */}
           <div className="sm:mx-auto sm:w-full sm:max-w-md text-center mb-6">
-            <div className="flex justify-center mb-3">
-              <img 
-                src="/symbol_mark.svg" 
-                alt="Sheet Buddy" 
-                className="w-14 h-14 rounded-2xl bg-slate-900 border border-slate-800 p-2 shadow-lg shadow-slate-900/10 object-contain mx-auto" 
-              />
+            <div className="inline-flex items-center gap-2 mb-2">
+              <span className="px-2.5 py-0.5 bg-[#008170] text-white font-extrabold text-[11px] rounded tracking-wider font-mono shadow-sm">
+                TALLY PRIME
+              </span>
+              <span className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wide">
+                COMPANION SUITE
+              </span>
             </div>
-            <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
-              Sheet Buddy
-            </h2>
-            <p className="mt-1.5 text-xs text-slate-500 font-medium inline-flex items-center gap-1.5 bg-white border border-slate-200/80 rounded-full px-3 py-1 shadow-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
+            <div className="flex items-center justify-center space-x-3 mb-2">
+              <div className="w-10 h-10 rounded bg-[#0b192c] border border-[#1e3e62] flex items-center justify-center p-1.5 shadow-sm">
+                <img 
+                  src="/symbol_mark.svg" 
+                  alt="Sheet Buddy" 
+                  className="w-full h-full object-contain filter invert" 
+                />
+              </div>
+              <h2 className="text-2xl font-bold text-[#0b192c] tracking-tight font-mono">
+                Sheet Buddy Pro
+              </h2>
+            </div>
+            <p className="text-xs font-mono font-bold text-slate-600 bg-white border-2 border-slate-300 rounded px-3 py-1 inline-flex items-center gap-2 shadow-xs">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
               A Complete Tally Supporting Tool • Since 2026
             </p>
           </div>
 
           <div className="sm:mx-auto sm:w-full sm:max-w-md">
-            <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xl shadow-slate-200/40 p-7 sm:p-8 space-y-5">
+            <div className="bg-white rounded-lg border-2 border-slate-400 shadow-md p-6 sm:p-7 space-y-4 font-mono">
               
               {/* Tab Selector between Login and Register if on auth home */}
               {(authMode === 'login' || authMode === 'register') && (
-                <div className="flex bg-slate-100 p-1 rounded-xl">
+                <div className="flex border-2 border-slate-400 bg-slate-100 p-0.5 rounded font-mono">
                   <button
                     type="button"
                     onClick={() => { setAuthMode('login'); setAuthError(''); }}
-                    className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                    className={`flex-1 py-1.5 text-xs font-bold rounded transition-colors ${
                       authMode === 'login'
-                        ? 'bg-white text-slate-900 shadow-sm'
-                        : 'text-slate-600 hover:text-slate-900'
+                        ? 'bg-[#0b192c] text-amber-300 shadow-sm'
+                        : 'text-slate-700 hover:text-slate-900'
                     }`}
                   >
-                    Sign In
+                    [F1] Sign In
                   </button>
                   <button
                     type="button"
                     onClick={() => { setAuthMode('register'); setAuthError(''); }}
-                    className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                    className={`flex-1 py-1.5 text-xs font-bold rounded transition-colors ${
                       authMode === 'register'
-                        ? 'bg-white text-slate-900 shadow-sm'
-                        : 'text-slate-600 hover:text-slate-900'
+                        ? 'bg-[#0b192c] text-amber-300 shadow-sm'
+                        : 'text-slate-700 hover:text-slate-900'
                     }`}
                   >
-                    Create Account
+                    [F2] Create Account
                   </button>
                 </div>
               )}
 
               {statusMessage && (
-                <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium rounded-xl p-3.5 flex items-start gap-2.5">
-                  <span className="text-emerald-600 font-bold">✓</span>
-                  <div className="flex-1">{String(statusMessage)}</div>
+                <div className="bg-emerald-50 border-2 border-emerald-300 text-emerald-900 text-xs font-bold rounded p-3 flex items-start gap-2">
+                  <span className="text-emerald-700 font-bold font-mono">[OK]</span>
+                  <div className="flex-1 font-mono">{String(statusMessage)}</div>
                 </div>
               )}
 
               {authError && (
-                <div className="bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium rounded-xl p-3.5 flex items-start gap-2.5">
-                  <span className="text-rose-500 font-bold">!</span>
-                  <div className="flex-1">{String(authError)}</div>
+                <div className="bg-rose-50 border-2 border-rose-300 text-rose-900 text-xs font-bold rounded p-3 flex items-start gap-2">
+                  <span className="text-rose-700 font-bold font-mono">[!]</span>
+                  <div className="flex-1 font-mono">{String(authError)}</div>
                 </div>
               )}
 
               {/* Login Form */}
               {authMode === 'login' && (
-                <form className="space-y-4" onSubmit={handleAuthSubmit}>
+                <form className="space-y-3.5" onSubmit={handleAuthSubmit}>
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Email Address</label>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">
+                      Email Address
+                    </label>
                     <input
                       type="email"
                       required
-                      placeholder="name@company.com"
+                      placeholder="ca.partner@firm.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="block w-full px-3.5 py-2.5 bg-slate-50/50 border border-slate-300 rounded-xl text-slate-900 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 focus:bg-white transition-all placeholder:text-slate-400"
+                      className="block w-full px-3 py-2 bg-white border-2 border-slate-400 rounded text-slate-900 text-xs font-mono font-medium focus:outline-none focus:border-[#008170] transition-colors placeholder:text-slate-400"
                     />
                   </div>
 
                   <div>
                     <div className="flex justify-between items-center mb-1">
-                      <label className="block text-xs font-semibold text-slate-700">Password</label>
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide">
+                        Password
+                      </label>
                       <button
                         type="button"
                         onClick={() => { setAuthMode('forgot'); setAuthError(''); }}
-                        className="text-[11px] font-medium text-indigo-600 hover:text-indigo-500 hover:underline"
+                        className="text-[11px] font-bold text-[#008170] hover:underline"
                       >
-                        Forgot password?
+                        [Forgot Password?]
                       </button>
                     </div>
                     <input
@@ -2780,7 +2796,7 @@ export default function App() {
                       placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="block w-full px-3.5 py-2.5 bg-slate-50/50 border border-slate-300 rounded-xl text-slate-900 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 focus:bg-white transition-all placeholder:text-slate-400"
+                      className="block w-full px-3 py-2 bg-white border-2 border-slate-400 rounded text-slate-900 text-xs font-mono font-medium focus:outline-none focus:border-[#008170] transition-colors placeholder:text-slate-400"
                     />
                   </div>
 
@@ -2791,9 +2807,9 @@ export default function App() {
                       type="checkbox"
                       checked={remember}
                       onChange={(e) => setRemember(e.target.checked)}
-                      className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 rounded cursor-pointer"
+                      className="h-4 w-4 text-[#008170] focus:ring-[#008170] border-slate-400 rounded cursor-pointer"
                     />
-                    <label htmlFor="remember_me" className="ml-2 block text-xs font-medium text-slate-600 cursor-pointer select-none">
+                    <label htmlFor="remember_me" className="ml-2 block text-xs font-bold text-slate-700 cursor-pointer select-none">
                       Remember me on this workstation
                     </label>
                   </div>
@@ -2802,9 +2818,9 @@ export default function App() {
                     <button
                       type="submit"
                       disabled={authLoading}
-                      className="w-full flex justify-center py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-sm transition-all disabled:opacity-50"
+                      className="w-full flex justify-center py-2.5 px-4 bg-[#008170] hover:bg-[#006e5f] text-white rounded font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-colors disabled:opacity-50"
                     >
-                      {authLoading ? 'Signing in...' : 'Sign In'}
+                      {authLoading ? 'Verifying Credentials...' : '[Enter] Sign In to Tally Suite'}
                     </button>
                   </div>
                 </form>
@@ -2812,28 +2828,32 @@ export default function App() {
 
               {/* Register Form */}
               {authMode === 'register' && (
-                <form className="space-y-4" onSubmit={handleAuthSubmit}>
+                <form className="space-y-3.5" onSubmit={handleAuthSubmit}>
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Email Address</label>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">
+                      Email Address
+                    </label>
                     <input
                       type="email"
                       required
-                      placeholder="name@company.com"
+                      placeholder="ca.partner@firm.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="block w-full px-3.5 py-2.5 bg-slate-50/50 border border-slate-300 rounded-xl text-slate-900 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 focus:bg-white transition-all placeholder:text-slate-400"
+                      className="block w-full px-3 py-2 bg-white border-2 border-slate-400 rounded text-slate-900 text-xs font-mono font-medium focus:outline-none focus:border-[#008170] transition-colors placeholder:text-slate-400"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Password</label>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">
+                      Password
+                    </label>
                     <input
                       type="password"
                       required
                       placeholder="Create a secure password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="block w-full px-3.5 py-2.5 bg-slate-50/50 border border-slate-300 rounded-xl text-slate-900 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 focus:bg-white transition-all placeholder:text-slate-400"
+                      className="block w-full px-3 py-2 bg-white border-2 border-slate-400 rounded text-slate-900 text-xs font-mono font-medium focus:outline-none focus:border-[#008170] transition-colors placeholder:text-slate-400"
                     />
                   </div>
 
@@ -2841,9 +2861,9 @@ export default function App() {
                     <button
                       type="submit"
                       disabled={authLoading}
-                      className="w-full flex justify-center py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold shadow-sm transition-all disabled:opacity-50"
+                      className="w-full flex justify-center py-2.5 px-4 bg-[#008170] hover:bg-[#006e5f] text-white rounded font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-colors disabled:opacity-50"
                     >
-                      {authLoading ? 'Creating account...' : 'Create Account'}
+                      {authLoading ? 'Creating account...' : '[Enter] Create Account & Get 100 Credits'}
                     </button>
                   </div>
                 </form>
@@ -2851,12 +2871,14 @@ export default function App() {
 
               {/* OTP Verification Form */}
               {authMode === 'verify' && (
-                <form className="space-y-4" onSubmit={handleVerifyOTP}>
-                  <div className="text-xs text-slate-600">
-                    We sent a 6-digit verification code to <span className="font-semibold text-slate-900">{verificationEmail}</span>.
+                <form className="space-y-3.5" onSubmit={handleVerifyOTP}>
+                  <div className="text-xs text-slate-700 font-mono">
+                    We sent a 6-digit verification code to <span className="font-bold text-[#0b192c]">{verificationEmail}</span>.
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">One-Time Code (OTP)</label>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">
+                      One-Time Code (OTP)
+                    </label>
                     <input
                       type="text"
                       required
@@ -2864,21 +2886,21 @@ export default function App() {
                       placeholder="123456"
                       value={otp}
                       onChange={(e) => setOtp(e.target.value)}
-                      className="block w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-center font-mono tracking-widest text-lg font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 focus:bg-white transition-all"
+                      className="block w-full px-3 py-2 bg-white border-2 border-slate-400 rounded text-[#0b192c] text-center font-mono tracking-widest text-lg font-bold focus:outline-none focus:border-[#008170] transition-colors"
                     />
                   </div>
                   <button
                     type="submit"
                     disabled={authLoading}
-                    className="w-full flex justify-center py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-sm transition-all disabled:opacity-50"
+                    className="w-full flex justify-center py-2.5 px-4 bg-[#008170] hover:bg-[#006e5f] text-white rounded font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-colors disabled:opacity-50"
                   >
-                    {authLoading ? 'Verifying...' : 'Verify Code & Sign In'}
+                    {authLoading ? 'Verifying OTP...' : 'Verify OTP & Activate Account'}
                   </button>
-                  <div className="text-center">
+                  <div className="text-center pt-1">
                     <button
                       type="button"
                       onClick={() => setAuthMode('login')}
-                      className="text-xs font-medium text-slate-500 hover:text-slate-800"
+                      className="text-xs font-bold text-slate-600 hover:text-slate-900 font-mono"
                     >
                       ← Back to Sign In
                     </button>
@@ -2888,33 +2910,35 @@ export default function App() {
 
               {/* Forgot Password Form */}
               {authMode === 'forgot' && (
-                <form className="space-y-4" onSubmit={handleForgotPassword}>
-                  <div className="text-xs text-slate-600">
-                    Enter your email address and we'll send you an OTP to reset your password.
+                <form className="space-y-3.5" onSubmit={handleForgotPassword}>
+                  <div className="text-xs text-slate-600 font-mono">
+                    Enter your registered email address. We will send an OTP to reset your password.
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Email Address</label>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">
+                      Email Address
+                    </label>
                     <input
                       type="email"
                       required
-                      placeholder="name@company.com"
+                      placeholder="ca.partner@firm.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="block w-full px-3.5 py-2.5 bg-slate-50/50 border border-slate-300 rounded-xl text-slate-900 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 focus:bg-white transition-all"
+                      className="block w-full px-3 py-2 bg-white border-2 border-slate-400 rounded text-slate-900 text-xs font-mono font-medium focus:outline-none focus:border-[#008170] transition-colors"
                     />
                   </div>
                   <button
                     type="submit"
                     disabled={authLoading}
-                    className="w-full flex justify-center py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-sm transition-all disabled:opacity-50"
+                    className="w-full flex justify-center py-2.5 px-4 bg-[#0b192c] hover:bg-[#1e3e62] text-amber-300 rounded font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-colors disabled:opacity-50"
                   >
                     {authLoading ? 'Sending...' : 'Send Reset Code'}
                   </button>
-                  <div className="text-center">
+                  <div className="text-center pt-1">
                     <button
                       type="button"
                       onClick={() => setAuthMode('login')}
-                      className="text-xs font-medium text-slate-500 hover:text-slate-800"
+                      className="text-xs font-bold text-slate-600 hover:text-slate-900 font-mono"
                     >
                       ← Back to Sign In
                     </button>
@@ -2924,44 +2948,50 @@ export default function App() {
 
               {/* Reset Password Form */}
               {authMode === 'reset' && (
-                <form className="space-y-4" onSubmit={handleResetPassword}>
+                <form className="space-y-3.5" onSubmit={handleResetPassword}>
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">OTP Code</label>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">
+                      OTP Code
+                    </label>
                     <input
                       type="text"
                       required
                       placeholder="Enter 6-digit OTP"
                       value={otp}
                       onChange={(e) => setOtp(e.target.value)}
-                      className="block w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 font-mono text-center text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 focus:bg-white"
+                      className="block w-full px-3 py-2 bg-white border-2 border-slate-400 rounded text-slate-900 font-mono text-center text-sm font-bold focus:outline-none focus:border-[#008170]"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">New Password</label>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">
+                      New Password
+                    </label>
                     <input
                       type="password"
                       required
                       placeholder="Enter new password"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      className="block w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 focus:bg-white"
+                      className="block w-full px-3 py-2 bg-white border-2 border-slate-400 rounded text-slate-900 text-xs font-mono focus:outline-none focus:border-[#008170]"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Confirm New Password</label>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">
+                      Confirm New Password
+                    </label>
                     <input
                       type="password"
                       required
                       placeholder="Confirm new password"
                       value={confirmNewPassword}
                       onChange={(e) => setConfirmNewPassword(e.target.value)}
-                      className="block w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 focus:bg-white"
+                      className="block w-full px-3 py-2 bg-white border-2 border-slate-400 rounded text-slate-900 text-xs font-mono focus:outline-none focus:border-[#008170]"
                     />
                   </div>
                   <button
                     type="submit"
                     disabled={authLoading}
-                    className="w-full flex justify-center py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-sm transition-all disabled:opacity-50"
+                    className="w-full flex justify-center py-2.5 px-4 bg-[#008170] hover:bg-[#006e5f] text-white rounded font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-colors disabled:opacity-50"
                   >
                     {authLoading ? 'Updating password...' : 'Update Password & Sign In'}
                   </button>
@@ -2970,25 +3000,26 @@ export default function App() {
 
             </div>
 
-            {/* Feature Capability Strip */}
-            <div className="mt-5 bg-slate-900 text-white rounded-2xl p-4 border border-slate-800 shadow-md text-center">
-              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Automated Financial Reconciliation & Tally Integration</p>
-              <img src="/feature_icons.svg" alt="Statements, Analytics, Automation, Validation, Export" className="w-full h-auto object-contain mx-auto opacity-90" />
+            {/* Feature Capability Strip (Only text kept; image removed) */}
+            <div className="mt-4 bg-[#0b192c] text-white rounded-lg p-3 border-2 border-[#1e3e62] shadow-sm text-center font-mono">
+              <p className="text-xs font-bold text-amber-300 uppercase tracking-wider font-mono">
+                Automated Financial Reconciliation & Tally Integration
+              </p>
             </div>
           </div>
         </div>
 
         {/* Footer on Login Page */}
-        <footer className="py-6 text-center text-xs text-slate-500 border-t border-slate-200/80 bg-white/50 backdrop-blur-sm space-y-3">
+        <footer className="py-5 text-center text-xs text-slate-600 border-t-2 border-slate-300 bg-slate-50 space-y-2.5 font-mono">
           <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-3 max-w-lg mx-auto">
-            <span>Book demo or custom enterprise pricing:</span>
+            <span className="font-bold text-slate-700">Book demo or custom enterprise pricing:</span>
             <div className="flex items-center space-x-2">
               {/* WhatsApp Link */}
               <a
                 href="https://wa.me/919204915729?text=Hello!%20I'd%20like%20to%20know%20more,%20book%20a%20demo,%20or%20discuss%20pricing%20for%20Sheet%20Buddy."
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-medium shadow-sm transition-all flex items-center gap-1.5"
+                className="px-2.5 py-1 bg-[#008170] hover:bg-[#006e5f] text-white rounded text-xs font-bold shadow-sm transition-colors flex items-center gap-1.5"
                 title="Contact on WhatsApp"
               >
                 <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
@@ -2999,7 +3030,7 @@ export default function App() {
               {/* Email Link */}
               <a
                 href="mailto:sheetbuddyorg@gmail.com?subject=Sheet%20Buddy%20Demo%20and%20Pricing%20Inquiry"
-                className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-medium shadow-sm transition-all flex items-center gap-1.5"
+                className="px-2.5 py-1 bg-[#0b192c] hover:bg-[#1e3e62] text-amber-300 rounded text-xs font-bold border border-[#1e3e62] shadow-sm transition-colors flex items-center gap-1.5"
                 title="Send an Email"
               >
                 <svg className="w-3.5 h-3.5 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="2.5">
@@ -3010,18 +3041,18 @@ export default function App() {
             </div>
           </div>
 
-          <div className="flex items-center justify-center space-x-2 text-[11px] text-slate-400">
-            <span className="font-semibold text-slate-600">Sheet Buddy</span>
+          <div className="flex flex-wrap items-center justify-center gap-2 text-[11px] text-slate-500 font-mono">
+            <span className="font-bold text-[#0b192c]">Sheet Buddy Pro</span>
             <span>•</span>
             <span>A Complete Tally Supporting Tool • Since 2026</span>
             <span>•</span>
             <span>
-              Sheet Buddy Pro • Engineered for Chartered Accountants •{" "}
+              Engineered for Chartered Accountants •{" "}
               <a
                 href="https://www.instagram.com/verx_mysterio?igsi=MzliODFvcWt0emhn"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-slate-700 hover:text-slate-900 font-medium underline"
+                className="text-slate-800 hover:text-black font-bold underline"
               >
                 verx_mysterio
               </a>
@@ -3031,6 +3062,7 @@ export default function App() {
       </div>
     );
   }
+
 
   // --- Main Executive Dashboard View ---
   return (
