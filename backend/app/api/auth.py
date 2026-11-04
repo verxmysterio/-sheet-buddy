@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from ..core.security import hash_password, verify_password, create_access_token
+from ..core.email_utils import send_otp_email, generate_otp
 from ..models.database import get_db
 from ..models.models import User, WalletTransaction, UserOTP, RefreshToken, AuditLog
 from ..schemas.schemas import (
@@ -116,3 +117,68 @@ def change_password(req: ChangePasswordRequest, current_user: User = Depends(get
     current_user.hashed_password = hash_password(req.new_password)
     db.commit()
     return {"message": "Password changed successfully."}
+
+
+@router.post("/forgot-password")
+def forgot_password(req: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == req.email).first()
+    if not user:
+        # Avoid user enumeration - return standard success message
+        return {"message": "If the account exists, a recovery code has been sent."}
+    
+    otp_code = generate_otp()
+    expires_at = get_utc_now() + timedelta(minutes=15)
+    
+    # Clean up any existing recovery OTPs for this email
+    db.query(UserOTP).filter(UserOTP.email == req.email, UserOTP.purpose == "RECOVERY").delete()
+    
+    otp_entry = UserOTP(
+        email=req.email,
+        otp_code=otp_code,
+        purpose="RECOVERY",
+        expires_at=expires_at
+    )
+    db.add(otp_entry)
+    db.commit()
+    
+    try:
+        send_otp_email(req.email, otp_code, "RECOVERY")
+    except Exception as e:
+        db.delete(otp_entry)
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to send recovery email: {str(e)}"
+        )
+    return {"message": "If the account exists, a recovery code has been sent."}
+
+@router.post("/reset-password")
+def reset_password(req: ResetPasswordRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == req.email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found.")
+        
+    otp = db.query(UserOTP).filter(
+        UserOTP.email == req.email,
+        UserOTP.otp_code == req.otp_code,
+        UserOTP.purpose == "RECOVERY"
+    ).order_by(UserOTP.created_at.desc()).first()
+    
+    if not otp:
+        raise HTTPException(status_code=400, detail="Invalid or expired recovery code.")
+        
+    now = get_utc_now()
+    exp = otp.expires_at
+    if exp.tzinfo is None:
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+    if exp < now:
+        db.delete(otp)
+        db.commit()
+        raise HTTPException(status_code=400, detail="Invalid or expired recovery code.")
+        
+    user.hashed_password = hash_password(req.new_password)
+    user.is_verified = True
+    db.delete(otp)
+    db.commit()
+    
+    return {"message": "Password reset successfully. You can now log in."}

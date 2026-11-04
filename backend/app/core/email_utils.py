@@ -79,9 +79,9 @@ def send_otp_email(to_email: str, otp_code: str, purpose: str) -> bool:
         print("MOCK SMTP DISPATCH FALLBACK (No Credentials Configured)")
         print(f"To Email: {to_email}")
         print(f"Subject:  {subject}")
-        print(" "*10 + "┌" + "─"*22 + "┐")
-        print(" "*10 + f"│   OTP CODE: {otp_code}   │")
-        print(" "*10 + "└" + "─"*22 + "┘")
+        print(" "*10 + "+" + "-"*22 + "+")
+        print(" "*10 + f"|   OTP CODE: {otp_code}   |")
+        print(" "*10 + "+" + "-"*22 + "+")
         print("="*60 + "\n")
         return True
 

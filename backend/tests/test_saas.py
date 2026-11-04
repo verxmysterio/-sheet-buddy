@@ -510,3 +510,54 @@ def test_admin_endpoints():
 
 
 
+
+
+def test_forgot_and_reset_password():
+    from app.models.models import User, UserOTP
+    db = TestingSessionLocal()
+    
+    # Create test user
+    test_email = "recovery_test@ca-practice.in"
+    db.query(User).filter(User.email == test_email).delete()
+    db.commit()
+    
+    from app.core.security import hash_password
+    test_user = User(email=test_email, hashed_password=hash_password("InitialSecret123!"), page_credits=10, is_verified=True)
+    db.add(test_user)
+    db.commit()
+    
+    # Request forgot password
+    res = client.post("/api/auth/forgot-password", json={"email": test_email})
+    assert res.status_code == 200
+    assert "recovery code" in res.json()["message"]
+    
+    # Check OTP was written
+    otp_record = db.query(UserOTP).filter(UserOTP.email == test_email, UserOTP.purpose == "RECOVERY").first()
+    assert otp_record is not None
+    valid_code = otp_record.otp_code
+    
+    # Try invalid OTP code
+    bad_res = client.post("/api/auth/reset-password", json={
+        "email": test_email,
+        "otp_code": "000000",
+        "new_password": "NewSecretPass456!"
+    })
+    assert bad_res.status_code == 400
+    
+    # Reset with valid OTP code
+    good_res = client.post("/api/auth/reset-password", json={
+        "email": test_email,
+        "otp_code": valid_code,
+        "new_password": "NewSecretPass456!"
+    })
+    assert good_res.status_code == 200
+    
+    # Verify login with new password
+    login_res = client.post("/api/auth/login", json={"email": test_email, "password": "NewSecretPass456!"})
+    assert login_res.status_code == 200
+    assert "access_token" in login_res.json()
+    
+    # Clean up
+    db.query(User).filter(User.email == test_email).delete()
+    db.commit()
+    db.close()

@@ -1620,12 +1620,18 @@ export default function App() {
     e.preventDefault();
     setAuthError('');
     setStatusMessage('');
+    const targetEmail = (email || verificationEmail || '').trim();
+    if (!targetEmail) {
+      setAuthError('Please enter your email address.');
+      return;
+    }
+    setVerificationEmail(targetEmail);
     setAuthLoading(true);
     try {
       const res = await fetch('/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: verificationEmail })
+        body: JSON.stringify({ email: targetEmail })
       });
       const data = await res.json();
       if (!res.ok) {
@@ -1649,24 +1655,25 @@ export default function App() {
       setAuthError("Passwords do not match.");
       return;
     }
+    const targetEmail = (verificationEmail || email || '').trim();
     setAuthLoading(true);
     try {
       const res = await fetch('/api/auth/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: verificationEmail,
-          otp_code: otp,
+          email: targetEmail,
+          otp_code: otp.trim(),
           new_password: newPassword
         })
       });
       const data = await res.json();
       if (!res.ok) {
-        setAuthError(extractErrorMessage(data.detail, 'Invalid or expired OTP.'));
+        setAuthError(extractErrorMessage(data.detail, 'Invalid or expired recovery code.'));
       } else {
         setAuthMode('login');
         setIsRegistering(false);
-        setEmail(verificationEmail);
+        setEmail(targetEmail);
         setPassword('');
         setOtp('');
         setNewPassword('');
@@ -2718,33 +2725,16 @@ export default function App() {
           <div className="sm:mx-auto sm:w-full sm:max-w-md">
             <div className="bg-white rounded-lg border-2 border-slate-400 shadow-md p-6 sm:p-7 space-y-4 font-mono">
               
-              {/* Tab Selector between Login and Register if on auth home */}
-              {(authMode === 'login' || authMode === 'register') && (
-                <div className="flex border-2 border-slate-400 bg-slate-100 p-0.5 rounded font-mono">
-                  <button
-                    type="button"
-                    onClick={() => { setAuthMode('login'); setAuthError(''); }}
-                    className={`flex-1 py-1.5 text-xs font-bold rounded transition-colors ${
-                      authMode === 'login'
-                        ? 'bg-[#0b192c] text-amber-300 shadow-sm'
-                        : 'text-slate-700 hover:text-slate-900'
-                    }`}
-                  >
-                    [F1] Sign In
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setAuthMode('register'); setAuthError(''); }}
-                    className={`flex-1 py-1.5 text-xs font-bold rounded transition-colors ${
-                      authMode === 'register'
-                        ? 'bg-[#0b192c] text-amber-300 shadow-sm'
-                        : 'text-slate-700 hover:text-slate-900'
-                    }`}
-                  >
-                    [F2] Create Account
-                  </button>
+              {/* Practice Terminal Authentication Header */}
+              <div className="border-b-2 border-slate-200 pb-2.5 mb-2 font-mono flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-slate-800 uppercase tracking-wider block">Practitioner Sign In</span>
+                  <span className="text-[10px] text-slate-500 font-mono">Tally Prime Edition &bull; Practice Portal</span>
                 </div>
-              )}
+                <span className="text-[10px] font-bold px-2 py-0.5 bg-emerald-50 border border-emerald-300 rounded text-emerald-800">
+                  Online
+                </span>
+              </div>
 
               {statusMessage && (
                 <div className="bg-emerald-50 border-2 border-emerald-300 text-emerald-900 text-xs font-bold rounded p-3 flex items-start gap-2">
@@ -2826,48 +2816,7 @@ export default function App() {
                 </form>
               )}
 
-              {/* Register Form */}
-              {authMode === 'register' && (
-                <form className="space-y-3.5" onSubmit={handleAuthSubmit}>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">
-                      Email Address
-                    </label>
-                    <input
-                      type="email"
-                      required
-                      placeholder="ca.partner@firm.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="block w-full px-3 py-2 bg-white border-2 border-slate-400 rounded text-slate-900 text-xs font-mono font-medium focus:outline-none focus:border-[#008170] transition-colors placeholder:text-slate-400"
-                    />
-                  </div>
 
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">
-                      Password
-                    </label>
-                    <input
-                      type="password"
-                      required
-                      placeholder="Create a secure password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="block w-full px-3 py-2 bg-white border-2 border-slate-400 rounded text-slate-900 text-xs font-mono font-medium focus:outline-none focus:border-[#008170] transition-colors placeholder:text-slate-400"
-                    />
-                  </div>
-
-                  <div>
-                    <button
-                      type="submit"
-                      disabled={authLoading}
-                      className="w-full flex justify-center py-2.5 px-4 bg-[#008170] hover:bg-[#006e5f] text-white rounded font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-colors disabled:opacity-50"
-                    >
-                      {authLoading ? 'Creating account...' : '[Enter] Create Account & Get 100 Credits'}
-                    </button>
-                  </div>
-                </form>
-              )}
 
               {/* OTP Verification Form */}
               {authMode === 'verify' && (
@@ -2912,18 +2861,18 @@ export default function App() {
               {authMode === 'forgot' && (
                 <form className="space-y-3.5" onSubmit={handleForgotPassword}>
                   <div className="text-xs text-slate-600 font-mono">
-                    Enter your registered email address. We will send an OTP to reset your password.
+                    Enter your registered email address. We will dispatch a 6-digit OTP code to verify and reset your password.
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">
-                      Email Address
+                      Registered Email Address
                     </label>
                     <input
                       type="email"
                       required
                       placeholder="ca.partner@firm.com"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => { setEmail(e.target.value); setVerificationEmail(e.target.value); }}
                       className="block w-full px-3 py-2 bg-white border-2 border-slate-400 rounded text-slate-900 text-xs font-mono font-medium focus:outline-none focus:border-[#008170] transition-colors"
                     />
                   </div>
@@ -2932,12 +2881,12 @@ export default function App() {
                     disabled={authLoading}
                     className="w-full flex justify-center py-2.5 px-4 bg-[#0b192c] hover:bg-[#1e3e62] text-amber-300 rounded font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-colors disabled:opacity-50"
                   >
-                    {authLoading ? 'Sending...' : 'Send Reset Code'}
+                    {authLoading ? 'Sending Recovery Code...' : '[Enter] Send Recovery Code'}
                   </button>
                   <div className="text-center pt-1">
                     <button
                       type="button"
-                      onClick={() => setAuthMode('login')}
+                      onClick={() => { setAuthMode('login'); setAuthError(''); }}
                       className="text-xs font-bold text-slate-600 hover:text-slate-900 font-mono"
                     >
                       ← Back to Sign In
@@ -2949,17 +2898,21 @@ export default function App() {
               {/* Reset Password Form */}
               {authMode === 'reset' && (
                 <form className="space-y-3.5" onSubmit={handleResetPassword}>
+                  <div className="text-xs text-slate-600 font-mono">
+                    Enter the 6-digit recovery OTP code sent to <strong className="text-slate-900">{verificationEmail || email}</strong> along with your new password:
+                  </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide mb-1">
-                      OTP Code
+                      Recovery OTP Code
                     </label>
                     <input
                       type="text"
                       required
+                      maxLength={6}
                       placeholder="Enter 6-digit OTP"
                       value={otp}
                       onChange={(e) => setOtp(e.target.value)}
-                      className="block w-full px-3 py-2 bg-white border-2 border-slate-400 rounded text-slate-900 font-mono text-center text-sm font-bold focus:outline-none focus:border-[#008170]"
+                      className="block w-full px-3 py-2 bg-white border-2 border-slate-400 rounded text-slate-900 font-mono text-center text-sm font-bold tracking-widest focus:outline-none focus:border-[#008170]"
                     />
                   </div>
                   <div>
@@ -2969,7 +2922,7 @@ export default function App() {
                     <input
                       type="password"
                       required
-                      placeholder="Enter new password"
+                      placeholder="Enter new secure password"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       className="block w-full px-3 py-2 bg-white border-2 border-slate-400 rounded text-slate-900 text-xs font-mono focus:outline-none focus:border-[#008170]"
@@ -2993,8 +2946,17 @@ export default function App() {
                     disabled={authLoading}
                     className="w-full flex justify-center py-2.5 px-4 bg-[#008170] hover:bg-[#006e5f] text-white rounded font-mono font-bold text-xs uppercase tracking-wider shadow-sm transition-colors disabled:opacity-50"
                   >
-                    {authLoading ? 'Updating password...' : 'Update Password & Sign In'}
+                    {authLoading ? 'Updating Password...' : '[Enter] Update Password & Sign In'}
                   </button>
+                  <div className="text-center pt-1">
+                    <button
+                      type="button"
+                      onClick={() => { setAuthMode('login'); setAuthError(''); }}
+                      className="text-xs font-bold text-slate-600 hover:text-slate-900 font-mono"
+                    >
+                      ← Back to Sign In
+                    </button>
+                  </div>
                 </form>
               )}
 
