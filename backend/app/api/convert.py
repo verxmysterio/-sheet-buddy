@@ -25,7 +25,9 @@ from ..schemas.schemas import (
     LedgerRuleCreate, 
     LedgerRuleResponse, 
     ClientCreate, 
-    ClientResponse
+    ClientUpdate,
+    ClientResponse,
+    SaveCloudXmlRequest
 )
 from .deps import get_current_user
 
@@ -498,7 +500,9 @@ async def execute_conversion(
         is_reconciled=payload.get("is_reconciled", True),
         opening_balance=float(payload.get("opening_balance", 0.0)),
         closing_balance=float(payload.get("closing_balance", 0.0)),
-        cached_xml=xml_content
+        cached_xml=xml_content,
+        file_name=f"Tally_Import_{bank_name.replace(' ', '_')}_{len(reconstructed_txs)}_Vouchers.xml",
+        source_type="STATEMENT_PDF"
     )
     db.add(conversion)
     db.flush()
@@ -642,7 +646,31 @@ def get_clients(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    return db.query(Client).filter(Client.user_id == current_user.id).all()
+    clients = db.query(Client).filter(Client.user_id == current_user.id).order_by(Client.created_at.desc()).all()
+    results = []
+    for c in clients:
+        conv_stats = db.query(Conversion).filter(Conversion.client_id == c.id).all()
+        conversions_count = len(conv_stats)
+        vouchers_count = sum(cv.transactions_count or 0 for cv in conv_stats)
+        
+        results.append({
+            "id": c.id,
+            "organization_id": c.organization_id,
+            "user_id": c.user_id,
+            "name": c.name,
+            "pan": c.pan,
+            "gstin": c.gstin,
+            "email": c.email,
+            "phone": c.phone,
+            "financial_year": getattr(c, "financial_year", "2024-25") or "2024-25",
+            "business_type": getattr(c, "business_type", "Proprietorship") or "Proprietorship",
+            "notes": c.notes,
+            "status": c.status or "ACTIVE",
+            "conversions_count": conversions_count,
+            "vouchers_count": vouchers_count,
+            "created_at": c.created_at
+        })
+    return results
 
 @router.post("/clients", response_model=ClientResponse)
 def create_client(
@@ -652,26 +680,323 @@ def create_client(
 ):
     client = Client(
         user_id=current_user.id,
-        name=client_data.name,
-        pan=client_data.pan,
-        gstin=client_data.gstin,
-        email=client_data.email,
-        phone=client_data.phone,
+        name=client_data.name.strip(),
+        pan=client_data.pan.strip().upper() if client_data.pan else None,
+        gstin=client_data.gstin.strip().upper() if client_data.gstin else None,
+        email=client_data.email.strip() if client_data.email else None,
+        phone=client_data.phone.strip() if client_data.phone else None,
+        financial_year=client_data.financial_year or "2024-25",
+        business_type=client_data.business_type or "Proprietorship",
         notes=client_data.notes
     )
     db.add(client)
     db.commit()
     db.refresh(client)
-    return client
+    return {
+        "id": client.id,
+        "organization_id": client.organization_id,
+        "user_id": client.user_id,
+        "name": client.name,
+        "pan": client.pan,
+        "gstin": client.gstin,
+        "email": client.email,
+        "phone": client.phone,
+        "financial_year": client.financial_year,
+        "business_type": client.business_type,
+        "notes": client.notes,
+        "status": client.status,
+        "conversions_count": 0,
+        "vouchers_count": 0,
+        "created_at": client.created_at
+    }
 
-@router.get("/history", response_model=List[ConversionResponse])
-def get_conversion_history(
+@router.put("/clients/{client_id}", response_model=ClientResponse)
+def update_client(
+    client_id: str,
+    client_data: ClientUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    return db.query(Conversion).filter(
+    client = db.query(Client).filter(Client.id == client_id, Client.user_id == current_user.id).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found.")
+    
+    if client_data.name is not None:
+        client.name = client_data.name.strip()
+    if client_data.pan is not None:
+        client.pan = client_data.pan.strip().upper() if client_data.pan else None
+    if client_data.gstin is not None:
+        client.gstin = client_data.gstin.strip().upper() if client_data.gstin else None
+    if client_data.email is not None:
+        client.email = client_data.email.strip() if client_data.email else None
+    if client_data.phone is not None:
+        client.phone = client_data.phone.strip() if client_data.phone else None
+    if client_data.financial_year is not None:
+        client.financial_year = client_data.financial_year
+    if client_data.business_type is not None:
+        client.business_type = client_data.business_type
+    if client_data.status is not None:
+        client.status = client_data.status
+    if client_data.notes is not None:
+        client.notes = client_data.notes
+
+    db.commit()
+    db.refresh(client)
+
+    conv_stats = db.query(Conversion).filter(Conversion.client_id == client.id).all()
+    return {
+        "id": client.id,
+        "organization_id": client.organization_id,
+        "user_id": client.user_id,
+        "name": client.name,
+        "pan": client.pan,
+        "gstin": client.gstin,
+        "email": client.email,
+        "phone": client.phone,
+        "financial_year": client.financial_year,
+        "business_type": client.business_type,
+        "notes": client.notes,
+        "status": client.status,
+        "conversions_count": len(conv_stats),
+        "vouchers_count": sum(cv.transactions_count or 0 for cv in conv_stats),
+        "created_at": client.created_at
+    }
+
+@router.delete("/clients/{client_id}")
+def delete_client(
+    client_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    client = db.query(Client).filter(Client.id == client_id, Client.user_id == current_user.id).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found.")
+    
+    db.query(Conversion).filter(Conversion.client_id == client_id).update({"client_id": None})
+    db.delete(client)
+    db.commit()
+    return {"status": "SUCCESS", "message": f"Client '{client.name}' deleted successfully."}
+
+@router.get("/clients/{client_id}/dossier")
+def get_client_dossier(
+    client_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    client = db.query(Client).filter(Client.id == client_id, Client.user_id == current_user.id).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found.")
+        
+    conversions = db.query(Conversion).filter(
+        Conversion.client_id == client_id,
         Conversion.user_id == current_user.id
     ).order_by(Conversion.created_at.desc()).all()
+    
+    total_vouchers = sum(c.transactions_count or 0 for c in conversions)
+    bank_set = set()
+    for c in conversions:
+        if c.bank_name:
+            bank_label = c.bank_name
+            if c.account_number:
+                bank_label += f" ({c.account_number})"
+            bank_set.add(bank_label)
+            
+    fy = getattr(client, "financial_year", "2024-25") or "2024-25"
+    start_year = int(fy.split("-")[0]) if "-" in fy else 2024
+    end_year = start_year + 1
+    
+    fy_months = [
+        {"month": "April", "short": "Apr", "month_num": 4, "year": start_year},
+        {"month": "May", "short": "May", "month_num": 5, "year": start_year},
+        {"month": "June", "short": "Jun", "month_num": 6, "year": start_year},
+        {"month": "July", "short": "Jul", "month_num": 7, "year": start_year},
+        {"month": "August", "short": "Aug", "month_num": 8, "year": start_year},
+        {"month": "September", "short": "Sep", "month_num": 9, "year": start_year},
+        {"month": "October", "short": "Oct", "month_num": 10, "year": start_year},
+        {"month": "November", "short": "Nov", "month_num": 11, "year": start_year},
+        {"month": "December", "short": "Dec", "month_num": 12, "year": start_year},
+        {"month": "January", "short": "Jan", "month_num": 1, "year": end_year},
+        {"month": "February", "short": "Feb", "month_num": 2, "year": end_year},
+        {"month": "March", "short": "Mar", "month_num": 3, "year": end_year},
+    ]
+    
+    monthly_matrix = []
+    for m in fy_months:
+        matched_conversions = []
+        for c in conversions:
+            period_str = (c.statement_period or "").lower()
+            month_name = m["month"].lower()
+            month_short = m["short"].lower()
+            month_num_str = f"{m['month_num']:02d}"
+            if (month_name in period_str or 
+                month_short in period_str or 
+                f"-{month_num_str}-" in period_str or 
+                f"/{month_num_str}/" in period_str or
+                (c.created_at and c.created_at.month == m["month_num"] and c.created_at.year == m["year"])):
+                matched_conversions.append(c)
+                
+        is_completed = len(matched_conversions) > 0
+        v_count = sum(cv.transactions_count or 0 for cv in matched_conversions)
+        banks = list(set(cv.bank_name for cv in matched_conversions))
+        
+        monthly_matrix.append({
+            "month": m["month"],
+            "short": m["short"],
+            "year": m["year"],
+            "is_completed": is_completed,
+            "vouchers_count": v_count,
+            "banks": banks,
+            "conversions_count": len(matched_conversions),
+            "latest_conversion_id": matched_conversions[0].id if matched_conversions else None
+        })
+        
+    return {
+        "client": {
+            "id": client.id,
+            "name": client.name,
+            "pan": client.pan,
+            "gstin": client.gstin,
+            "email": client.email,
+            "phone": client.phone,
+            "financial_year": fy,
+            "business_type": getattr(client, "business_type", "Proprietorship"),
+            "status": client.status,
+            "notes": client.notes
+        },
+        "total_statements": len(conversions),
+        "total_vouchers": total_vouchers,
+        "bank_accounts": list(bank_set),
+        "monthly_matrix": monthly_matrix,
+        "conversions": [
+            {
+                "id": c.id,
+                "bank_name": c.bank_name,
+                "account_number": c.account_number,
+                "statement_period": c.statement_period,
+                "pages_count": c.pages_count,
+                "transactions_count": c.transactions_count,
+                "file_name": getattr(c, "file_name", None) or f"Tally_Import_{c.bank_name.replace(' ', '_')}.xml",
+                "source_type": getattr(c, "source_type", "STATEMENT_PDF") or "STATEMENT_PDF",
+                "xml_size_kb": round(len((c.cached_xml or "").encode('utf-8')) / 1024, 1) if c.cached_xml else 0.0,
+                "created_at": c.created_at
+            }
+            for c in conversions
+        ]
+    }
+
+@router.post("/save-cloud-xml")
+def save_cloud_xml(
+    request_data: SaveCloudXmlRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if not request_data.xml_content:
+        raise HTTPException(status_code=400, detail="XML content cannot be empty.")
+        
+    client_name = "Default"
+    if request_data.client_id:
+        c = db.query(Client).filter(Client.id == request_data.client_id, Client.user_id == current_user.id).first()
+        if c:
+            client_name = c.name
+
+    file_name = request_data.file_name or f"Tally_{request_data.bank_name.replace(' ', '_')}.xml"
+    if not file_name.endswith(".xml"):
+        file_name += ".xml"
+
+    conversion = Conversion(
+        user_id=current_user.id,
+        client_id=request_data.client_id,
+        bank_name=request_data.bank_name,
+        account_number=None,
+        statement_period=request_data.statement_period,
+        pages_count=request_data.pages_count or 1,
+        transactions_count=request_data.transactions_count or 0,
+        status="SUCCESS",
+        file_fingerprint=f"vault_{uuid.uuid4().hex[:16]}",
+        is_reconciled=True,
+        opening_balance=request_data.opening_balance or 0.0,
+        closing_balance=request_data.closing_balance or 0.0,
+        cached_xml=request_data.xml_content,
+        file_name=file_name,
+        source_type=request_data.source_type or "STATEMENT_PDF"
+    )
+    db.add(conversion)
+    db.commit()
+    db.refresh(conversion)
+    
+    return {
+        "status": "SUCCESS",
+        "conversion_id": conversion.id,
+        "file_name": conversion.file_name,
+        "download_url": f"/api/convert/download-xml/{conversion.id}",
+        "message": "XML file successfully archived in Cloud Vault."
+    }
+
+@router.delete("/history/{conversion_id}")
+def delete_saved_xml(
+    conversion_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    conversion = db.query(Conversion).filter(
+        Conversion.id == conversion_id,
+        Conversion.user_id == current_user.id
+    ).first()
+    if not conversion:
+        raise HTTPException(status_code=404, detail="Record not found in Cloud Vault.")
+    
+    db.delete(conversion)
+    db.commit()
+    return {"status": "SUCCESS", "message": "Record removed from Cloud Vault."}
+
+@router.get("/history", response_model=List[ConversionResponse])
+def get_conversion_history(
+    client_id: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    query = db.query(Conversion).filter(Conversion.user_id == current_user.id)
+    if client_id:
+        query = query.filter(Conversion.client_id == client_id)
+        
+    conversions = query.order_by(Conversion.created_at.desc()).all()
+    results = []
+    
+    client_cache = {}
+    for conv in conversions:
+        c_name = None
+        if conv.client_id:
+            if conv.client_id not in client_cache:
+                client_obj = db.query(Client).filter(Client.id == conv.client_id).first()
+                client_cache[conv.client_id] = client_obj.name if client_obj else None
+            c_name = client_cache[conv.client_id]
+            
+        xml_len = len(conv.cached_xml.encode('utf-8')) if conv.cached_xml else 0
+        xml_size_kb = round(xml_len / 1024, 1)
+        
+        fallback_filename = f"Tally_Import_{conv.bank_name.replace(' ', '_')}.xml"
+        file_name = getattr(conv, "file_name", None) or fallback_filename
+        
+        results.append({
+            "id": conv.id,
+            "client_id": conv.client_id,
+            "client_name": c_name,
+            "bank_name": conv.bank_name,
+            "account_number": conv.account_number,
+            "statement_period": conv.statement_period,
+            "pages_count": conv.pages_count,
+            "transactions_count": conv.transactions_count,
+            "status": conv.status,
+            "is_reconciled": conv.is_reconciled,
+            "opening_balance": conv.opening_balance,
+            "closing_balance": conv.closing_balance,
+            "file_name": file_name,
+            "source_type": getattr(conv, "source_type", "STATEMENT_PDF") or "STATEMENT_PDF",
+            "has_xml": bool(conv.cached_xml),
+            "xml_size_kb": xml_size_kb,
+            "created_at": conv.created_at
+        })
+    return results
 
 @router.get("/download-xml/{conversion_id}")
 def download_cached_xml(
@@ -684,7 +1009,6 @@ def download_cached_xml(
         Conversion.user_id == current_user.id
     ).first()
     if not conversion or not conversion.cached_xml:
-        # Fallback to file check
         cache_filepath = os.path.join(settings.XML_CACHE_DIR, f"{conversion_id}.xml")
         if os.path.exists(cache_filepath):
             with open(cache_filepath, "r", encoding="utf-8") as f:
@@ -694,9 +1018,15 @@ def download_cached_xml(
     else:
         xml_content = conversion.cached_xml
         
-    filename = f"Tally_Vouchers_{conversion.bank_name.replace(' ', '_')}.xml"
+    filename = getattr(conversion, "file_name", None) or f"Tally_Vouchers_{conversion.bank_name.replace(' ', '_')}.xml"
+    if not filename.endswith(".xml"):
+        filename += ".xml"
+        
     return Response(
         content=xml_content,
         media_type="application/xml",
-        headers={"Content-Disposition": f"attachment; filename={filename}"}
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Access-Control-Expose-Headers": "Content-Disposition"
+        }
     )

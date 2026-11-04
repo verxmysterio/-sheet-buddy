@@ -33,6 +33,11 @@ async def lifespan(app: FastAPI):
             "ALTER TABLE conversions ADD COLUMN opening_balance FLOAT DEFAULT 0.0 NOT NULL",
             "ALTER TABLE conversions ADD COLUMN closing_balance FLOAT DEFAULT 0.0 NOT NULL",
             "ALTER TABLE conversions ADD COLUMN cached_xml TEXT",
+            "ALTER TABLE conversions ADD COLUMN file_name VARCHAR(255)",
+            "ALTER TABLE conversions ADD COLUMN source_type VARCHAR(50) DEFAULT 'STATEMENT_PDF'",
+            "ALTER TABLE clients ADD COLUMN financial_year VARCHAR(20) DEFAULT '2024-25'",
+            "ALTER TABLE clients ADD COLUMN business_type VARCHAR(50) DEFAULT 'Proprietorship'",
+            "ALTER TABLE clients ADD COLUMN active_bank_accounts TEXT DEFAULT '[]'",
             "ALTER TABLE support_queries ADD COLUMN status VARCHAR(50) DEFAULT 'OPEN' NOT NULL"
         ]
         for query in migration_queries:

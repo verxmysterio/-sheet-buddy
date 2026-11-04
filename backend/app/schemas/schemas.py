@@ -37,6 +37,8 @@ class ConversionResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     
     id: str
+    client_id: Optional[str] = None
+    client_name: Optional[str] = None
     bank_name: str
     account_number: Optional[str] = None
     statement_period: Optional[str] = None
@@ -46,6 +48,10 @@ class ConversionResponse(BaseModel):
     is_reconciled: Optional[bool] = True
     opening_balance: Optional[float] = 0.0
     closing_balance: Optional[float] = 0.0
+    file_name: Optional[str] = None
+    source_type: Optional[str] = "STATEMENT_PDF"
+    has_xml: Optional[bool] = True
+    xml_size_kb: Optional[float] = 0.0
     created_at: datetime
 
 class WalletTransactionResponse(BaseModel):
@@ -103,6 +109,19 @@ class ClientCreate(BaseModel):
     gstin: Optional[str] = None
     email: Optional[str] = None
     phone: Optional[str] = None
+    financial_year: Optional[str] = "2024-25"
+    business_type: Optional[str] = "Proprietorship"
+    notes: Optional[str] = None
+
+class ClientUpdate(BaseModel):
+    name: Optional[str] = None
+    pan: Optional[str] = None
+    gstin: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    financial_year: Optional[str] = None
+    business_type: Optional[str] = None
+    status: Optional[str] = None
     notes: Optional[str] = None
 
 class ClientResponse(BaseModel):
@@ -116,9 +135,25 @@ class ClientResponse(BaseModel):
     gstin: Optional[str] = None
     email: Optional[str] = None
     phone: Optional[str] = None
+    financial_year: Optional[str] = "2024-25"
+    business_type: Optional[str] = "Proprietorship"
     notes: Optional[str] = None
     status: str
+    conversions_count: Optional[int] = 0
+    vouchers_count: Optional[int] = 0
     created_at: datetime
+
+class SaveCloudXmlRequest(BaseModel):
+    client_id: Optional[str] = None
+    bank_name: str = "Tally Bank Import"
+    file_name: Optional[str] = "Tally_Import.xml"
+    xml_content: str
+    statement_period: Optional[str] = "Statement Period"
+    transactions_count: int = 0
+    pages_count: int = 1
+    opening_balance: Optional[float] = 0.0
+    closing_balance: Optional[float] = 0.0
+    source_type: Optional[str] = "STATEMENT_PDF"
 
 class AuditLogResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)

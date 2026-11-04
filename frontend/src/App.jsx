@@ -421,6 +421,29 @@ export default function App() {
   const [ruleVoucherType, setRuleVoucherType] = useState('Payment');
   const [ruleCategoryInput, setRuleCategoryInput] = useState('General');
   
+  // --- Feature 10: Multi-Client Practice Workspace & Cloud Dossier States ---
+  const [clientsList, setClientsList] = useState([]);
+  const [activeClientId, setActiveClientId] = useState(''); // '' means 'All Clients' or general
+  const [selectedDossierClient, setSelectedDossierClient] = useState(null);
+  const [dossierData, setDossierData] = useState(null);
+  const [dossierLoading, setDossierLoading] = useState(false);
+  const [clientModalOpen, setClientModalOpen] = useState(false);
+  const [editingClient, setEditingClient] = useState(null);
+  const [clientSearchQuery, setClientSearchQuery] = useState('');
+  const [historyClientFilter, setHistoryClientFilter] = useState('');
+  
+  // Client Form state
+  const [clientFormName, setClientFormName] = useState('');
+  const [clientFormPan, setClientFormPan] = useState('');
+  const [clientFormGstin, setClientFormGstin] = useState('');
+  const [clientFormEmail, setClientFormEmail] = useState('');
+  const [clientFormPhone, setClientFormPhone] = useState('');
+  const [clientFormFy, setClientFormFy] = useState('2024-25');
+  const [clientFormType, setClientFormType] = useState('Proprietorship');
+  const [clientFormNotes, setClientFormNotes] = useState('');
+  const [clientSaving, setClientSaving] = useState(false);
+  const [clientError, setClientError] = useState('');
+
   // --- CSV Template, Mapping & Conversion States ---
   const [csvMappings, setCsvMappings] = useState(() => {
     try {
@@ -560,9 +583,11 @@ export default function App() {
       fetchSupportedBanks();
       fetchUserRules();
       fetchCsvMappings();
+      fetchClients();
     } else {
       localStorage.removeItem('token');
       setUser(null);
+      setClientsList([]);
     }
   }, [token]);
 
@@ -597,6 +622,7 @@ export default function App() {
         setReviewModalOpen(false);
         setShortcutsModalOpen(false);
         setMappingModalOpen(false);
+        setClientModalOpen(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -736,6 +762,185 @@ export default function App() {
       }
     } catch (e) {
       console.error("Wallet transactions fetch error", e);
+    }
+  };
+
+  // --- Feature 10: Multi-Client Workspace & Cloud Vault Functions ---
+  const fetchClients = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch('/api/convert/clients', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setClientsList(data);
+      }
+    } catch (e) {
+      console.error("Failed to fetch clients", e);
+    }
+  };
+
+  const fetchClientDossier = async (clientId) => {
+    if (!token || !clientId) return;
+    setDossierLoading(true);
+    try {
+      const res = await fetch(`/api/convert/clients/${clientId}/dossier`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setDossierData(data);
+      }
+    } catch (e) {
+      console.error("Failed to fetch client dossier", e);
+    } finally {
+      setDossierLoading(false);
+    }
+  };
+
+  const handleOpenClientModal = (clientToEdit = null) => {
+    setClientError('');
+    if (clientToEdit) {
+      setEditingClient(clientToEdit);
+      setClientFormName(clientToEdit.name || '');
+      setClientFormPan(clientToEdit.pan || '');
+      setClientFormGstin(clientToEdit.gstin || '');
+      setClientFormEmail(clientToEdit.email || '');
+      setClientFormPhone(clientToEdit.phone || '');
+      setClientFormFy(clientToEdit.financial_year || '2024-25');
+      setClientFormType(clientToEdit.business_type || 'Proprietorship');
+      setClientFormNotes(clientToEdit.notes || '');
+    } else {
+      setEditingClient(null);
+      setClientFormName('');
+      setClientFormPan('');
+      setClientFormGstin('');
+      setClientFormEmail('');
+      setClientFormPhone('');
+      setClientFormFy('2024-25');
+      setClientFormType('Proprietorship');
+      setClientFormNotes('');
+    }
+    setClientModalOpen(true);
+  };
+
+  const handleSaveClient = async (e) => {
+    if (e) e.preventDefault();
+    if (!clientFormName.trim()) {
+      setClientError('Client company name is required.');
+      return;
+    }
+    setClientSaving(true);
+    setClientError('');
+    try {
+      const payload = {
+        name: clientFormName.trim(),
+        pan: clientFormPan.trim() || null,
+        gstin: clientFormGstin.trim() || null,
+        email: clientFormEmail.trim() || null,
+        phone: clientFormPhone.trim() || null,
+        financial_year: clientFormFy || '2024-25',
+        business_type: clientFormType || 'Proprietorship',
+        notes: clientFormNotes.trim() || null
+      };
+      const url = editingClient ? `/api/convert/clients/${editingClient.id}` : '/api/convert/clients';
+      const method = editingClient ? 'PUT' : 'POST';
+      const res = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.detail || 'Failed to save client.');
+      }
+      setClientModalOpen(false);
+      fetchClients();
+      if (selectedDossierClient && selectedDossierClient.id === (editingClient?.id)) {
+        fetchClientDossier(editingClient.id);
+      }
+    } catch (err) {
+      setClientError(err.message || 'Error saving client');
+    } finally {
+      setClientSaving(false);
+    }
+  };
+
+  const handleDeleteClient = async (clientId, clientName) => {
+    if (!confirm(`Are you sure you want to delete client '${clientName}'? Any existing converted records will be preserved.`)) return;
+    try {
+      const res = await fetch(`/api/convert/clients/${clientId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        if (activeClientId === clientId) setActiveClientId('');
+        if (selectedDossierClient?.id === clientId) setSelectedDossierClient(null);
+        fetchClients();
+        fetchHistory();
+      }
+    } catch (err) {
+      alert('Failed to delete client.');
+    }
+  };
+
+  const handleSaveXmlToCloudVault = async (xmlContent, meta = {}) => {
+    if (!token || !xmlContent) return null;
+    try {
+      const payload = {
+        client_id: activeClientId || meta.client_id || null,
+        bank_name: meta.bank_name || 'Bank Statement',
+        file_name: meta.file_name || 'Tally_Import.xml',
+        xml_content: xmlContent,
+        statement_period: meta.statement_period || 'Consolidated',
+        transactions_count: meta.transactions_count || 0,
+        pages_count: meta.pages_count || 1,
+        opening_balance: meta.opening_balance || 0.0,
+        closing_balance: meta.closing_balance || 0.0,
+        source_type: meta.source_type || 'STATEMENT_PDF'
+      };
+      const res = await fetch('/api/convert/save-cloud-xml', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        fetchHistory();
+        fetchClients();
+        if (selectedDossierClient) {
+          fetchClientDossier(selectedDossierClient.id);
+        }
+        return data;
+      }
+    } catch (e) {
+      console.warn("Auto-save to cloud vault warning:", e);
+    }
+    return null;
+  };
+
+  const handleDeleteHistoryXml = async (conversionId) => {
+    if (!confirm('Are you sure you want to remove this XML record from your Cloud Vault?')) return;
+    try {
+      const res = await fetch(`/api/convert/history/${conversionId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        fetchHistory();
+        if (selectedDossierClient) {
+          fetchClientDossier(selectedDossierClient.id);
+        }
+      }
+    } catch (e) {
+      alert('Failed to delete XML record from Cloud Vault.');
     }
   };
 
@@ -1218,9 +1423,20 @@ export default function App() {
           fetchHistory();
           fetchWalletTxs();
         } catch (e) {}
+
+        // Save generated XML to Cloud Vault
+        await handleSaveXmlToCloudVault(xmlString, {
+          client_id: activeClientId,
+          bank_name: mappingName || 'CSV Import',
+          file_name: outName,
+          statement_period: 'CSV Import Batch',
+          transactions_count: csvVouchers.length,
+          pages_count: pricing || 1,
+          source_type: 'CSV_TALLY'
+        });
       }
 
-      alert(`Success! 100% Compliant Tally Prime XML generated for ${csvVouchers.length} vouchers (${pricing} credits deducted).`);
+      alert(`Success! 100% Compliant Tally Prime XML generated for ${csvVouchers.length} vouchers and saved to Cloud Vault.`);
     } catch (err) {
       console.error("Convert to XML error", err);
       setCsvConvertError("Error while generating Tally XML: " + err.message);
@@ -1730,6 +1946,9 @@ export default function App() {
     formData.append('file_fingerprint', parsedSummary.file_fingerprint || '');
     formData.append('edited_narrations', JSON.stringify(editedNarrations || {}));
     formData.append('transactions', JSON.stringify(structuredTxs));
+    if (activeClientId) {
+      formData.append('client_id', activeClientId);
+    }
 
     try {
       const res = await fetch('/api/convert/execute', {
@@ -1754,12 +1973,26 @@ export default function App() {
           const a = document.createElement('a');
           a.href = url;
           const bankLabel = (parsedSummary.bank_name || bankName || 'Statement').replace(/ /g, '_');
-          a.download = `Tally_Import_${bankLabel}_${structuredTxs.length}_Vouchers.xml`;
+          const outName = `Tally_Import_${bankLabel}_${structuredTxs.length}_Vouchers.xml`;
+          a.download = outName;
           document.body.appendChild(a);
           a.click();
           a.remove();
+
+          // Auto-save generated XML to Cloud Vault
+          await handleSaveXmlToCloudVault(clientXml, {
+            client_id: activeClientId,
+            bank_name: parsedSummary.bank_name || bankName || 'Statement',
+            file_name: outName,
+            statement_period: parsedSummary.statement_period || 'Consolidated',
+            transactions_count: structuredTxs.length,
+            pages_count: parsedSummary.pages_count || 1,
+            opening_balance: parsedSummary.opening_balance || 0.0,
+            closing_balance: parsedSummary.closing_balance || 0.0,
+            source_type: 'STATEMENT_PDF'
+          });
           
-          alert(`Success! Generated 100% Compliant Tally Prime XML for ${structuredTxs.length} vouchers.`);
+          alert(`Success! Generated 100% Compliant Tally Prime XML for ${structuredTxs.length} vouchers and saved to Cloud Vault.`);
           setParsedSummary(null);
           setSelectedFiles([]);
           setSelectedFile(null);
@@ -1768,6 +2001,7 @@ export default function App() {
           setEditedNarrations({});
           setEditedLedgers({});
           setAllTransactions([]);
+          fetchHistory();
           return;
         } catch (clientErr) {
           const data = await res.json().catch(() => ({}));
@@ -1795,6 +2029,7 @@ export default function App() {
         fetchUserProfile();
         fetchHistory();
         fetchWalletTxs();
+        fetchClients();
         
         setActiveTab('history');
       }
@@ -1811,12 +2046,26 @@ export default function App() {
         const a = document.createElement('a');
         a.href = url;
         const bankLabel = (parsedSummary.bank_name || bankName || 'Statement').replace(/ /g, '_');
-        a.download = `Tally_Import_${bankLabel}_${structuredTxs.length}_Vouchers.xml`;
+        const outName = `Tally_Import_${bankLabel}_${structuredTxs.length}_Vouchers.xml`;
+        a.download = outName;
         document.body.appendChild(a);
         a.click();
         a.remove();
         
-        alert(`Success! Generated 100% Compliant Tally Prime XML for ${structuredTxs.length} vouchers.`);
+        // Auto-save generated XML to Cloud Vault
+        await handleSaveXmlToCloudVault(clientXml, {
+          client_id: activeClientId,
+          bank_name: parsedSummary.bank_name || bankName || 'Statement',
+          file_name: outName,
+          statement_period: parsedSummary.statement_period || 'Consolidated',
+          transactions_count: structuredTxs.length,
+          pages_count: parsedSummary.pages_count || 1,
+          opening_balance: parsedSummary.opening_balance || 0.0,
+          closing_balance: parsedSummary.closing_balance || 0.0,
+          source_type: 'STATEMENT_PDF'
+        });
+
+        alert(`Success! Generated 100% Compliant Tally Prime XML for ${structuredTxs.length} vouchers and saved to Cloud Vault.`);
         setParsedSummary(null);
         setSelectedFiles([]);
         setSelectedFile(null);
@@ -1825,6 +2074,7 @@ export default function App() {
         setEditedNarrations({});
         setEditedLedgers({});
         setAllTransactions([]);
+        fetchHistory();
       } catch (e2) {
         setExecuteError('Connection lost. Conversion failed.');
       }
@@ -2368,15 +2618,20 @@ export default function App() {
     }
   };
 
-  // Filter history list based on search bar query safely
+  // Filter history list based on search bar query and client filter safely
   const filteredHistory = (conversionsHistory || []).filter(conv => {
     if (!conv) return false;
+    if (historyClientFilter && conv.client_id !== historyClientFilter) {
+      return false;
+    }
     const q = (historySearch || '').toLowerCase().trim();
     if (!q) return true;
     const bName = (conv.bank_name || '').toLowerCase();
+    const cName = (conv.client_name || '').toLowerCase();
     const period = (conv.statement_period || '').toLowerCase();
     const acc = (conv.account_number || '').toLowerCase();
-    return bName.includes(q) || period.includes(q) || acc.includes(q);
+    const fName = (conv.file_name || '').toLowerCase();
+    return bName.includes(q) || cName.includes(q) || period.includes(q) || acc.includes(q) || fName.includes(q);
   });
 
   // --- Auth View ---
@@ -2578,6 +2833,12 @@ export default function App() {
                 CSV TO TALLY
               </button>
               <button
+                onClick={() => { setActiveTab('clients'); setSelectedDossierClient(null); setExecuteError(''); setMobileMenuOpen(false); }}
+                className={`min-w-[130px] px-3.5 py-2 text-xs font-black border-2 border-black uppercase tracking-wider transition-all whitespace-nowrap text-center flex-shrink-0 ${activeTab === 'clients' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-yellow-50 text-black'}`}
+              >
+                🏢 CLIENT DOSSIER
+              </button>
+              <button
                 onClick={() => { setActiveTab('rules'); setExecuteError(''); setMobileMenuOpen(false); }}
                 className={`min-w-[130px] px-3.5 py-2 text-xs font-black border-2 border-black uppercase tracking-wider transition-all whitespace-nowrap text-center flex-shrink-0 ${activeTab === 'rules' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-yellow-50 text-black'}`}
               >
@@ -2587,7 +2848,7 @@ export default function App() {
                 onClick={() => { setActiveTab('history'); setExecuteError(''); setMobileMenuOpen(false); }}
                 className={`min-w-[130px] px-3.5 py-2 text-xs font-black border-2 border-black uppercase tracking-wider transition-all whitespace-nowrap text-center flex-shrink-0 ${activeTab === 'history' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-yellow-50 text-black'}`}
               >
-                HISTORY ARCHIVE
+                ☁️ CLOUD XML VAULT
               </button>
               <button
                 onClick={() => { setActiveTab('wallet'); setExecuteError(''); setMobileMenuOpen(false); }}
@@ -2639,6 +2900,60 @@ export default function App() {
                 LOGOUT
               </button>
             </div>
+          </div>
+        </div>
+
+        {/* Active Client Practice Workspace Bar */}
+        <div className="bg-[#ffd615] border-t-2 border-black px-6 py-2 flex flex-wrap items-center justify-between text-xs font-black gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="uppercase text-[11px] tracking-wide text-black flex items-center gap-1.5 font-black">
+              🏢 ACTIVE WORKSPACE:
+            </span>
+            <select
+              value={activeClientId}
+              onChange={(e) => setActiveClientId(e.target.value)}
+              className="bg-white border-2 border-black px-2.5 py-1 text-xs font-bold text-black focus:outline-none cursor-pointer shadow-[2px_2px_0px_rgba(0,0,0,1)]"
+            >
+              <option value="">(All Clients / General Practice)</option>
+              {clientsList.map(c => (
+                <option key={c.id} value={c.id}>
+                  {c.name} {c.financial_year ? `[FY ${c.financial_year}]` : ''}
+                </option>
+              ))}
+            </select>
+            {activeClientId && (
+              <button
+                type="button"
+                onClick={() => {
+                  const clientObj = clientsList.find(c => c.id === activeClientId);
+                  if (clientObj) {
+                    setSelectedDossierClient(clientObj);
+                    fetchClientDossier(clientObj.id);
+                    setActiveTab('clients');
+                  }
+                }}
+                className="text-[10px] bg-black text-white hover:bg-zinc-800 px-2.5 py-1 border-2 border-black uppercase shadow-[1px_1px_0px_rgba(0,0,0,1)] font-black"
+              >
+                Open Dossier 📂
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <button
+              type="button"
+              onClick={() => handleOpenClientModal()}
+              className="text-[10px] bg-white text-black hover:bg-slate-100 px-3 py-1 border-2 border-black uppercase shadow-[2px_2px_0px_rgba(0,0,0,1)] font-black"
+            >
+              + Add Client Company
+            </button>
+            <button
+              type="button"
+              onClick={() => { setActiveTab('clients'); setSelectedDossierClient(null); }}
+              className="text-[10px] bg-black text-white hover:bg-zinc-800 px-3 py-1 border-2 border-black uppercase shadow-[2px_2px_0px_rgba(0,0,0,1)] font-black"
+            >
+              All Clients ({clientsList.length})
+            </button>
           </div>
         </div>
       </header>
@@ -4212,71 +4527,538 @@ export default function App() {
           </div>
         )}
 
-          {/* --- TAB 2: CONVERSION HISTORY --- */}
-          {activeTab === 'history' && (
-            <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 space-y-6 max-w-6xl mx-auto">
-              
-              {/* Header and Search */}
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 border-b-4 border-black pb-4">
-                <div className="flex items-center space-x-3">
-                  <img src="/app_icon_yellow.svg" alt="History" className="w-10 h-10 border-2 border-black bg-white shadow-[2px_2px_0px_rgba(0,0,0,1)] flex-shrink-0" />
+        {/* --- TAB: CLIENT DOSSIER & CA PRACTICE WORKSPACE --- */}
+        {activeTab === 'clients' && (
+          <div className="space-y-6 max-w-6xl mx-auto">
+            {selectedDossierClient ? (
+              /* --- 1. INDIVIDUAL CLIENT DOSSIER VIEW --- */
+              <div className="space-y-6">
+                {/* Back Navigation & Client Header */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-black text-white p-6 border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)]">
                   <div>
-                    <h3 className="text-xl font-black text-black uppercase">Conversion History Archive</h3>
-                    <p className="text-xs font-bold text-slate-500 mt-0.5">Re-download processed XML statements from cache free of charge.</p>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedDossierClient(null)}
+                      className="inline-flex items-center text-xs font-black uppercase text-[#ffd615] hover:underline mb-2"
+                    >
+                      ← Back to All Clients
+                    </button>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <h2 className="text-2xl font-black uppercase tracking-tight text-white">
+                        {selectedDossierClient.name}
+                      </h2>
+                      <span className="bg-[#ffd615] text-black text-xs font-black px-2 py-0.5 border border-black uppercase">
+                        FY {selectedDossierClient.financial_year || '2024-25'}
+                      </span>
+                      <span className="bg-[#3affaa] text-black text-xs font-black px-2 py-0.5 border border-black uppercase">
+                        {selectedDossierClient.business_type || 'Proprietorship'}
+                      </span>
+                    </div>
+                    {selectedDossierClient.notes && (
+                      <p className="text-xs font-mono text-zinc-300 mt-1 max-w-xl truncate">
+                        {selectedDossierClient.notes}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveClientId(selectedDossierClient.id);
+                        setActiveTab('convert');
+                      }}
+                      className="px-4 py-2 bg-[#ffd615] text-black font-black text-xs border-2 border-black hover:bg-yellow-400 shadow-[3px_3px_0px_rgba(255,255,255,1)] uppercase active:translate-x-[1px] active:translate-y-[1px]"
+                    >
+                      + Import Statement PDF
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenClientModal(selectedDossierClient)}
+                      className="px-3 py-2 bg-white text-black font-black text-xs border-2 border-black hover:bg-slate-200 shadow-[2px_2px_0px_rgba(255,255,255,1)] uppercase"
+                    >
+                      Edit ✏️
+                    </button>
                   </div>
                 </div>
-                <div className="w-full sm:w-72">
+
+                {/* Dossier Meta KPI Bar */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-white border-4 border-black p-4 shadow-[4px_4px_0px_rgba(0,0,0,1)]">
+                    <span className="text-[10px] font-black uppercase text-slate-500 block">Tax Identifiers</span>
+                    <span className="text-sm font-black font-mono text-black block mt-1">
+                      {selectedDossierClient.pan || 'NO PAN'}
+                    </span>
+                    <span className="text-[10px] font-mono text-slate-600 truncate block">
+                      {selectedDossierClient.gstin || 'Unregistered / No GST'}
+                    </span>
+                  </div>
+                  <div className="bg-white border-4 border-black p-4 shadow-[4px_4px_0px_rgba(0,0,0,1)]">
+                    <span className="text-[10px] font-black uppercase text-slate-500 block">Total Statements Converted</span>
+                    <span className="text-2xl font-black text-black block mt-1">
+                      {dossierData ? dossierData.total_statements : (selectedDossierClient.conversions_count || 0)}
+                    </span>
+                  </div>
+                  <div className="bg-white border-4 border-black p-4 shadow-[4px_4px_0px_rgba(0,0,0,1)]">
+                    <span className="text-[10px] font-black uppercase text-slate-500 block">Total Vouchers Generated</span>
+                    <span className="text-2xl font-black text-emerald-600 block mt-1">
+                      {dossierData ? dossierData.total_vouchers : (selectedDossierClient.vouchers_count || 0)}
+                    </span>
+                  </div>
+                  <div className="bg-white border-4 border-black p-4 shadow-[4px_4px_0px_rgba(0,0,0,1)]">
+                    <span className="text-[10px] font-black uppercase text-slate-500 block">Associated Bank Accounts</span>
+                    <span className="text-xs font-bold text-slate-800 block mt-1 truncate" title={dossierData?.bank_accounts?.join(', ')}>
+                      {dossierData?.bank_accounts?.length > 0 ? dossierData.bank_accounts.join(', ') : 'Statements Pending'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Financial Year Monthly Reconciliation Tracker (April - March) */}
+                <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0px_rgba(0,0,0,1)] space-y-4">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b-2 border-black pb-3">
+                    <div>
+                      <h3 className="text-lg font-black uppercase text-black">
+                        📅 Financial Year Reconciliation Tracker (April to March)
+                      </h3>
+                      <p className="text-xs font-bold text-slate-600 mt-0.5">
+                        Audit completion checklist for FY {selectedDossierClient.financial_year || '2024-25'}. Green signifies completed statement imports; yellow indicates missing months.
+                      </p>
+                    </div>
+                    <span className="bg-[#3affaa] text-black text-[10px] font-black px-2 py-1 border border-black uppercase">
+                      ✓ Audit Matrix Active
+                    </span>
+                  </div>
+
+                  {dossierLoading ? (
+                    <div className="py-12 text-center text-sm font-bold text-slate-500">
+                      Loading financial year dossier...
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                      {(dossierData?.monthly_matrix || []).map((m, idx) => (
+                        <div
+                          key={idx}
+                          className={`p-3 border-2 border-black flex flex-col justify-between h-32 transition-all ${
+                            m.is_completed
+                              ? 'bg-emerald-50 border-emerald-800 shadow-[3px_3px_0px_rgba(16,185,129,1)]'
+                              : 'bg-amber-50/50 border-amber-400 shadow-[2px_2px_0px_rgba(0,0,0,1)]'
+                          }`}
+                        >
+                          <div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-black uppercase text-black">
+                                {m.month}
+                              </span>
+                              <span className="text-[10px] font-mono text-slate-500 font-bold">
+                                '{String(m.year).slice(-2)}
+                              </span>
+                            </div>
+                            <div className="mt-2">
+                              {m.is_completed ? (
+                                <span className="inline-block bg-[#3affaa] text-black text-[9px] font-black uppercase px-1.5 py-0.5 border border-black">
+                                  ✓ Converted
+                                </span>
+                              ) : (
+                                <span className="inline-block bg-amber-200 text-amber-900 text-[9px] font-black uppercase px-1.5 py-0.5 border border-black">
+                                  ⏳ Pending
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="pt-2 border-t border-slate-300 flex items-center justify-between">
+                            {m.is_completed ? (
+                              <div className="text-[10px] font-bold text-slate-700">
+                                <div>{m.vouchers_count} Vouchers</div>
+                                {m.latest_conversion_id && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDownloadCachedXml(m.latest_conversion_id, selectedDossierClient.name, m.month)}
+                                    className="text-[9px] text-blue-700 font-black underline uppercase"
+                                  >
+                                    Get XML 📥
+                                  </button>
+                                )}
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setActiveClientId(selectedDossierClient.id);
+                                  setActiveTab('convert');
+                                }}
+                                className="text-[9px] bg-black text-white hover:bg-zinc-800 px-1.5 py-0.5 border border-black uppercase font-black"
+                              >
+                                + Upload
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Client's Cloud XML Vault Table */}
+                <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0px_rgba(0,0,0,1)] space-y-4">
+                  <div className="flex justify-between items-center border-b-2 border-black pb-3">
+                    <h3 className="text-lg font-black uppercase text-black">
+                      ☁️ Client Cloud XML Vault ({dossierData?.conversions?.length || 0} Files)
+                    </h3>
+                    <span className="text-xs font-bold text-slate-500">
+                      Permanent cloud archive for this client. Download anytime on any device.
+                    </span>
+                  </div>
+
+                  {(!dossierData?.conversions || dossierData.conversions.length === 0) ? (
+                    <p className="text-slate-500 font-bold text-sm py-6 text-center">
+                      No converted Tally XML files for this client yet. Convert a bank statement or CSV to automatically store it in the cloud vault.
+                    </p>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-black border-2 border-black">
+                        <thead className="bg-[#ffd615] text-[10px] font-black text-black uppercase tracking-wider border-b-2 border-black">
+                          <tr>
+                            <th className="px-4 py-2.5 text-left border-r border-black">Date Converted</th>
+                            <th className="px-4 py-2.5 text-left border-r border-black">File Name / Bank</th>
+                            <th className="px-4 py-2.5 text-left border-r border-black">Statement Period</th>
+                            <th className="px-4 py-2.5 text-center border-r border-black">Vouchers</th>
+                            <th className="px-4 py-2.5 text-center border-r border-black">Size</th>
+                            <th className="px-4 py-2.5 text-right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-black text-xs font-bold text-black">
+                          {dossierData.conversions.map((conv) => (
+                            <tr key={conv.id} className="hover:bg-slate-50">
+                              <td className="px-4 py-3 border-r border-black whitespace-nowrap font-mono text-[11px]">
+                                {formatDisplayDate(conv.created_at)}
+                              </td>
+                              <td className="px-4 py-3 border-r border-black">
+                                <div className="font-black uppercase text-black">{conv.bank_name}</div>
+                                <div className="text-[10px] font-mono text-slate-500">{conv.file_name}</div>
+                              </td>
+                              <td className="px-4 py-3 border-r border-black text-slate-700">
+                                {conv.statement_period || 'Consolidated'}
+                              </td>
+                              <td className="px-4 py-3 border-r border-black text-center font-mono">
+                                {conv.transactions_count}
+                              </td>
+                              <td className="px-4 py-3 border-r border-black text-center font-mono text-slate-600">
+                                {conv.xml_size_kb ? `${conv.xml_size_kb} KB` : '-'}
+                              </td>
+                              <td className="px-4 py-3 text-right whitespace-nowrap space-x-2">
+                                <button
+                                  type="button"
+                                  onClick={() => handleDownloadCachedXml(conv.id, conv.bank_name, conv.statement_period)}
+                                  className="px-3 py-1 bg-[#3fecff] hover:bg-cyan-300 border-2 border-black text-xs font-black uppercase shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px]"
+                                >
+                                  📥 DOWNLOAD XML
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteHistoryXml(conv.id)}
+                                  className="px-2 py-1 bg-white hover:bg-[#ff5757] hover:text-white border-2 border-black text-xs font-black uppercase transition-colors"
+                                  title="Delete from vault"
+                                >
+                                  🗑️
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              /* --- 2. ALL CLIENTS DIRECTORY & KPI GRID --- */
+              <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 space-y-6">
+                {/* Header */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b-4 border-black pb-4">
+                  <div className="flex items-center space-x-3">
+                    <span className="text-3xl">🏢</span>
+                    <div>
+                      <h3 className="text-xl font-black text-black uppercase">Multi-Client Practice Workspace</h3>
+                      <p className="text-xs font-bold text-slate-500 mt-0.5">
+                        Manage all client companies, track monthly April to March financial year progress, and archive Tally XML files in the cloud.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                    <input
+                      type="text"
+                      placeholder="Search clients by name, PAN, GSTIN..."
+                      value={clientSearchQuery}
+                      onChange={(e) => setClientSearchQuery(e.target.value)}
+                      className="px-3 py-2 border-2 border-black text-xs font-bold focus:outline-none w-full sm:w-64"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleOpenClientModal()}
+                      className="px-4 py-2 bg-[#ffd615] hover:bg-yellow-400 border-2 border-black text-xs font-black uppercase shadow-[3px_3px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] whitespace-nowrap"
+                    >
+                      + ADD NEW CLIENT
+                    </button>
+                  </div>
+                </div>
+
+                {/* Clients Grid */}
+                {clientsList.length === 0 ? (
+                  <div className="py-12 text-center space-y-3">
+                    <div className="text-4xl">🏢</div>
+                    <p className="text-base font-black text-black uppercase">No Clients Added Yet</p>
+                    <p className="text-xs font-bold text-slate-500 max-w-md mx-auto">
+                      Add your client companies to organize statements, track April to March financial year completion, and keep their Tally XML files saved in the cloud.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenClientModal()}
+                      className="mt-2 px-5 py-2.5 bg-[#ffd615] hover:bg-yellow-400 border-2 border-black font-black text-xs uppercase shadow-[4px_4px_0px_rgba(0,0,0,1)]"
+                    >
+                      Create First Client
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {clientsList
+                      .filter(c => {
+                        if (!clientSearchQuery.trim()) return true;
+                        const q = clientSearchQuery.toLowerCase();
+                        return (
+                          (c.name || '').toLowerCase().includes(q) ||
+                          (c.pan || '').toLowerCase().includes(q) ||
+                          (c.gstin || '').toLowerCase().includes(q)
+                        );
+                      })
+                      .map((client) => {
+                        const isCurrentActive = activeClientId === client.id;
+                        return (
+                          <div
+                            key={client.id}
+                            className={`border-4 border-black p-5 flex flex-col justify-between space-y-4 transition-all ${
+                              isCurrentActive
+                                ? 'bg-yellow-50/70 shadow-[6px_6px_0px_rgba(0,0,0,1)] ring-2 ring-black'
+                                : 'bg-white shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_rgba(0,0,0,1)]'
+                            }`}
+                          >
+                            <div>
+                              <div className="flex items-start justify-between gap-2">
+                                <div>
+                                  <h4 className="text-base font-black text-black uppercase tracking-tight">
+                                    {client.name}
+                                  </h4>
+                                  <span className="text-[10px] font-black uppercase text-slate-500">
+                                    {client.business_type || 'Proprietorship'}
+                                  </span>
+                                </div>
+                                <span className="bg-[#ffd615] text-black text-[10px] font-black px-2 py-0.5 border border-black uppercase whitespace-nowrap">
+                                  FY {client.financial_year || '2024-25'}
+                                </span>
+                              </div>
+
+                              <div className="flex flex-wrap gap-1.5 mt-3">
+                                {client.pan && (
+                                  <span className="bg-slate-100 text-slate-800 text-[10px] font-mono font-bold px-1.5 py-0.5 border border-slate-300">
+                                    PAN: {client.pan}
+                                  </span>
+                                )}
+                                {client.gstin && (
+                                  <span className="bg-slate-100 text-slate-800 text-[10px] font-mono font-bold px-1.5 py-0.5 border border-slate-300">
+                                    GST: {client.gstin}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Stats */}
+                            <div className="grid grid-cols-2 gap-2 pt-2 border-t-2 border-black text-center">
+                              <div className="bg-slate-50 border border-black p-2">
+                                <span className="text-[9px] font-black uppercase text-slate-500 block">Statements</span>
+                                <span className="text-sm font-black text-black">{client.conversions_count || 0}</span>
+                              </div>
+                              <div className="bg-slate-50 border border-black p-2">
+                                <span className="text-[9px] font-black uppercase text-slate-500 block">Vouchers</span>
+                                <span className="text-sm font-black text-emerald-600">{client.vouchers_count || 0}</span>
+                              </div>
+                            </div>
+
+                            {/* Actions */}
+                            <div className="space-y-2 pt-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedDossierClient(client);
+                                  fetchClientDossier(client.id);
+                                }}
+                                className="w-full py-2 bg-black text-white hover:bg-zinc-800 border-2 border-black text-xs font-black uppercase shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px]"
+                              >
+                                📂 OPEN DOSSIER & XML VAULT
+                              </button>
+
+                              <div className="flex gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setActiveClientId(isCurrentActive ? '' : client.id)}
+                                  className={`flex-1 py-1.5 text-[10px] font-black border-2 border-black uppercase transition-all ${
+                                    isCurrentActive
+                                      ? 'bg-[#3affaa] text-black font-black'
+                                      : 'bg-white hover:bg-yellow-100 text-black'
+                                  }`}
+                                >
+                                  {isCurrentActive ? '✓ Active Workspace' : 'Set Active'}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenClientModal(client)}
+                                  className="px-2.5 py-1.5 bg-white hover:bg-slate-100 border-2 border-black text-[10px] font-black uppercase"
+                                  title="Edit Client"
+                                >
+                                  ✏️
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteClient(client.id, client.name)}
+                                  className="px-2.5 py-1.5 bg-white hover:bg-[#ff5757] hover:text-white border-2 border-black text-[10px] font-black uppercase"
+                                  title="Delete Client"
+                                >
+                                  🗑️
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* --- TAB: CLOUD XML VAULT & CONVERSION ARCHIVE --- */}
+        {activeTab === 'history' && (
+          <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 space-y-6 max-w-6xl mx-auto">
+            
+            {/* Header, Search and Filter */}
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b-4 border-black pb-4">
+              <div className="flex items-center space-x-3">
+                <span className="text-3xl">☁️</span>
+                <div>
+                  <h3 className="text-xl font-black text-black uppercase">Cloud XML Vault & Archive</h3>
+                  <p className="text-xs font-bold text-slate-500 mt-0.5">
+                    All generated Tally Prime XML files are securely preserved in the cloud. Re-download anytime on any device.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+                <div className="w-full sm:w-48">
+                  <label className="block text-[10px] font-black text-black uppercase mb-1">Filter By Client</label>
+                  <select
+                    value={historyClientFilter}
+                    onChange={(e) => setHistoryClientFilter(e.target.value)}
+                    className="w-full px-2.5 py-1.5 border-2 border-black text-xs font-bold bg-white focus:outline-none"
+                  >
+                    <option value="">All Clients</option>
+                    {clientsList.map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="w-full sm:w-64">
                   <label className="block text-[10px] font-black text-black uppercase mb-1">Search Archives</label>
                   <input
                     type="text"
-                    placeholder="Search bank, period, account..."
+                    placeholder="Search bank, period, file name..."
                     value={historySearch}
                     onChange={(e) => setHistorySearch(e.target.value)}
-                    className="w-full px-3 py-2 border-2 border-black text-xs font-bold focus:outline-none"
+                    className="w-full px-3 py-1.5 border-2 border-black text-xs font-bold focus:outline-none"
                   />
                 </div>
               </div>
-
-              {/* Table */}
-              {filteredHistory.length === 0 ? (
-                <p className="text-slate-500 font-bold text-sm py-6 text-center">No conversion records matching "{historySearch}" were found.</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-black border-2 border-black">
-                    <thead className="bg-[#ffd615] text-[10px] font-black text-black uppercase tracking-wider border-b-2 border-black">
-                      <tr>
-                        <th className="px-6 py-3 text-left border-r border-black">Date Converted</th>
-                        <th className="px-6 py-3 text-left border-r border-black">Bank Name</th>
-                        <th className="px-6 py-3 text-left border-r border-black">Statement Period</th>
-                        <th className="px-6 py-3 text-center border-r border-black">Pages</th>
-                        <th className="px-6 py-3 text-center border-r border-black">Transactions</th>
-                        <th className="px-6 py-3 text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-black text-xs font-bold text-black">
-                      {filteredHistory.map((conv) => (
-                        <tr key={conv.id} className="hover:bg-slate-50">
-                          <td className="px-6 py-4 border-r border-black whitespace-nowrap">{formatDisplayDate(conv.created_at)}</td>
-                          <td className="px-6 py-4 border-r border-black font-black uppercase text-slate-800">{conv.bank_name}</td>
-                          <td className="px-6 py-4 border-r border-black">{conv.statement_period || 'N/A'}</td>
-                          <td className="px-6 py-4 border-r border-black text-center">{conv.pages_count}</td>
-                          <td className="px-6 py-4 border-r border-black text-center">{conv.transactions_count}</td>
-                          <td className="px-6 py-4 text-right">
-                            <button
-                              onClick={() => handleDownloadCachedXml(conv.id, conv.bank_name, conv.statement_period)}
-                              className="inline-flex items-center px-4 py-2 border-2 border-black text-xs font-black rounded-none bg-[#3fecff] hover:bg-cyan-300 text-black hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[3px_3px_0px_rgba(0,0,0,1)] shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-all uppercase"
-                            >
-                              GET XML
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
             </div>
-          )}
+
+            {/* Table */}
+            {filteredHistory.length === 0 ? (
+              <p className="text-slate-500 font-bold text-sm py-8 text-center">
+                No XML files matching the filter criteria found in Cloud Vault.
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-black border-2 border-black">
+                  <thead className="bg-[#ffd615] text-[10px] font-black text-black uppercase tracking-wider border-b-2 border-black">
+                    <tr>
+                      <th className="px-4 py-3 text-left border-r border-black">Date Converted</th>
+                      <th className="px-4 py-3 text-left border-r border-black">Client Company</th>
+                      <th className="px-4 py-3 text-left border-r border-black">Bank / Source</th>
+                      <th className="px-4 py-3 text-left border-r border-black">Statement Period</th>
+                      <th className="px-4 py-3 text-center border-r border-black">Vouchers</th>
+                      <th className="px-4 py-3 text-center border-r border-black">File Size</th>
+                      <th className="px-4 py-3 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-black text-xs font-bold text-black">
+                    {filteredHistory.map((conv) => (
+                      <tr key={conv.id} className="hover:bg-slate-50">
+                        <td className="px-4 py-3 border-r border-black whitespace-nowrap font-mono text-[11px]">
+                          {formatDisplayDate(conv.created_at)}
+                        </td>
+                        <td className="px-4 py-3 border-r border-black font-black">
+                          {conv.client_name ? (
+                            <span className="bg-blue-50 text-blue-900 border border-blue-400 px-1.5 py-0.5 text-[10px] font-black uppercase">
+                              🏢 {conv.client_name}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400 text-[10px]">General / Unassigned</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 border-r border-black">
+                          <div className="font-black uppercase text-black">{conv.bank_name}</div>
+                          {conv.source_type === 'CSV_TALLY' ? (
+                            <span className="text-[9px] bg-purple-100 text-purple-900 px-1 border border-purple-300 uppercase font-mono">
+                              CSV Import
+                            </span>
+                          ) : (
+                            <span className="text-[9px] bg-slate-100 text-slate-700 px-1 border border-slate-300 uppercase font-mono">
+                              PDF Statement
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 border-r border-black text-slate-700">
+                          {conv.statement_period || 'Consolidated Period'}
+                        </td>
+                        <td className="px-4 py-3 border-r border-black text-center font-mono font-black">
+                          {conv.transactions_count}
+                        </td>
+                        <td className="px-4 py-3 border-r border-black text-center font-mono text-slate-600">
+                          {conv.xml_size_kb ? `${conv.xml_size_kb} KB` : '-'}
+                        </td>
+                        <td className="px-4 py-3 text-right whitespace-nowrap space-x-2">
+                          <button
+                            type="button"
+                            onClick={() => handleDownloadCachedXml(conv.id, conv.bank_name, conv.statement_period)}
+                            className="inline-flex items-center px-3 py-1.5 border-2 border-black text-xs font-black bg-[#3fecff] hover:bg-cyan-300 text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] transition-all uppercase"
+                          >
+                            📥 GET XML
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteHistoryXml(conv.id)}
+                            className="px-2.5 py-1.5 bg-white hover:bg-[#ff5757] hover:text-white border-2 border-black text-xs font-black uppercase transition-colors"
+                            title="Delete from cloud vault"
+                          >
+                            🗑️
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
 
           {/* --- TAB 3: WALLET & PLANS --- */}
           {activeTab === 'wallet' && (
@@ -5662,6 +6444,153 @@ export default function App() {
             </div>
           )}
 
+          {/* --- Client Create/Edit Modal --- */}
+          {clientModalOpen && (
+            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="bg-white border-4 border-black shadow-[10px_10px_0px_rgba(0,0,0,1)] max-w-lg w-full p-6 space-y-4">
+                <div className="flex justify-between items-center bg-[#ffd615] p-3 border-2 border-black shadow-[2px_2px_0px_rgba(0,0,0,1)]">
+                  <h3 className="text-sm font-black uppercase text-black">
+                    {editingClient ? '✏️ Edit Client Company' : '🏢 Add Client Company'}
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setClientModalOpen(false)}
+                    className="text-black font-black text-sm px-2 py-0.5 border border-black hover:bg-black hover:text-white"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {clientError && (
+                  <div className="bg-[#ff5757] text-white p-2.5 text-xs font-bold border-2 border-black shadow-[2px_2px_0px_rgba(0,0,0,1)]">
+                    {clientError}
+                  </div>
+                )}
+
+                <form onSubmit={handleSaveClient} className="space-y-3.5">
+                  <div>
+                    <label className="block text-xs font-black uppercase mb-1">Company / Client Name *</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Sharma Trading Co."
+                      value={clientFormName}
+                      onChange={(e) => setClientFormName(e.target.value)}
+                      className="w-full px-3 py-2 border-2 border-black text-xs font-bold focus:outline-none focus:bg-yellow-50"
+                      required
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-black uppercase mb-1">PAN Number</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. ABCDE1234F"
+                        maxLength={10}
+                        value={clientFormPan}
+                        onChange={(e) => setClientFormPan(e.target.value.toUpperCase())}
+                        className="w-full px-3 py-2 border-2 border-black text-xs font-bold font-mono uppercase focus:outline-none focus:bg-yellow-50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-black uppercase mb-1">GSTIN</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 07ABCDE1234F1Z5"
+                        maxLength={15}
+                        value={clientFormGstin}
+                        onChange={(e) => setClientFormGstin(e.target.value.toUpperCase())}
+                        className="w-full px-3 py-2 border-2 border-black text-xs font-bold font-mono uppercase focus:outline-none focus:bg-yellow-50"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-black uppercase mb-1">Financial Year</label>
+                      <select
+                        value={clientFormFy}
+                        onChange={(e) => setClientFormFy(e.target.value)}
+                        className="w-full px-3 py-2 border-2 border-black text-xs font-bold focus:outline-none bg-white cursor-pointer"
+                      >
+                        <option value="2024-25">FY 2024-25</option>
+                        <option value="2025-26">FY 2025-26</option>
+                        <option value="2026-27">FY 2026-27</option>
+                        <option value="2023-24">FY 2023-24</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-black uppercase mb-1">Business Type</label>
+                      <select
+                        value={clientFormType}
+                        onChange={(e) => setClientFormType(e.target.value)}
+                        className="w-full px-3 py-2 border-2 border-black text-xs font-bold focus:outline-none bg-white cursor-pointer"
+                      >
+                        <option value="Proprietorship">Proprietorship</option>
+                        <option value="Partnership">Partnership</option>
+                        <option value="Pvt Ltd">Pvt Ltd Company</option>
+                        <option value="LLP">LLP</option>
+                        <option value="Individual">Individual</option>
+                        <option value="Trust / NGO">Trust / NGO</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-black uppercase mb-1">Email</label>
+                      <input
+                        type="email"
+                        placeholder="client@example.com"
+                        value={clientFormEmail}
+                        onChange={(e) => setClientFormEmail(e.target.value)}
+                        className="w-full px-3 py-2 border-2 border-black text-xs font-bold focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-black uppercase mb-1">Phone</label>
+                      <input
+                        type="text"
+                        placeholder="+91 9876543210"
+                        value={clientFormPhone}
+                        onChange={(e) => setClientFormPhone(e.target.value)}
+                        className="w-full px-3 py-2 border-2 border-black text-xs font-bold focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-black uppercase mb-1">Notes / Address</label>
+                    <textarea
+                      rows={2}
+                      placeholder="Additional remarks, account notes, branch details..."
+                      value={clientFormNotes}
+                      onChange={(e) => setClientFormNotes(e.target.value)}
+                      className="w-full px-3 py-2 border-2 border-black text-xs font-bold focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="flex justify-end space-x-2 pt-3 border-t-2 border-black">
+                    <button
+                      type="button"
+                      onClick={() => setClientModalOpen(false)}
+                      className="px-4 py-2 border-2 border-black text-xs font-black uppercase hover:bg-slate-100"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={clientSaving}
+                      className="px-5 py-2 bg-[#ffd615] hover:bg-yellow-400 border-2 border-black text-xs font-black uppercase shadow-[3px_3px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px]"
+                    >
+                      {clientSaving ? 'Saving...' : (editingClient ? 'Update Client' : 'Save Client')}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+          
           {/* --- Keyboard Shortcuts Helper Modal --- */}
           {shortcutsModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">

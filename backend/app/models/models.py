@@ -64,6 +64,9 @@ class Client(Base):
     gstin = Column(String(15), nullable=True)
     email = Column(String(150), nullable=True)
     phone = Column(String(20), nullable=True)
+    financial_year = Column(String(20), default="2024-25", nullable=True)
+    business_type = Column(String(50), default="Proprietorship", nullable=True)
+    active_bank_accounts = Column(Text, default="[]", nullable=True)
     notes = Column(Text, nullable=True)
     status = Column(String(50), default="ACTIVE", nullable=False)
     created_at = Column(DateTime, default=get_utc_now)
@@ -88,6 +91,8 @@ class Conversion(Base):
     opening_balance = Column(Float, default=0.0, nullable=False)
     closing_balance = Column(Float, default=0.0, nullable=False)
     cached_xml = Column(Text, nullable=True)
+    file_name = Column(String(255), nullable=True)
+    source_type = Column(String(50), default="STATEMENT_PDF", nullable=True)
     created_at = Column(DateTime, default=get_utc_now)
     
     user = relationship("User", back_populates="conversions")
