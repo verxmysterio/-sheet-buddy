@@ -1,17 +1,40 @@
 <!doctype html>
-<html lang="en" class="h-full bg-slate-50">
+<html lang="en" class="h-full bg-slate-50 antialiased">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sheet Buddy - A Complete Tally Supporting Tool</title>
+    
+    <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
     <!-- Tailwind CSS Play CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
         theme: {
           extend: {
+            fontFamily: {
+              sans: ['"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+              mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+            },
             colors: {
+              brand: {
+                50: '#f4f6fc',
+                100: '#e8ecf8',
+                200: '#d5ddf3',
+                300: '#b6c4ec',
+                400: '#8fa4e2',
+                500: '#6d83d7',
+                600: '#4f64c6',
+                700: '#404fa9',
+                800: '#38438b',
+                900: '#313a70',
+                950: '#1e2343',
+              },
               navy: {
                 50: '#f4f6fa',
                 100: '#e9edf5',
@@ -31,7 +54,7 @@
       }
     </script>
   </head>
-  <body class="h-full text-slate-800">
+  <body class="h-full bg-slate-50 text-slate-800 font-sans selection:bg-brand-500/20 selection:text-brand-900">
     <div id="root" class="min-h-full flex flex-col"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

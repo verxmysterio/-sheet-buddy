@@ -2637,60 +2637,103 @@ export default function App() {
   // --- Auth View ---
   if (!token || !user) {
     return (
-      <div className="min-h-screen flex flex-col bg-[#f4f2ed]">
-        <div className="flex-grow flex flex-col justify-center py-12 px-4">
-          <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-            <div className="flex justify-center text-black">
+      <div className="min-h-screen flex flex-col justify-between bg-slate-50 antialiased font-sans">
+        <div className="flex-grow flex flex-col justify-center py-10 px-4 sm:px-6">
+          <div className="sm:mx-auto sm:w-full sm:max-w-md text-center mb-6">
+            <div className="flex justify-center mb-3">
               <img 
                 src="/symbol_mark.svg" 
-                alt="Sheet Buddy Symbol" 
-                className="w-20 h-20 border-4 border-black p-1 shadow-[4px_4px_0px_rgba(0,0,0,1)] bg-black object-contain mx-auto" 
+                alt="Sheet Buddy" 
+                className="w-14 h-14 rounded-2xl bg-slate-900 border border-slate-800 p-2 shadow-lg shadow-slate-900/10 object-contain mx-auto" 
               />
             </div>
-            <h2 className="mt-5 text-center text-4xl font-black text-black tracking-tight uppercase">
+            <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
               Sheet Buddy
             </h2>
-            <p className="mt-2 text-center text-xs text-black border-2 border-black bg-white inline-block px-3 py-1 mx-auto shadow-[2px_2px_0px_rgba(0,0,0,1)] font-black uppercase tracking-wider">
+            <p className="mt-1.5 text-xs text-slate-500 font-medium inline-flex items-center gap-1.5 bg-white border border-slate-200/80 rounded-full px-3 py-1 shadow-sm">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
               A Complete Tally Supporting Tool • Since 2026
             </p>
           </div>
 
-          <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-            <div className="bg-white py-8 px-4 border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] sm:rounded-none sm:px-10 space-y-6">
+          <div className="sm:mx-auto sm:w-full sm:max-w-md">
+            <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xl shadow-slate-200/40 p-7 sm:p-8 space-y-5">
               
+              {/* Tab Selector between Login and Register if on auth home */}
+              {(authMode === 'login' || authMode === 'register') && (
+                <div className="flex bg-slate-100 p-1 rounded-xl">
+                  <button
+                    type="button"
+                    onClick={() => { setAuthMode('login'); setAuthError(''); }}
+                    className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                      authMode === 'login'
+                        ? 'bg-white text-slate-900 shadow-sm'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    Sign In
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setAuthMode('register'); setAuthError(''); }}
+                    className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                      authMode === 'register'
+                        ? 'bg-white text-slate-900 shadow-sm'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    Create Account
+                  </button>
+                </div>
+              )}
+
               {statusMessage && (
-                <div className="bg-[#25D366] text-white p-3 border-2 border-black font-bold text-sm">
-                  INFO: {String(statusMessage)}
+                <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium rounded-xl p-3.5 flex items-start gap-2.5">
+                  <span className="text-emerald-600 font-bold">✓</span>
+                  <div className="flex-1">{String(statusMessage)}</div>
                 </div>
               )}
 
               {authError && (
-                <div className="bg-[#ff5757] text-white p-3 border-2 border-black font-bold text-sm">
-                  ERROR: {String(authError)}
+                <div className="bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium rounded-xl p-3.5 flex items-start gap-2.5">
+                  <span className="text-rose-500 font-bold">!</span>
+                  <div className="flex-1">{String(authError)}</div>
                 </div>
               )}
 
+              {/* Login Form */}
               {authMode === 'login' && (
-                <form className="space-y-6" onSubmit={handleAuthSubmit}>
+                <form className="space-y-4" onSubmit={handleAuthSubmit}>
                   <div>
-                    <label className="block text-sm font-black text-black uppercase">Email Address</label>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Email Address</label>
                     <input
                       type="email"
                       required
+                      placeholder="name@company.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="mt-1 block w-full px-3 py-2 border-2 border-black focus:outline-none focus:bg-yellow-50 text-sm font-bold"
+                      className="block w-full px-3.5 py-2.5 bg-slate-50/50 border border-slate-300 rounded-xl text-slate-900 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 focus:bg-white transition-all placeholder:text-slate-400"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-black text-black uppercase">Password</label>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="block text-xs font-semibold text-slate-700">Password</label>
+                      <button
+                        type="button"
+                        onClick={() => { setAuthMode('forgot'); setAuthError(''); }}
+                        className="text-[11px] font-medium text-indigo-600 hover:text-indigo-500 hover:underline"
+                      >
+                        Forgot password?
+                      </button>
+                    </div>
                     <input
                       type="password"
                       required
+                      placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="mt-1 block w-full px-3 py-2 border-2 border-black focus:outline-none focus:bg-yellow-50 text-sm font-bold"
+                      className="block w-full px-3.5 py-2.5 bg-slate-50/50 border border-slate-300 rounded-xl text-slate-900 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 focus:bg-white transition-all placeholder:text-slate-400"
                     />
                   </div>
 
@@ -2701,10 +2744,10 @@ export default function App() {
                       type="checkbox"
                       checked={remember}
                       onChange={(e) => setRemember(e.target.checked)}
-                      className="h-4 w-4 text-black focus:ring-black border-2 border-black rounded-none cursor-pointer"
+                      className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 rounded cursor-pointer"
                     />
-                    <label htmlFor="remember_me" className="ml-2 block text-xs font-black text-black uppercase cursor-pointer select-none">
-                      Remember Me
+                    <label htmlFor="remember_me" className="ml-2 block text-xs font-medium text-slate-600 cursor-pointer select-none">
+                      Remember me on this workstation
                     </label>
                   </div>
 
@@ -2712,102 +2755,263 @@ export default function App() {
                     <button
                       type="submit"
                       disabled={authLoading}
-                      className="w-full flex justify-center py-2.5 px-4 border-2 border-black font-black text-black bg-[#ffd615] hover:bg-yellow-400 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] shadow-[4px_4px_0px_rgba(0,0,0,1)] transition-all uppercase disabled:opacity-50"
+                      className="w-full flex justify-center py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-sm transition-all disabled:opacity-50"
                     >
-                      {authLoading ? 'Logging in...' : 'Log In'}
+                      {authLoading ? 'Signing in...' : 'Sign In'}
                     </button>
                   </div>
+                </form>
+              )}
+
+              {/* Register Form */}
+              {authMode === 'register' && (
+                <form className="space-y-4" onSubmit={handleAuthSubmit}>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Email Address</label>
+                    <input
+                      type="email"
+                      required
+                      placeholder="name@company.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="block w-full px-3.5 py-2.5 bg-slate-50/50 border border-slate-300 rounded-xl text-slate-900 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 focus:bg-white transition-all placeholder:text-slate-400"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Password</label>
+                    <input
+                      type="password"
+                      required
+                      placeholder="Create a secure password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="block w-full px-3.5 py-2.5 bg-slate-50/50 border border-slate-300 rounded-xl text-slate-900 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 focus:bg-white transition-all placeholder:text-slate-400"
+                    />
+                  </div>
+
+                  <div>
+                    <button
+                      type="submit"
+                      disabled={authLoading}
+                      className="w-full flex justify-center py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold shadow-sm transition-all disabled:opacity-50"
+                    >
+                      {authLoading ? 'Creating account...' : 'Create Account'}
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* OTP Verification Form */}
+              {authMode === 'verify' && (
+                <form className="space-y-4" onSubmit={handleVerifyOTP}>
+                  <div className="text-xs text-slate-600">
+                    We sent a 6-digit verification code to <span className="font-semibold text-slate-900">{verificationEmail}</span>.
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">One-Time Code (OTP)</label>
+                    <input
+                      type="text"
+                      required
+                      maxLength={6}
+                      placeholder="123456"
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value)}
+                      className="block w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-center font-mono tracking-widest text-lg font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 focus:bg-white transition-all"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={authLoading}
+                    className="w-full flex justify-center py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-sm transition-all disabled:opacity-50"
+                  >
+                    {authLoading ? 'Verifying...' : 'Verify Code & Sign In'}
+                  </button>
+                  <div className="text-center">
+                    <button
+                      type="button"
+                      onClick={() => setAuthMode('login')}
+                      className="text-xs font-medium text-slate-500 hover:text-slate-800"
+                    >
+                      ← Back to Sign In
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* Forgot Password Form */}
+              {authMode === 'forgot' && (
+                <form className="space-y-4" onSubmit={handleForgotPassword}>
+                  <div className="text-xs text-slate-600">
+                    Enter your email address and we'll send you an OTP to reset your password.
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Email Address</label>
+                    <input
+                      type="email"
+                      required
+                      placeholder="name@company.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="block w-full px-3.5 py-2.5 bg-slate-50/50 border border-slate-300 rounded-xl text-slate-900 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 focus:bg-white transition-all"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={authLoading}
+                    className="w-full flex justify-center py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-sm transition-all disabled:opacity-50"
+                  >
+                    {authLoading ? 'Sending...' : 'Send Reset Code'}
+                  </button>
+                  <div className="text-center">
+                    <button
+                      type="button"
+                      onClick={() => setAuthMode('login')}
+                      className="text-xs font-medium text-slate-500 hover:text-slate-800"
+                    >
+                      ← Back to Sign In
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* Reset Password Form */}
+              {authMode === 'reset' && (
+                <form className="space-y-4" onSubmit={handleResetPassword}>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">OTP Code</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Enter 6-digit OTP"
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value)}
+                      className="block w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 font-mono text-center text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 focus:bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">New Password</label>
+                    <input
+                      type="password"
+                      required
+                      placeholder="Enter new password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="block w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 focus:bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Confirm New Password</label>
+                    <input
+                      type="password"
+                      required
+                      placeholder="Confirm new password"
+                      value={confirmNewPassword}
+                      onChange={(e) => setConfirmNewPassword(e.target.value)}
+                      className="block w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 focus:bg-white"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={authLoading}
+                    className="w-full flex justify-center py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-sm transition-all disabled:opacity-50"
+                  >
+                    {authLoading ? 'Updating password...' : 'Update Password & Sign In'}
+                  </button>
                 </form>
               )}
 
             </div>
 
             {/* Feature Capability Strip */}
-            <div className="mt-6 bg-black border-4 border-black p-4 shadow-[6px_6px_0px_rgba(0,0,0,1)] text-center">
-              <p className="text-[10px] font-black text-[#FFD629] uppercase tracking-widest mb-2 text-center">POWERFUL ACCOUNTING AUTOMATION</p>
-              <img src="/feature_icons.svg" alt="Statements, Analytics, Automation, Validation, Export" className="w-full h-auto object-contain mx-auto" />
+            <div className="mt-5 bg-slate-900 text-white rounded-2xl p-4 border border-slate-800 shadow-md text-center">
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Automated Financial Reconciliation & Tally Integration</p>
+              <img src="/feature_icons.svg" alt="Statements, Analytics, Automation, Validation, Export" className="w-full h-auto object-contain mx-auto opacity-90" />
             </div>
           </div>
         </div>
 
         {/* Footer on Login Page */}
-        <footer className="bg-white border-t-4 border-black py-6 text-center text-xs font-bold text-black mt-auto space-y-4">
-          <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-3 pb-2 border-b border-slate-100 max-w-lg mx-auto">
-            <span>To know more, book demo or pricing contact us:</span>
-            <div className="flex items-center space-x-3">
+        <footer className="py-6 text-center text-xs text-slate-500 border-t border-slate-200/80 bg-white/50 backdrop-blur-sm space-y-3">
+          <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-3 max-w-lg mx-auto">
+            <span>Book demo or custom enterprise pricing:</span>
+            <div className="flex items-center space-x-2">
               {/* WhatsApp Link */}
               <a
                 href="https://wa.me/919204915729?text=Hello!%20I'd%20like%20to%20know%20more,%20book%20a%20demo,%20or%20discuss%20pricing%20for%20Sheet%20Buddy."
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-1 border-2 border-black bg-[#25D366] hover:bg-green-500 text-white rounded-none shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-all flex items-center justify-center w-7 h-7"
+                className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-medium shadow-sm transition-all flex items-center gap-1.5"
                 title="Contact on WhatsApp"
               >
-                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
                   <path d="M17.472 14.382c-.022-.079-.116-.123-.27-.2c-.155-.077-.915-.452-1.056-.502c-.142-.053-.247-.077-.35.077c-.104.154-.4.502-.49.603c-.09.1-.18.11-.33.037c-.152-.074-.64-.236-1.22-.756c-.45-.4-.754-.896-.838-1.042c-.085-.145-.01-.223.067-.3c.068-.07.155-.18.23-.27c.077-.09.104-.15.155-.25c.05-.1.025-.19-.012-.265c-.038-.076-.35-.85-.48-1.164c-.127-.31-.257-.267-.35-.272c-.09-.004-.19-.004-.29-.004c-.1-.004-.263.038-.4.19c-.138.15-.527.513-.527 1.253s.54 1.455.614 1.555c.077.1 1.06 1.622 2.57 2.27c.36.155.64.248.86.315c.36.115.69.098.95.06c.29-.044.9-.368 1.03-.722c.13-.356.13-.663.09-.723M12 2C6.477 2 2 6.477 2 12c0 2.01.524 3.9 1.524 5.56L2 22l4.632-1.216C8.204 21.464 9.99 22 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2z"/>
                 </svg>
+                <span>WhatsApp</span>
               </a>
               {/* Email Link */}
               <a
                 href="mailto:sheetbuddyorg@gmail.com?subject=Sheet%20Buddy%20Demo%20and%20Pricing%20Inquiry"
-                className="p-1 border-2 border-black bg-[#3b82f6] hover:bg-blue-500 text-white rounded-none shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-all flex items-center justify-center w-7 h-7"
+                className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-medium shadow-sm transition-all flex items-center gap-1.5"
                 title="Send an Email"
               >
-                <svg className="w-4 h-4 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="2.5">
+                <svg className="w-3.5 h-3.5 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="2.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
+                <span>Email Us</span>
               </a>
             </div>
           </div>
 
-          <div className="flex items-center justify-center space-x-2 pt-2">
-            <img src="/symbol_mark.svg" alt="Sheet Buddy" className="w-5 h-5 border border-black bg-black inline-block" />
-            <span className="font-black uppercase tracking-tight">Sheet Buddy</span>
-            <span className="text-slate-400 font-normal">|</span>
-            <span className="text-slate-600 font-bold">A Tally Supporting Tool • Since 2026</span>
+          <div className="flex items-center justify-center space-x-2 text-[11px] text-slate-400">
+            <span className="font-semibold text-slate-600">Sheet Buddy</span>
+            <span>•</span>
+            <span>A Complete Tally Supporting Tool • Since 2026</span>
+            <span>•</span>
+            <span>
+              Build with ❤️ by{" "}
+              <a
+                href="https://www.instagram.com/verx_mysterio?igsi=MzliODFvcWt0emhn"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-slate-700 hover:text-slate-900 font-medium underline"
+              >
+                verx_mysterio
+              </a>
+            </span>
           </div>
-
-          <p className="text-slate-600 font-bold">
-            Build with ❤️ by{" "}
-            <a
-              href="https://www.instagram.com/verx_mysterio?igsi=MzliODFvcWt0emhn"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline hover:no-underline text-black font-black"
-            >
-              verx_mysterio
-            </a>
-          </p>
         </footer>
       </div>
     );
   }
 
-  // --- Main Brutalist Header Navigation Dashboard View ---
+  // --- Main Executive Dashboard View ---
   return (
-    <div className="min-h-screen flex flex-col bg-[#f4f2ed]">
+    <div className="min-h-screen flex flex-col bg-slate-50 antialiased font-sans">
       
       {/* Top Header containing Navigation Menu, Logo, and User stats */}
-      <header className="bg-white border-b-4 border-black sticky top-0 z-50 shadow-[0px_4px_0px_rgba(0,0,0,0.05)] w-full max-w-full">
+      <header className="bg-white/95 backdrop-blur-md border-b border-slate-200/90 sticky top-0 z-50 shadow-sm w-full max-w-full">
         <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between w-full max-w-full">
           
           {/* Left: Brand Logo & Mobile hamburger toggle */}
-          <div className="h-16 flex items-center justify-between px-5 border-b-2 lg:border-b-0 lg:border-r-4 border-black bg-[#ffd615] flex-shrink-0">
-            <div className="flex items-center space-x-2.5 cursor-pointer" onClick={() => { setActiveTab('convert'); setExecuteError(''); }}>
-              <img src="/symbol_mark.svg" alt="Sheet Buddy Logo" className="w-8 h-8 border-2 border-black rounded-none shadow-[2px_2px_0px_rgba(0,0,0,1)] bg-black flex-shrink-0" />
+          <div className="h-16 flex items-center justify-between px-6 border-b lg:border-b-0 lg:border-r border-slate-200 bg-white flex-shrink-0">
+            <div className="flex items-center space-x-3 cursor-pointer select-none" onClick={() => { setActiveTab('convert'); setExecuteError(''); }}>
+              <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center p-1.5 shadow-sm">
+                <img src="/symbol_mark.svg" alt="Sheet Buddy Logo" className="w-full h-full object-contain" />
+              </div>
               <div>
-                <span className="font-black text-black text-lg tracking-tight uppercase block leading-none">Sheet Buddy</span>
-                <span className="text-[8px] font-black text-black opacity-75 uppercase tracking-wider block mt-0.5">Tally Companion • 2026</span>
+                <span className="font-bold text-slate-900 text-base tracking-tight block leading-none">Sheet Buddy</span>
+                <span className="text-[10px] font-medium text-slate-400 block mt-1 tracking-normal">Tally Companion • 2026</span>
               </div>
             </div>
 
             {/* Hamburger Icon button for mobile screen */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-1.5 border-2 border-black bg-white hover:bg-slate-100 text-black focus:outline-none shadow-[2px_2px_0px_rgba(0,0,0,1)]"
+              className="lg:hidden p-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 focus:outline-none transition-colors"
               aria-label="Toggle navigation"
             >
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 {mobileMenuOpen ? (
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 ) : (
@@ -2819,46 +3023,46 @@ export default function App() {
 
           {/* Center Navigation: Single row desktop with horizontal scrollbar if needed */}
           <div className={`${mobileMenuOpen ? 'flex' : 'hidden'} lg:flex flex-col lg:flex-row flex-1 items-stretch lg:items-center justify-between min-w-0 overflow-hidden`}>
-            <nav className="flex flex-col lg:flex-row lg:flex-nowrap items-stretch lg:items-center p-2 gap-2 flex-1 min-w-0 overflow-x-auto border-b-2 lg:border-b-0 border-black scrollbar-thin">
+            <nav className="flex flex-col lg:flex-row lg:flex-nowrap items-stretch lg:items-center p-2.5 gap-1.5 flex-1 min-w-0 overflow-x-auto border-b lg:border-b-0 border-slate-200 scrollbar-thin">
               <button
                 onClick={() => { setActiveTab('convert'); setExecuteError(''); setMobileMenuOpen(false); }}
-                className={`min-w-[130px] px-3.5 py-2 text-xs font-black border-2 border-black uppercase tracking-wider transition-all whitespace-nowrap text-center flex-shrink-0 ${activeTab === 'convert' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-yellow-50 text-black'}`}
+                className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap text-center flex-shrink-0 ${activeTab === 'convert' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
               >
                 IMPORT TRANSACTION
               </button>
               <button
                 onClick={() => { setActiveTab('csv'); setExecuteError(''); setMobileMenuOpen(false); }}
-                className={`min-w-[130px] px-3.5 py-2 text-xs font-black border-2 border-black uppercase tracking-wider transition-all whitespace-nowrap text-center flex-shrink-0 ${activeTab === 'csv' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-yellow-50 text-black'}`}
+                className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap text-center flex-shrink-0 ${activeTab === 'csv' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
               >
                 CSV TO TALLY
               </button>
               <button
                 onClick={() => { setActiveTab('clients'); setSelectedDossierClient(null); setExecuteError(''); setMobileMenuOpen(false); }}
-                className={`min-w-[130px] px-3.5 py-2 text-xs font-black border-2 border-black uppercase tracking-wider transition-all whitespace-nowrap text-center flex-shrink-0 ${activeTab === 'clients' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-yellow-50 text-black'}`}
+                className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap text-center flex-shrink-0 ${activeTab === 'clients' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
               >
                 🏢 CLIENT DOSSIER
               </button>
               <button
                 onClick={() => { setActiveTab('rules'); setExecuteError(''); setMobileMenuOpen(false); }}
-                className={`min-w-[130px] px-3.5 py-2 text-xs font-black border-2 border-black uppercase tracking-wider transition-all whitespace-nowrap text-center flex-shrink-0 ${activeTab === 'rules' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-yellow-50 text-black'}`}
+                className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap text-center flex-shrink-0 ${activeTab === 'rules' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
               >
                 LEDGER RULES
               </button>
               <button
                 onClick={() => { setActiveTab('history'); setExecuteError(''); setMobileMenuOpen(false); }}
-                className={`min-w-[130px] px-3.5 py-2 text-xs font-black border-2 border-black uppercase tracking-wider transition-all whitespace-nowrap text-center flex-shrink-0 ${activeTab === 'history' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-yellow-50 text-black'}`}
+                className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap text-center flex-shrink-0 ${activeTab === 'history' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
               >
                 ☁️ CLOUD XML VAULT
               </button>
               <button
                 onClick={() => { setActiveTab('wallet'); setExecuteError(''); setMobileMenuOpen(false); }}
-                className={`min-w-[130px] px-3.5 py-2 text-xs font-black border-2 border-black uppercase tracking-wider transition-all whitespace-nowrap text-center flex-shrink-0 ${activeTab === 'wallet' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-yellow-50 text-black'}`}
+                className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap text-center flex-shrink-0 ${activeTab === 'wallet' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
               >
                 BUY CREDITS
               </button>
               <button
                 onClick={() => { setActiveTab('support'); setExecuteError(''); setMobileMenuOpen(false); }}
-                className={`min-w-[130px] px-3.5 py-2 text-xs font-black border-2 border-black uppercase tracking-wider transition-all whitespace-nowrap text-center flex-shrink-0 ${activeTab === 'support' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-yellow-50 text-black'}`}
+                className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap text-center flex-shrink-0 ${activeTab === 'support' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
               >
                 CONTACT SUPPORT
               </button>
@@ -2873,46 +3077,47 @@ export default function App() {
                   setProfileSuccessMsg('');
                   setProfileErrorMsg('');
                 }}
-                className={`min-w-[130px] px-3.5 py-2 text-xs font-black border-2 border-black uppercase tracking-wider transition-all whitespace-nowrap text-center flex-shrink-0 ${activeTab === 'settings' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-yellow-50 text-black'}`}
+                className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap text-center flex-shrink-0 ${activeTab === 'settings' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
               >
                 PROFILE SECURITY
               </button>
               {user.is_admin && (
                 <button
                   onClick={() => { setActiveTab('admin'); setExecuteError(''); setMobileMenuOpen(false); }}
-                  className={`min-w-[130px] px-3.5 py-2 text-xs font-black border-2 border-black uppercase tracking-wider transition-all whitespace-nowrap text-center flex-shrink-0 ${activeTab === 'admin' ? 'bg-[#ffd615] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] -translate-y-[1px]' : 'bg-white hover:bg-yellow-50 text-black'}`}
+                  className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap text-center flex-shrink-0 ${activeTab === 'admin' ? 'bg-indigo-600 text-white shadow-sm' : 'text-indigo-600 hover:bg-indigo-50'}`}
                 >
                   ADMIN CONSOLE
                 </button>
               )}
             </nav>
 
-            {/* Right: User Credits status and logout - strictly contained within page border */}
-            <div className="flex items-center justify-between sm:justify-end px-5 py-2.5 space-x-3 border-t-2 lg:border-t-0 lg:border-l-4 border-black bg-slate-50 flex-shrink-0 self-stretch lg:self-center">
-              <div className="flex items-center space-x-1.5 bg-white px-3 py-1.5 border-2 border-black shadow-[2px_2px_0px_rgba(0,0,0,1)] flex-shrink-0">
-                <span className="text-xs font-black text-black">{user.page_credits}</span>
-                <span className="text-[10px] font-black uppercase text-slate-600">Credits</span>
+            {/* Right: User Credits status and logout */}
+            <div className="flex items-center justify-between sm:justify-end px-5 py-2.5 space-x-3 border-t lg:border-t-0 lg:border-l border-slate-200 bg-white flex-shrink-0 self-stretch lg:self-center">
+              <div className="flex items-center space-x-1.5 bg-emerald-50 border border-emerald-200/90 text-emerald-800 px-3 py-1.5 rounded-full shadow-sm flex-shrink-0">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span className="text-xs font-mono font-bold">{user.page_credits}</span>
+                <span className="text-[10px] font-semibold uppercase text-emerald-700 tracking-wider">Credits</span>
               </div>
               <button
                 onClick={handleLogout}
-                className="px-3.5 py-1.5 border-2 border-black font-black text-xs uppercase text-black bg-white hover:bg-[#ff5757] hover:text-white shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all flex-shrink-0"
+                className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-200 shadow-sm transition-all flex-shrink-0"
               >
-                LOGOUT
+                Logout
               </button>
             </div>
           </div>
         </div>
 
         {/* Active Client Practice Workspace Bar */}
-        <div className="bg-[#ffd615] border-t-2 border-black px-6 py-2 flex flex-wrap items-center justify-between text-xs font-black gap-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="uppercase text-[11px] tracking-wide text-black flex items-center gap-1.5 font-black">
-              🏢 ACTIVE WORKSPACE:
+        <div className="bg-slate-900 text-slate-200 border-t border-slate-800 px-6 py-2.5 flex flex-wrap items-center justify-between text-xs gap-3">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <span className="text-[11px] font-semibold text-slate-400 flex items-center gap-1.5 tracking-wide uppercase">
+              🏢 Workspace:
             </span>
             <select
               value={activeClientId}
               onChange={(e) => setActiveClientId(e.target.value)}
-              className="bg-white border-2 border-black px-2.5 py-1 text-xs font-bold text-black focus:outline-none cursor-pointer shadow-[2px_2px_0px_rgba(0,0,0,1)]"
+              className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1 text-xs font-medium text-white focus:outline-none focus:ring-1 focus:ring-indigo-400 cursor-pointer"
             >
               <option value="">(All Clients / General Practice)</option>
               {clientsList.map(c => (
@@ -2932,7 +3137,7 @@ export default function App() {
                     setActiveTab('clients');
                   }
                 }}
-                className="text-[10px] bg-black text-white hover:bg-zinc-800 px-2.5 py-1 border-2 border-black uppercase shadow-[1px_1px_0px_rgba(0,0,0,1)] font-black"
+                className="text-[11px] bg-indigo-600 hover:bg-indigo-500 text-white px-2.5 py-1 rounded-md font-semibold transition-all shadow-sm"
               >
                 Open Dossier 📂
               </button>
@@ -2943,14 +3148,14 @@ export default function App() {
             <button
               type="button"
               onClick={() => handleOpenClientModal()}
-              className="text-[10px] bg-white text-black hover:bg-slate-100 px-3 py-1 border-2 border-black uppercase shadow-[2px_2px_0px_rgba(0,0,0,1)] font-black"
+              className="text-[11px] bg-slate-800 hover:bg-slate-700 text-white px-3 py-1 rounded-md font-semibold border border-slate-700 transition-all"
             >
               + Add Client Company
             </button>
             <button
               type="button"
               onClick={() => { setActiveTab('clients'); setSelectedDossierClient(null); }}
-              className="text-[10px] bg-black text-white hover:bg-zinc-800 px-3 py-1 border-2 border-black uppercase shadow-[2px_2px_0px_rgba(0,0,0,1)] font-black"
+              className="text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1 rounded-md font-semibold border border-slate-700 transition-all"
             >
               All Clients ({clientsList.length})
             </button>
@@ -2959,143 +3164,147 @@ export default function App() {
       </header>
 
       {/* Main Content Workspace */}
-      <main className="flex-1 overflow-y-auto p-8">
+      <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
 
         {checkoutSession ? (
-          <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-8 max-w-lg mx-auto space-y-6">
-            <div className="bg-[#ffd615] p-4 border-2 border-black shadow-[2px_2px_0px_rgba(0,0,0,1)] flex items-center space-x-3">
+          <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xl shadow-slate-200/40 p-8 max-w-lg mx-auto space-y-6">
+            <div className="bg-slate-900 text-white p-5 rounded-xl flex items-center space-x-3.5 shadow-sm">
               <span className="text-2xl">💳</span>
               <div>
-                <h3 className="text-lg font-black text-black uppercase">Secure Checkout</h3>
-                <p className="text-xs font-bold text-slate-700">Sheet Buddy Payment Gateway Integration</p>
+                <h3 className="text-base font-bold tracking-tight text-white">Secure Checkout</h3>
+                <p className="text-xs text-slate-400">Sheet Buddy Payment Verification Gateway</p>
               </div>
             </div>
 
             {/* Plan Details Box */}
-            <div className="bg-slate-100 p-4 border-2 border-black text-sm font-bold space-y-2">
-              <div className="flex justify-between">
+            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 text-xs font-medium space-y-2.5">
+              <div className="flex justify-between items-center text-slate-600">
                 <span>Selected Plan:</span>
-                <span className="font-black text-black uppercase">{checkoutSession.planName}</span>
+                <span className="font-bold text-slate-900 uppercase">{checkoutSession.planName}</span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between items-center text-slate-600">
                 <span>Page Credits:</span>
-                <span className="font-black text-black">{checkoutSession.pages} Pages</span>
+                <span className="font-mono font-bold text-slate-900">{checkoutSession.pages} Pages</span>
               </div>
-              <div className="flex justify-between border-t-2 border-black border-dashed pt-2 text-md">
-                <span>Amount Due:</span>
-                <span className="font-black text-black text-lg">₹{checkoutSession.amount.toFixed(2)}</span>
+              <div className="flex justify-between items-center border-t border-slate-200/80 pt-2.5">
+                <span className="font-semibold text-slate-700">Amount Due:</span>
+                <span className="font-mono font-extrabold text-slate-900 text-base">₹{checkoutSession.amount.toFixed(2)}</span>
               </div>
             </div>
 
             {/* Payment Details & QR Code */}
-            <div className="flex flex-col items-center space-y-4 py-4 border-2 border-black bg-white shadow-[4px_4px_0px_rgba(0,0,0,1)]">
-              <span className="text-xs font-black text-black uppercase tracking-wider">Scan QR Code to Pay ₹{checkoutSession.amount.toFixed(2)}</span>
+            <div className="flex flex-col items-center space-y-3.5 p-5 border border-slate-200 rounded-xl bg-white shadow-sm">
+              <span className="text-xs font-semibold text-slate-800">Scan QR Code to Pay ₹{checkoutSession.amount.toFixed(2)}</span>
               
               <img 
                 src="/QR-CODE.jpeg" 
-                className="w-48 h-48 border-4 border-black object-contain" 
+                className="w-48 h-48 rounded-xl border border-slate-200 object-contain shadow-inner" 
                 alt="Payment QR Code" 
               />
               
-              <span className="text-[10px] font-bold text-slate-500 uppercase">GPay / PhonePe / Paytm / Any UPI App</span>
+              <span className="text-[11px] font-medium text-slate-500">GPay • PhonePe • Paytm • Any UPI App</span>
             </div>
 
-            <div className="bg-amber-50 border-2 border-black p-4 text-xs font-bold text-amber-900 space-y-2 leading-relaxed">
-              <p className="font-black uppercase text-amber-950">⚠️ Action Required:</p>
-              <p>
-                Please pay exactly <span className="font-black text-black">₹{checkoutSession.amount.toFixed(2)}</span> using the QR code above.
+            <div className="bg-amber-50 rounded-xl border border-amber-200 p-4 text-xs font-medium text-amber-900 space-y-2 leading-relaxed">
+              <p className="font-bold text-amber-950 flex items-center gap-1.5">
+                <span>⚠️</span> Action Required:
               </p>
               <p>
-                Once payment is complete, click the button below to send your **payment screenshot** along with your registered email account (**{user.email}**) to our WhatsApp number **+919204915729**.
+                Please pay exactly <span className="font-bold font-mono text-amber-950">₹{checkoutSession.amount.toFixed(2)}</span> using the QR code above.
               </p>
-              <p className="italic text-[10px]">
+              <p>
+                Once payment is complete, click the button below to send your payment screenshot along with your registered email account (<span className="font-semibold text-amber-950">{user.email}</span>) to our WhatsApp support.
+              </p>
+              <p className="text-[11px] text-amber-700 italic">
                 Your credits will be activated immediately upon admin confirmation.
               </p>
             </div>
 
             {checkoutError && (
-              <div className="bg-[#ff5757] text-white p-3 border-2 border-black font-bold text-xs shadow-[2px_2px_0px_rgba(0,0,0,1)] uppercase">
-                ERROR: {String(checkoutError)}
+              <div className="bg-rose-50 text-rose-700 p-3 rounded-xl border border-rose-200 font-medium text-xs">
+                {String(checkoutError)}
               </div>
             )}
 
-            <div className="space-y-3 pt-2">
+            <div className="space-y-2.5 pt-1">
               <button
                 onClick={handleWhatsAppCheckout}
                 disabled={paymentLoading}
-                className="w-full flex justify-center py-3 px-4 border-2 border-black font-black text-white bg-[#25D366] hover:bg-[#1ebd58] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[4px_4px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all uppercase text-center text-xs disabled:opacity-50 font-bold"
+                className="w-full flex justify-center items-center gap-2 py-3 px-4 rounded-xl font-semibold text-white bg-emerald-600 hover:bg-emerald-500 shadow-sm transition-all text-xs disabled:opacity-50"
               >
-                {paymentLoading ? 'REGISTING TICKET...' : 'Send Screenshot on WhatsApp'}
+                <span>💬</span>
+                <span>{paymentLoading ? 'Registering Ticket...' : 'Send Screenshot on WhatsApp'}</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setCheckoutSession(null)}
-                className="w-full text-center py-2 px-4 border-2 border-black font-black text-black bg-white hover:bg-slate-50 uppercase text-xs shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-all"
+                className="w-full text-center py-2.5 px-4 rounded-xl font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-all text-xs"
               >
-                CANCEL & GO BACK
+                Cancel & Go Back
               </button>
             </div>
           </div>
         ) : (
           <>
-
         {/* --- TAB 1: CONVERT STATEMENT --- */}
         {activeTab === 'convert' && (
           <div className="space-y-6">
             
             {/* Top Brand Banner */}
             {!parsedSummary && (
-              <div className="bg-black text-white p-4 border-4 border-black shadow-[6px_6px_0px_rgba(0,0,0,1)] max-w-2xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="flex items-center space-x-3">
-                  <img src="/symbol_mark.svg" alt="Sheet Buddy" className="w-10 h-10 border border-yellow-400 bg-black flex-shrink-0" />
+              <div className="bg-slate-900 text-white p-6 rounded-2xl border border-slate-800 shadow-md max-w-2xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center space-x-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center p-1.5 flex-shrink-0">
+                    <img src="/symbol_mark.svg" alt="Sheet Buddy" className="w-full h-full object-contain" />
+                  </div>
                   <div>
-                    <h3 className="font-black text-sm text-[#FFD629] uppercase tracking-wider">BANK STATEMENT → TALLY VOUCHERS</h3>
-                    <p className="text-[10px] font-bold text-slate-300">Fast, Automated & Mathematically Reconciled XML Export</p>
+                    <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest block">BANK STATEMENT → TALLY VOUCHERS</span>
+                    <p className="text-xs font-medium text-slate-300 mt-0.5">Fast, Automated & Mathematically Reconciled XML Export</p>
                   </div>
                 </div>
-                <span className="px-3 py-1 bg-[#FFD629] text-black text-[10px] font-black uppercase shadow-[2px_2px_0px_rgba(255,255,255,1)]">SINCE 2026</span>
+                <span className="px-2.5 py-1 bg-slate-800 text-slate-300 text-[10px] font-semibold rounded-full border border-slate-700">SINCE 2026</span>
               </div>
             )}
             
             {/* UPLOAD FORM */}
             {!parsedSummary && (
-              <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 max-w-2xl mx-auto">
-                <div className="flex items-center space-x-3 mb-6 bg-[#ffd615] p-3 border-2 border-black shadow-[2px_2px_0px_rgba(0,0,0,1)]">
-                  <div className="p-0.5 bg-white border-2 border-black text-black">
-                    <img src="/app_icon_yellow.svg" alt="SB Icon" className="w-8 h-8" />
+              <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xl shadow-slate-200/40 p-6 sm:p-8 max-w-2xl mx-auto space-y-6">
+                <div className="flex items-center space-x-3.5 bg-slate-50 p-4 rounded-xl border border-slate-200/80">
+                  <div className="w-9 h-9 rounded-xl bg-slate-900 flex items-center justify-center p-1.5 text-white flex-shrink-0">
+                    <img src="/app_icon_yellow.svg" alt="SB Icon" className="w-6 h-6 object-contain" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-black text-black uppercase">Import BANK PDF Statement</h2>
-                    <p className="text-xs font-bold text-black opacity-80">Converts statement layout coordinates into Tally Vouchers</p>
+                    <h2 className="text-base font-bold text-slate-900 tracking-tight">Import Bank Statement PDF</h2>
+                    <p className="text-xs text-slate-500 font-medium">Automatically parses statement coordinates into Tally Vouchers</p>
                   </div>
                 </div>
 
-                <form onSubmit={handleUploadAndParse} className="space-y-6">
+                <form onSubmit={handleUploadAndParse} className="space-y-5">
                   <div>
-                    <label className="block text-sm font-black text-black uppercase mb-1">Select Bank Statement Format</label>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">Select Bank Statement Format</label>
                     <select
                       value={supportedBanks.some(b => b.bank_key === bankName) ? bankName : (supportedBanks[0]?.bank_key || 'sbi')}
                       onChange={(e) => setBankName(e.target.value)}
-                      className="w-full pl-3 pr-10 py-2.5 text-sm border-2 border-black font-bold focus:outline-none focus:bg-yellow-50 bg-white"
+                      className="w-full px-3.5 py-2.5 text-xs font-medium border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 bg-white transition-all"
                     >
                       {supportedBanks.map((b) => (
                         <option key={b.bank_key} value={b.bank_key}>{b.name}</option>
                       ))}
                     </select>
                     {supportedBanks.find((b) => b.name === bankName)?.parser_type === "SIMULATOR" && (
-                      <p className="mt-2 text-xs font-black text-black bg-[#3fecff] border-2 border-black px-2 py-0.5 inline-block">
+                      <p className="mt-2 text-xs font-medium text-cyan-800 bg-cyan-50 border border-cyan-200 rounded-lg px-2.5 py-1 inline-block">
                         MOCK SIMULATOR ACTIVE: You can upload any test PDF to try.
                       </p>
                     )}
                   </div>
 
                   <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="block text-sm font-black text-black uppercase">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-xs font-semibold text-slate-700">
                         Upload Statement PDF(s)
                       </label>
-                      <span className="text-[10px] font-black uppercase bg-[#ffd615] px-2 py-0.5 border border-black shadow-[1px_1px_0px_rgba(0,0,0,1)]">
+                      <span className="text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/80 rounded-full px-2.5 py-0.5">
                         Multi-Upload Supported 📚
                       </span>
                     </div>
@@ -3117,17 +3326,17 @@ export default function App() {
                           setEditedLedgers({});
                         }
                       }}
-                      className="flex justify-center px-6 pt-8 pb-8 border-4 border-black border-dashed rounded-none hover:bg-yellow-50/40 cursor-pointer bg-slate-50 transition-colors"
+                      className="flex justify-center px-6 pt-8 pb-8 border-2 border-dashed border-slate-300 hover:border-indigo-500 hover:bg-slate-50/70 rounded-2xl cursor-pointer bg-slate-50/40 transition-all"
                     >
                       <div className="space-y-3 text-center">
-                        <img 
-                          src="/symbol_mark.svg" 
-                          alt="PDF Upload" 
-                          className="mx-auto h-12 w-12 border-2 border-black bg-black p-1 shadow-[3px_3px_0px_rgba(0,0,0,1)]" 
-                        />
-                        <div className="flex text-sm justify-center">
-                          <label className="relative cursor-pointer bg-transparent rounded-none font-black text-black underline hover:no-underline">
-                            <span>Choose one or multiple statement PDFs</span>
+                        <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center mx-auto text-slate-600">
+                          <svg className="w-6 h-6 stroke-current fill-none" viewBox="0 0 24 24" strokeWidth="2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                          </svg>
+                        </div>
+                        <div className="flex text-xs justify-center">
+                          <label className="relative cursor-pointer font-semibold text-indigo-600 hover:text-indigo-500">
+                            <span>Choose single or multiple statement PDFs</span>
                             <input
                               type="file"
                               accept=".pdf"
@@ -3137,7 +3346,7 @@ export default function App() {
                             />
                           </label>
                         </div>
-                        <p className="text-xs font-bold text-slate-500">
+                        <p className="text-[11px] text-slate-400 font-medium">
                           Select single or multiple files • Drag & drop supported
                         </p>
                       </div>
@@ -3146,36 +3355,36 @@ export default function App() {
 
                   {/* Multi-File or Single-File Selection Display */}
                   {selectedFiles.length > 1 ? (
-                    <div className="bg-white border-2 border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] p-3 space-y-2">
-                      <div className="flex items-center justify-between pb-2 border-b border-black">
+                    <div className="bg-slate-50 rounded-xl border border-slate-200/90 p-4 space-y-2.5">
+                      <div className="flex items-center justify-between pb-2 border-b border-slate-200">
                         <div className="flex items-center space-x-2">
-                          <span className="bg-[#ffd615] text-black text-[10px] font-black px-2 py-0.5 border border-black uppercase">
+                          <span className="bg-indigo-100 text-indigo-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
                             📚 {selectedFiles.length} FILES SELECTED
                           </span>
-                          <span className="text-[11px] font-mono font-bold text-slate-600">
+                          <span className="text-[11px] font-mono font-medium text-slate-500">
                             Total: {(selectedFiles.reduce((acc, f) => acc + f.size, 0) / (1024 * 1024)).toFixed(2)} MB
                           </span>
                         </div>
                         <button
                           type="button"
                           onClick={() => { setSelectedFiles([]); setSelectedFile(null); }}
-                          className="text-[10px] text-[#ff4b3f] hover:underline uppercase font-black"
+                          className="text-[11px] text-rose-600 hover:text-rose-700 font-semibold"
                         >
                           Clear All
                         </button>
                       </div>
-                      <div className="max-h-40 overflow-y-auto space-y-1.5 pr-1 divide-y divide-slate-200">
+                      <div className="max-h-40 overflow-y-auto space-y-1.5 pr-1 divide-y divide-slate-200/60">
                         {selectedFiles.map((f, fIdx) => (
-                          <div key={fIdx} className="flex items-center justify-between pt-1 text-xs font-bold">
+                          <div key={fIdx} className="flex items-center justify-between pt-1.5 text-xs font-medium">
                             <div className="flex items-center space-x-2 truncate max-w-sm">
                               <span className="text-[10px] font-mono text-slate-400">#{fIdx + 1}</span>
-                              <span className="text-black truncate font-mono text-[11px]">{f.name}</span>
-                              <span className="text-[10px] text-slate-500 font-mono">({(f.size / 1024).toFixed(0)} KB)</span>
+                              <span className="text-slate-800 truncate font-mono text-[11px]">{f.name}</span>
+                              <span className="text-[10px] text-slate-400 font-mono">({(f.size / 1024).toFixed(0)} KB)</span>
                             </div>
                             <button
                               type="button"
                               onClick={() => handleRemoveFile(fIdx)}
-                              className="text-[#ff4b3f] hover:bg-red-50 px-1.5 py-0.5 border border-transparent hover:border-red-400 text-xs font-black uppercase ml-2"
+                              className="text-slate-400 hover:text-rose-600 px-1 text-xs font-bold transition-colors ml-2"
                               title="Remove this file"
                             >
                               ✕
@@ -3185,15 +3394,15 @@ export default function App() {
                       </div>
                     </div>
                   ) : selectedFile ? (
-                    <div className="bg-white p-3 border-2 border-black shadow-[2px_2px_0px_rgba(0,0,0,1)] flex items-center justify-between text-xs font-bold">
+                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 flex items-center justify-between text-xs font-medium">
                       <div className="flex items-center space-x-2 truncate max-w-md">
-                        <span className="text-black truncate font-mono">{selectedFile.name}</span>
-                        <span className="text-[10px] text-slate-500 font-mono">({(selectedFile.size / 1024).toFixed(0)} KB)</span>
+                        <span className="text-slate-700 truncate font-mono">{selectedFile.name}</span>
+                        <span className="text-[10px] text-slate-400 font-mono">({(selectedFile.size / 1024).toFixed(0)} KB)</span>
                       </div>
                       <button
                         type="button"
                         onClick={() => { setSelectedFiles([]); setSelectedFile(null); }}
-                        className="text-[#ff4b3f] hover:underline uppercase font-black"
+                        className="text-rose-600 hover:text-rose-700 text-xs font-semibold"
                       >
                         Remove
                       </button>
@@ -3202,30 +3411,30 @@ export default function App() {
 
                   {/* Upload & Parse Live Progress Bar */}
                   {uploadLoading && uploadProgress && (
-                    <div className="bg-white border-2 border-black p-3 shadow-[3px_3px_0px_rgba(0,0,0,1)] space-y-2">
-                      <div className="flex items-center justify-between text-xs font-black uppercase">
-                        <span className="text-black">
+                    <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-sm space-y-2">
+                      <div className="flex items-center justify-between text-xs font-semibold">
+                        <span className="text-slate-800">
                           Parsing File {uploadProgress.current} of {uploadProgress.total}
                         </span>
-                        <span className="font-mono text-[#00a86b]">
+                        <span className="font-mono text-indigo-600 font-bold">
                           {Math.round((uploadProgress.current / uploadProgress.total) * 100)}%
                         </span>
                       </div>
-                      <div className="w-full bg-slate-200 border-2 border-black h-4 overflow-hidden">
+                      <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
                         <div
-                          className="bg-[#ffd615] h-full transition-all duration-300 border-r-2 border-black"
+                          className="bg-indigo-600 h-full transition-all duration-300 rounded-full"
                           style={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }}
                         />
                       </div>
-                      <p className="text-[10px] font-mono text-slate-600 truncate">
+                      <p className="text-[11px] font-mono text-slate-400 truncate">
                         Current: {uploadProgress.filename}
                       </p>
                     </div>
                   )}
 
                   {uploadError && (
-                    <div className="bg-[#ff5757] text-white p-3 border-2 border-black font-bold text-sm shadow-[2px_2px_0px_rgba(0,0,0,1)]">
-                      ERROR: {String(uploadError)}
+                    <div className="bg-rose-50 text-rose-700 p-3.5 rounded-xl border border-rose-200 font-medium text-xs">
+                      {String(uploadError)}
                     </div>
                   )}
 
@@ -3233,11 +3442,11 @@ export default function App() {
                     <button
                       type="submit"
                       disabled={uploadLoading || (selectedFiles.length === 0 && !selectedFile)}
-                      className="w-full flex justify-center py-3 px-4 border-2 border-black font-black text-black bg-[#ffd615] hover:bg-yellow-400 hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[2px_2px_0px_rgba(0,0,0,1)] shadow-[4px_4px_0px_rgba(0,0,0,1)] transition-all uppercase disabled:opacity-50"
+                      className="w-full flex justify-center py-3 px-4 rounded-xl font-semibold text-white bg-slate-900 hover:bg-slate-800 shadow-sm transition-all text-xs disabled:opacity-50"
                     >
                       {uploadLoading
                         ? (uploadProgress ? `Processing ${uploadProgress.current} of ${uploadProgress.total} Statements...` : 'Uploading & Extracting PDF Data...')
-                        : (selectedFiles.length > 1 ? `⚡ PARSE ${selectedFiles.length} STATEMENT PDFS` : '⚡ PARSE STATEMENT PDF')}
+                        : (selectedFiles.length > 1 ? `⚡ Parse ${selectedFiles.length} Statement PDFs` : '⚡ Parse Statement PDF')}
                     </button>
                   </div>
                 </form>
@@ -3246,45 +3455,47 @@ export default function App() {
 
             {/* DETAILED STATS PREVIEW & EXECUTION STEP */}
             {parsedSummary && (
-              <div className="space-y-8 max-w-6xl mx-auto">
+              <div className="space-y-6 max-w-7xl mx-auto">
                 
                 {/* 1. Multi-Signal Auto-Detected Bank Banner */}
-                <div className="bg-black text-white p-5 border-4 border-black shadow-[6px_6px_0px_rgba(0,0,0,1)] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div className="bg-slate-900 text-white p-6 rounded-2xl border border-slate-800 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                   <div className="flex items-center space-x-3.5">
-                    <img src="/symbol_mark.svg" alt="Bank Logo" className="w-11 h-11 border-2 border-[#FFD629] bg-black p-0.5 flex-shrink-0" />
+                    <div className="w-11 h-11 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center p-1.5 flex-shrink-0">
+                      <img src="/symbol_mark.svg" alt="Bank Logo" className="w-full h-full object-contain" />
+                    </div>
                     <div>
                       <div className="flex items-center space-x-2">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-[#FFD629]">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-400">
                           INTELLIGENT DETECTION ENGINE
                         </span>
-                        <span className="bg-[#3affaa] text-black text-[9px] font-black px-1.5 py-0.2 border border-black uppercase">
-                          {parsedSummary.detection_confidence ? `${Math.round(parsedSummary.detection_confidence)}% CONFIDENCE` : 'HIGH CONFIDENCE'}
+                        <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase">
+                          {parsedSummary.detection_confidence ? `${Math.round(parsedSummary.detection_confidence)}% Confidence` : 'High Confidence'}
                         </span>
                       </div>
-                      <h3 className="text-xl font-black text-white tracking-tight uppercase mt-0.5">
+                      <h3 className="text-xl font-bold text-white tracking-tight mt-0.5">
                         {parsedSummary.bank_name || parsedSummary.detected_bank || 'Standard Bank Statement'}
                       </h3>
-                      <div className="flex flex-wrap gap-1.5 mt-1.5">
-                        <span className="bg-zinc-800 text-zinc-300 text-[10px] font-mono font-bold px-2 py-0.5 border border-zinc-700">
-                          TYPE: {parsedSummary.document_type || 'NATIVE_PDF'}
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        <span className="bg-slate-800 text-slate-300 text-[10px] font-mono px-2 py-0.5 rounded border border-slate-700">
+                          Type: {parsedSummary.document_type || 'NATIVE_PDF'}
                         </span>
                         {parsedSummary.account_number && (
-                          <span className="bg-zinc-800 text-zinc-300 text-[10px] font-mono font-bold px-2 py-0.5 border border-zinc-700">
+                          <span className="bg-slate-800 text-slate-300 text-[10px] font-mono px-2 py-0.5 rounded border border-slate-700">
                             A/C: {parsedSummary.account_number}
                           </span>
                         )}
                         {parsedSummary.statement_period && (
-                          <span className="bg-zinc-800 text-zinc-300 text-[10px] font-mono font-bold px-2 py-0.5 border border-zinc-700">
-                            PERIOD: {parsedSummary.statement_period}
+                          <span className="bg-slate-800 text-slate-300 text-[10px] font-mono px-2 py-0.5 rounded border border-slate-700">
+                            Period: {parsedSummary.statement_period}
                           </span>
                         )}
                         {parsedSummary.multi_file_count > 1 && (
-                          <span className="bg-[#3fecff] text-black text-[10px] font-mono font-black px-2 py-0.5 border border-black shadow-[1px_1px_0px_rgba(0,0,0,1)] uppercase">
-                            📚 {parsedSummary.multi_file_count} STATEMENTS CONSOLIDATED
+                          <span className="bg-indigo-950 text-indigo-300 text-[10px] font-mono font-semibold px-2 py-0.5 rounded border border-indigo-800 uppercase">
+                            📚 {parsedSummary.multi_file_count} Statements Consolidated
                           </span>
                         )}
                         {parsedSummary.detection_signals && parsedSummary.detection_signals.slice(0, 3).map((sig, sIdx) => (
-                          <span key={sIdx} className="bg-yellow-400 text-black text-[9px] font-mono font-bold px-1.5 py-0.5 border border-black">
+                          <span key={sIdx} className="bg-slate-800 text-slate-300 text-[9px] font-mono px-1.5 py-0.5 rounded border border-slate-700">
                             {sig}
                           </span>
                         ))}
@@ -3295,10 +3506,10 @@ export default function App() {
                   <div className="flex items-center space-x-2 self-stretch md:self-auto justify-end">
                     <button
                       onClick={() => setShortcutsModalOpen(true)}
-                      className="px-3 py-1.5 bg-white text-black font-black text-xs border-2 border-black hover:bg-slate-100 shadow-[2px_2px_0px_rgba(255,255,255,1)] uppercase"
+                      className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs rounded-lg border border-slate-700 transition-all"
                       title="View Keyboard Shortcuts"
                     >
-                      ⌨️ SHORTCUTS
+                      ⌨️ Shortcuts
                     </button>
                     <button
                       onClick={() => {
@@ -3307,118 +3518,120 @@ export default function App() {
                         setSelectedFiles([]);
                         setAllTransactions([]);
                       }}
-                      className="px-3 py-1.5 bg-[#ff5757] text-white font-black text-xs border-2 border-black hover:bg-red-600 shadow-[2px_2px_0px_rgba(255,255,255,1)] uppercase"
+                      className="px-3 py-1.5 bg-rose-600/80 hover:bg-rose-600 text-white font-semibold text-xs rounded-lg transition-all"
                     >
-                      RE-UPLOAD
+                      Re-Upload
                     </button>
                   </div>
                 </div>
 
                 {/* Warning Alerts */}
                 {parsedSummary.is_duplicate && (
-                  <div className="bg-[#ffde47] border-4 border-black p-4 text-sm font-bold text-black flex items-start space-x-3 shadow-[4px_4px_0px_rgba(0,0,0,1)]">
-                    <svg className="w-6 h-6 text-black flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs font-medium text-amber-900 flex items-start space-x-3 shadow-sm">
+                    <svg className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
                     <div>
-                      <span className="font-black uppercase block">DUPLICATE STATEMENT FILE WARNING:</span>
+                      <span className="font-bold block text-amber-950 uppercase text-[11px]">Duplicate Statement File Warning</span>
                       This PDF has already been successfully converted before. Re-converting is allowed, but ensure you are not importing duplicate entries into Tally.
                     </div>
                   </div>
                 )}
 
                 {!parsedSummary.reconciled && (
-                  <div className="bg-[#ff5757] border-4 border-black p-4 text-sm font-bold text-white flex items-start space-x-3 shadow-[4px_4px_0px_rgba(0,0,0,1)]">
-                    <svg className="w-6 h-6 text-white flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 text-xs font-medium text-rose-900 flex items-start space-x-3 shadow-sm">
+                    <svg className="w-5 h-5 text-rose-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
                     <div>
-                      <span className="font-black uppercase block">RECONCILIATION AUDIT WARNING:</span>
+                      <span className="font-bold block text-rose-950 uppercase text-[11px]">Reconciliation Audit Warning</span>
                       The transaction sum (Opening + Credits - Debits) differs from the reported Closing Balance {parsedSummary.reconciliation_discrepancy ? `by ₹${Math.abs(parsedSummary.reconciliation_discrepancy).toFixed(2)}` : ''}. Review highlighted rows below.
                     </div>
                   </div>
                 )}
 
                 {/* Analytics Metric Cards Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="bg-white p-4 border-4 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] flex flex-col justify-between">
-                    <p className="text-[10px] font-black text-black uppercase tracking-wider">Total Transactions</p>
-                    <p className="text-3xl font-black text-black mt-1">{allTransactions.length || parsedSummary.transactions_count}</p>
-                    <span className="text-[10px] text-slate-500 font-bold mt-1">{parsedSummary.pages_count} PDF Pages</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col justify-between">
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Transactions</p>
+                    <p className="text-2xl font-bold font-mono text-slate-900 mt-2">{allTransactions.length || parsedSummary.transactions_count}</p>
+                    <span className="text-[11px] text-slate-400 font-medium mt-1">{parsedSummary.pages_count} PDF Pages</span>
                   </div>
 
-                  <div className="bg-white p-4 border-4 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] flex flex-col justify-between">
-                    <p className="text-[10px] font-black text-black uppercase tracking-wider">Opening Balance</p>
-                    <p className="text-xl font-black text-black mt-1">₹{(parsedSummary.opening_balance || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
-                    <span className="text-[10px] text-slate-500 font-bold mt-1">Start of Period</span>
+                  <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col justify-between">
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Opening Balance</p>
+                    <p className="text-xl font-bold font-mono text-slate-900 mt-2">₹{(parsedSummary.opening_balance || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+                    <span className="text-[11px] text-slate-400 font-medium mt-1">Start of Period</span>
                   </div>
 
-                  <div className="bg-white p-4 border-4 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] flex flex-col justify-between">
-                    <p className="text-[10px] font-black text-black uppercase tracking-wider">Closing Balance</p>
-                    <p className="text-xl font-black text-black mt-1">₹{(parsedSummary.closing_balance || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
-                    <span className="text-[10px] text-slate-500 font-bold mt-1">End of Period</span>
+                  <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col justify-between">
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Closing Balance</p>
+                    <p className="text-xl font-bold font-mono text-slate-900 mt-2">₹{(parsedSummary.closing_balance || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</p>
+                    <span className="text-[11px] text-slate-400 font-medium mt-1">End of Period</span>
                   </div>
 
-                  <div className="bg-white p-4 border-4 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] flex flex-col justify-between">
-                    <p className="text-[10px] font-black text-black uppercase tracking-wider">Reconciliation Audit</p>
+                  <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col justify-between">
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Reconciliation Audit</p>
                     <div className="mt-2">
                       {parsedSummary.reconciled ? (
-                        <span className="inline-flex items-center px-3 py-1 border-2 border-black font-black bg-[#3affaa] text-black text-xs uppercase shadow-[2px_2px_0px_rgba(0,0,0,1)]">
-                          RECONCILED ✓
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                          Reconciled ✓
                         </span>
                       ) : (
-                        <span className="inline-flex items-center px-3 py-1 border-2 border-black font-black bg-[#ff5757] text-white text-xs uppercase shadow-[2px_2px_0px_rgba(0,0,0,1)]">
-                          MISMATCH ✗
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                          <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                          Mismatch ✗
                         </span>
                       )}
                     </div>
-                    <span className="text-[10px] text-slate-500 font-bold mt-1">
+                    <span className="text-[11px] text-slate-400 font-medium mt-1">
                       {allTransactions.filter(t => t.requires_review).length} items need review
                     </span>
                   </div>
                 </div>
 
                 {/* 2. Review Queue Filter Tabs & Action Toolbar */}
-                <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] overflow-hidden">
+                <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden">
                   
                   {/* Top Bar with Queue Filter Tabs */}
-                  <div className="p-4 bg-[#ffd615] border-b-4 border-black flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-                    <div className="flex flex-wrap items-center gap-2">
+                  <div className="p-3.5 bg-slate-50 border-b border-slate-200 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-1.5">
                       <button
                         onClick={() => setFilterMode('ALL')}
-                        className={`px-3 py-1.5 border-2 border-black font-black text-xs uppercase transition-all ${filterMode === 'ALL' ? 'bg-black text-white shadow-[2px_2px_0px_rgba(0,0,0,1)]' : 'bg-white text-black hover:bg-slate-100'}`}
+                        className={`px-3 py-1.5 rounded-lg font-semibold text-xs transition-all ${filterMode === 'ALL' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'}`}
                       >
-                        ALL ({allTransactions.length})
+                        All ({allTransactions.length})
                       </button>
                       <button
                         onClick={() => setFilterMode('READY')}
-                        className={`px-3 py-1.5 border-2 border-black font-black text-xs uppercase transition-all ${filterMode === 'READY' ? 'bg-black text-white shadow-[2px_2px_0px_rgba(0,0,0,1)]' : 'bg-white text-black hover:bg-slate-100'}`}
+                        className={`px-3 py-1.5 rounded-lg font-semibold text-xs transition-all ${filterMode === 'READY' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'}`}
                       >
-                        READY ({allTransactions.filter(t => !t.requires_review).length})
+                        Ready ({allTransactions.filter(t => !t.requires_review).length})
                       </button>
                       <button
                         onClick={() => setFilterMode('REVIEW')}
-                        className={`px-3 py-1.5 border-2 border-black font-black text-xs uppercase transition-all ${filterMode === 'REVIEW' ? 'bg-[#ff5757] text-white shadow-[2px_2px_0px_rgba(0,0,0,1)]' : allTransactions.filter(t => t.requires_review).length > 0 ? 'bg-[#ff5757] text-white hover:bg-red-600' : 'bg-white text-black'}`}
+                        className={`px-3 py-1.5 rounded-lg font-semibold text-xs transition-all ${filterMode === 'REVIEW' ? 'bg-rose-600 text-white shadow-sm' : allTransactions.filter(t => t.requires_review).length > 0 ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'}`}
                       >
-                        NEEDS REVIEW ({allTransactions.filter(t => t.requires_review).length})
+                        Needs Review ({allTransactions.filter(t => t.requires_review).length})
                       </button>
                       <button
                         onClick={() => setFilterMode('DUPLICATES')}
-                        className={`px-3 py-1.5 border-2 border-black font-black text-xs uppercase transition-all ${filterMode === 'DUPLICATES' ? 'bg-amber-400 text-black shadow-[2px_2px_0px_rgba(0,0,0,1)]' : 'bg-white text-black hover:bg-slate-100'}`}
+                        className={`px-3 py-1.5 rounded-lg font-semibold text-xs transition-all ${filterMode === 'DUPLICATES' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'}`}
                       >
-                        DUPLICATES ({allTransactions.filter(t => t.is_duplicate).length})
+                        Duplicates ({allTransactions.filter(t => t.is_duplicate).length})
                       </button>
                       <button
                         onClick={() => setFilterMode('DEBIT')}
-                        className={`px-3 py-1.5 border-2 border-black font-black text-xs uppercase transition-all ${filterMode === 'DEBIT' ? 'bg-black text-white shadow-[2px_2px_0px_rgba(0,0,0,1)]' : 'bg-white text-black hover:bg-slate-100'}`}
+                        className={`px-3 py-1.5 rounded-lg font-semibold text-xs transition-all ${filterMode === 'DEBIT' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'}`}
                       >
-                        DEBITS ({allTransactions.filter(t => (t.debit || 0) > 0).length})
+                        Debits ({allTransactions.filter(t => (t.debit || 0) > 0).length})
                       </button>
                       <button
                         onClick={() => setFilterMode('CREDIT')}
-                        className={`px-3 py-1.5 border-2 border-black font-black text-xs uppercase transition-all ${filterMode === 'CREDIT' ? 'bg-black text-white shadow-[2px_2px_0px_rgba(0,0,0,1)]' : 'bg-white text-black hover:bg-slate-100'}`}
+                        className={`px-3 py-1.5 rounded-lg font-semibold text-xs transition-all ${filterMode === 'CREDIT' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'}`}
                       >
-                        CREDITS ({allTransactions.filter(t => (t.credit || 0) > 0).length})
+                        Credits ({allTransactions.filter(t => (t.credit || 0) > 0).length})
                       </button>
                     </div>
 
@@ -3429,7 +3642,7 @@ export default function App() {
                         placeholder="Search narration, ref, ledger... (Ctrl+F)"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="px-3 py-1.5 border-2 border-black text-xs font-bold bg-white focus:outline-none w-full lg:w-64"
+                        className="px-3.5 py-1.5 border border-slate-300 rounded-xl text-xs font-medium bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 w-full lg:w-64 placeholder:text-slate-400"
                       />
                       {allTransactions.filter(t => t.requires_review).length > 0 && (
                         <button
@@ -3437,25 +3650,25 @@ export default function App() {
                             setCurrentReviewIdx(0);
                             setReviewModalOpen(true);
                           }}
-                          className="px-3 py-1.5 bg-black text-[#FFD629] font-black text-xs border-2 border-black uppercase whitespace-nowrap hover:bg-zinc-800 shadow-[2px_2px_0px_rgba(0,0,0,1)]"
+                          className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold text-xs rounded-lg whitespace-nowrap shadow-sm transition-all"
                         >
-                          ⚡ REVIEW NEXT ISSUE
+                          ⚡ Review Next Issue
                         </button>
                       )}
                     </div>
                   </div>
 
                   {/* Bulk Actions Toolbar */}
-                  <div className="px-4 py-2.5 bg-slate-100 border-b-2 border-black flex flex-wrap items-center justify-between gap-3 text-xs font-bold">
+                  <div className="px-4 py-2.5 bg-slate-100/70 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs font-medium">
                     <div className="flex items-center space-x-3">
-                      <label className="flex items-center space-x-1.5 cursor-pointer font-black select-none">
+                      <label className="flex items-center space-x-1.5 cursor-pointer font-semibold text-slate-700 select-none">
                         <input
                           type="checkbox"
                           checked={selectedRowIds.size > 0 && selectedRowIds.size === allTransactions.length}
                           onChange={() => handleSelectAllRows(allTransactions)}
-                          className="w-4 h-4 border-2 border-black accent-black rounded-none"
+                          className="w-4 h-4 border-slate-300 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                         />
-                        <span>SELECT ALL ({selectedRowIds.size} selected)</span>
+                        <span>Select All ({selectedRowIds.size} selected)</span>
                       </label>
                       {undoStack.length > 0 && (
                         <button
@@ -3469,10 +3682,10 @@ export default function App() {
                               setUndoStack(prev => prev.slice(0, -1));
                             }
                           }}
-                          className="px-2 py-0.5 border border-black bg-white hover:bg-slate-200 font-bold text-[11px] shadow-[1px_1px_0px_rgba(0,0,0,1)]"
+                          className="px-2 py-0.5 border border-slate-300 bg-white hover:bg-slate-50 rounded-md font-semibold text-[11px] shadow-sm text-slate-700"
                           title="Undo last narration edit (Ctrl+Z)"
                         >
-                          ↩ UNDO ({undoStack.length})
+                          ↩ Undo ({undoStack.length})
                         </button>
                       )}
                     </div>
@@ -3484,19 +3697,19 @@ export default function App() {
                           placeholder="Type Counter Ledger..."
                           value={bulkLedgerInput}
                           onChange={(e) => setBulkLedgerInput(e.target.value)}
-                          className="px-2 py-1 border-2 border-black text-xs font-bold bg-white focus:outline-none"
+                          className="px-2.5 py-1 border border-slate-300 rounded-lg text-xs font-medium bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
                         />
                         <button
                           onClick={handleBulkAssignLedger}
-                          className="px-3 py-1 bg-[#ffd615] border-2 border-black font-black text-xs hover:bg-yellow-400 shadow-[1px_1px_0px_rgba(0,0,0,1)] uppercase"
+                          className="px-3 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-semibold text-xs shadow-sm transition-all"
                         >
-                          ASSIGN LEDGER
+                          Assign Ledger
                         </button>
                         <button
                           onClick={handleBulkMarkReviewed}
-                          className="px-3 py-1 bg-[#3affaa] border-2 border-black font-black text-xs hover:bg-emerald-400 shadow-[1px_1px_0px_rgba(0,0,0,1)] uppercase"
+                          className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold text-xs shadow-sm transition-all"
                         >
-                          MARK REVIEWED
+                          Mark Reviewed
                         </button>
                         <button
                           onClick={() => {
@@ -3504,39 +3717,39 @@ export default function App() {
                             setAllTransactions(prev => prev.filter(t => !selectedRowIds.has(t.id)));
                             setSelectedRowIds(new Set());
                           }}
-                          className="px-3 py-1 bg-[#ff5757] text-white border-2 border-black font-black text-xs hover:bg-red-600 shadow-[1px_1px_0px_rgba(0,0,0,1)] uppercase"
+                          className="px-3 py-1 bg-rose-600 hover:bg-rose-500 text-white rounded-lg font-semibold text-xs shadow-sm transition-all"
                         >
-                          DELETE SELECTED
+                          Delete Selected
                         </button>
                       </div>
                     )}
                   </div>
 
                   {/* 3. Interactive Transactions Grid */}
-                  <div className="overflow-x-auto max-h-[440px] overflow-y-auto">
-                    <table className="min-w-full divide-y divide-black text-left">
-                      <thead className="bg-slate-200 text-[10px] font-black text-black uppercase tracking-wider sticky top-0 border-b-2 border-black z-10">
+                  <div className="overflow-x-auto max-h-[460px] overflow-y-auto">
+                    <table className="min-w-full divide-y divide-slate-200 text-left">
+                      <thead className="bg-slate-50/95 sticky top-0 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider z-10 backdrop-blur-sm">
                         <tr>
-                          <th className="px-3 py-2.5 border-r border-black w-8 text-center">
+                          <th className="px-3 py-2.5 w-8 text-center">
                             <input
                               type="checkbox"
                               checked={selectedRowIds.size > 0 && selectedRowIds.size === allTransactions.length}
                               onChange={() => handleSelectAllRows(allTransactions)}
-                              className="w-3.5 h-3.5 border-2 border-black accent-black rounded-none"
+                              className="w-3.5 h-3.5 border-slate-300 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                             />
                           </th>
-                          <th className="px-3 py-2.5 border-r border-black whitespace-nowrap">Date</th>
-                          <th className="px-4 py-2.5 border-r border-black w-1/3">Narration (Editable)</th>
-                          <th className="px-3 py-2.5 border-r border-black">Ref / UTR</th>
-                          <th className="px-3 py-2.5 border-r border-black w-1/5">Counter Ledger</th>
-                          <th className="px-3 py-2.5 text-right border-r border-black">Debit (Out)</th>
-                          <th className="px-3 py-2.5 text-right border-r border-black">Credit (In)</th>
-                          <th className="px-3 py-2.5 text-right border-r border-black">Balance</th>
-                          <th className="px-3 py-2.5 text-center border-r border-black">Confidence</th>
+                          <th className="px-3 py-2.5 whitespace-nowrap">Date</th>
+                          <th className="px-4 py-2.5 w-1/3">Narration (Editable)</th>
+                          <th className="px-3 py-2.5">Ref / UTR</th>
+                          <th className="px-3 py-2.5 w-1/5">Counter Ledger</th>
+                          <th className="px-3 py-2.5 text-right">Debit (Out)</th>
+                          <th className="px-3 py-2.5 text-right">Credit (In)</th>
+                          <th className="px-3 py-2.5 text-right">Balance</th>
+                          <th className="px-3 py-2.5 text-center">Confidence</th>
                           <th className="px-3 py-2.5 text-center">Audit</th>
                         </tr>
                       </thead>
-                      <tbody className="bg-white divide-y divide-black text-xs font-bold text-black">
+                      <tbody className="bg-white divide-y divide-slate-100 text-xs text-slate-800">
                         {allTransactions
                           .filter((tx, idx) => {
                             if (filterMode === 'READY' && tx.requires_review) return false;
@@ -3560,59 +3773,59 @@ export default function App() {
                           .map((tx, idx) => (
                             <tr 
                               key={tx.id || idx} 
-                              className={`hover:bg-yellow-50/40 transition-colors ${selectedRowIds.has(tx.id) ? 'bg-yellow-50' : ''} ${tx.requires_review ? 'bg-red-50/40' : ''}`}
+                              className={`hover:bg-slate-50/80 transition-colors ${selectedRowIds.has(tx.id) ? 'bg-indigo-50/40' : ''} ${tx.requires_review ? 'bg-amber-50/40' : ''}`}
                             >
-                              <td className="px-3 py-2 border-r border-black text-center">
+                              <td className="px-3 py-2 text-center">
                                 <input
                                   type="checkbox"
                                   checked={selectedRowIds.has(tx.id)}
                                   onChange={() => handleToggleRowSelection(tx.id)}
-                                  className="w-3.5 h-3.5 border-2 border-black accent-black rounded-none"
+                                  className="w-3.5 h-3.5 border-slate-300 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                                 />
                               </td>
-                              <td className="px-3 py-2 border-r border-black whitespace-nowrap font-mono text-[11px]">
+                              <td className="px-3 py-2 whitespace-nowrap font-mono text-[11px] text-slate-700">
                                 <div>{tx.txn_date}</div>
                                 {tx.source_file && (
-                                  <span className="inline-block mt-0.5 text-[8px] bg-blue-100 text-blue-900 border border-blue-400 px-1 font-mono truncate max-w-[100px]" title={tx.source_file}>
+                                  <span className="inline-block mt-0.5 text-[8px] bg-slate-100 text-slate-600 rounded px-1.5 py-0.5 font-mono truncate max-w-[120px]" title={tx.source_file}>
                                     📄 {tx.source_file}
                                   </span>
                                 )}
                               </td>
-                              <td className="px-3 py-2 border-r border-black">
+                              <td className="px-3 py-2">
                                 <input
                                   type="text"
                                   value={editedNarrations[idx] !== undefined ? editedNarrations[idx] : tx.narration}
                                   onChange={(e) => handleNarrationEdit(idx, e.target.value)}
-                                  className="w-full px-2 py-1 border border-black font-mono font-bold text-[11px] bg-white focus:bg-yellow-50 focus:outline-none"
+                                  className="w-full px-2 py-1 rounded-md text-[11px] font-mono text-slate-900 bg-transparent hover:bg-slate-50 focus:bg-white border border-transparent hover:border-slate-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
                                 />
                               </td>
-                              <td className="px-3 py-2 border-r border-black text-slate-600 font-mono text-[10px] truncate max-w-[120px]">
+                              <td className="px-3 py-2 text-slate-500 font-mono text-[11px] truncate max-w-[120px]">
                                 <div>{tx.ref_no || tx.utr || '-'}</div>
                                 {tx.category && (
-                                  <span className="text-[8px] bg-slate-100 text-slate-700 px-1 border border-slate-300 uppercase">
+                                  <span className="text-[8px] bg-slate-100 text-slate-600 px-1 rounded uppercase font-sans font-semibold">
                                     {tx.category}
                                   </span>
                                 )}
                               </td>
-                              <td className="px-3 py-2 border-r border-black">
+                              <td className="px-3 py-2">
                                 <input
                                   type="text"
                                   value={editedLedgers[idx] !== undefined ? editedLedgers[idx] : (tx.assigned_ledger || counterLedgerName)}
                                   onChange={(e) => handleLedgerEdit(idx, e.target.value)}
-                                  className="w-full px-2 py-1 border border-black font-bold text-[11px] bg-white focus:bg-yellow-50 focus:outline-none"
+                                  className="w-full px-2 py-1 rounded-md text-[11px] font-medium text-slate-900 bg-transparent hover:bg-slate-50 focus:bg-white border border-transparent hover:border-slate-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
                                 />
                               </td>
-                              <td className="px-3 py-2 border-r border-black text-right text-[#ff4b3f] font-mono whitespace-nowrap">
+                              <td className="px-3 py-2 text-right text-rose-600 font-mono tabular-nums font-semibold whitespace-nowrap">
                                 {tx.debit ? `₹${Number(tx.debit).toFixed(2)}` : ''}
                               </td>
-                              <td className="px-3 py-2 border-r border-black text-right text-emerald-600 font-mono whitespace-nowrap">
+                              <td className="px-3 py-2 text-right text-emerald-600 font-mono tabular-nums font-semibold whitespace-nowrap">
                                 {tx.credit ? `₹${Number(tx.credit).toFixed(2)}` : ''}
                               </td>
-                              <td className="px-3 py-2 border-r border-black text-right font-mono text-slate-800 whitespace-nowrap">
+                              <td className="px-3 py-2 text-right font-mono tabular-nums text-slate-800 whitespace-nowrap font-medium">
                                 ₹{Number(tx.balance || 0).toFixed(2)}
                               </td>
-                              <td className="px-2 py-2 border-r border-black text-center whitespace-nowrap">
-                                <span className={`px-1.5 py-0.5 text-[9px] font-black uppercase border border-black ${tx.confidence_grade === 'HIGH' ? 'bg-[#3affaa] text-black' : tx.confidence_grade === 'MEDIUM' ? 'bg-[#ffd615] text-black' : 'bg-[#ff5757] text-white'}`}>
+                              <td className="px-2 py-2 text-center whitespace-nowrap">
+                                <span className={`px-2 py-0.5 text-[9px] font-bold rounded-full uppercase ${tx.confidence_grade === 'HIGH' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : tx.confidence_grade === 'MEDIUM' ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}`}>
                                   {Math.round(tx.confidence_score || 95)}%
                                 </span>
                               </td>
@@ -3624,16 +3837,16 @@ export default function App() {
                                       setCurrentReviewIdx(issueIdx >= 0 ? issueIdx : 0);
                                       setReviewModalOpen(true);
                                     }}
-                                    className="px-2 py-0.5 bg-[#ff5757] text-white text-[9px] font-black uppercase border border-black hover:bg-red-600"
+                                    className="px-2 py-0.5 bg-rose-50 text-rose-700 hover:bg-rose-100 rounded text-[9px] font-bold uppercase border border-rose-200 transition-colors"
                                   >
-                                    REVIEW ⚠️
+                                    Review ⚠️
                                   </button>
                                 ) : tx.is_duplicate ? (
-                                  <span className="px-1.5 py-0.5 bg-amber-300 text-black text-[9px] font-black uppercase border border-black">
+                                  <span className="px-1.5 py-0.5 bg-amber-100 text-amber-800 rounded text-[9px] font-bold uppercase">
                                     DUP
                                   </span>
                                 ) : (
-                                  <span className="text-emerald-600 font-black text-xs">✓</span>
+                                  <span className="text-emerald-600 font-bold text-xs">✓</span>
                                 )}
                               </td>
                             </tr>
@@ -3647,36 +3860,36 @@ export default function App() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   
                   {/* Left: Customization Settings */}
-                  <div className="bg-white border-4 border-black shadow-[6px_6px_0px_rgba(0,0,0,1)] p-6 space-y-4 lg:col-span-2">
-                    <div className="flex justify-between items-center border-b-2 border-black pb-2">
-                      <h4 className="text-md font-black text-black uppercase">Tally Prime / ERP 9 Integration Settings</h4>
-                      <span className="bg-[#3affaa] text-black text-[9px] font-black px-2 py-0.5 border border-black uppercase">
+                  <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-6 space-y-4 lg:col-span-2">
+                    <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                      <h4 className="text-sm font-bold text-slate-900 tracking-tight">Tally Prime / ERP 9 Integration Settings</h4>
+                      <span className="bg-emerald-50 text-emerald-700 text-[10px] font-semibold px-2.5 py-0.5 rounded-full border border-emerald-200">
                         ✓ Tally XML 1.0 Compliant
                       </span>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-black text-black uppercase mb-1">Tally Bank Ledger Name</label>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1.5">Tally Bank Ledger Name</label>
                         <input
                           type="text"
                           placeholder="e.g. State Bank of India"
                           value={tallyLedgerName}
                           onChange={(e) => setTallyLedgerName(e.target.value)}
-                          className="w-full px-3 py-2 border-2 border-black text-sm font-bold bg-white focus:outline-none focus:bg-yellow-50"
+                          className="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-xs font-medium bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all"
                         />
                       </div>
                       <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <label className="block text-xs font-black text-black uppercase">Counter Ledger Mode</label>
-                          <div className="inline-flex border-2 border-black bg-slate-100 p-0.5 shadow-[2px_2px_0px_rgba(0,0,0,1)]">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <label className="block text-xs font-semibold text-slate-700">Counter Ledger Mode</label>
+                          <div className="inline-flex border border-slate-200 bg-slate-100 p-0.5 rounded-lg">
                             <button
                               type="button"
                               onClick={() => handleToggleCounterLedgerMode('AUTO')}
-                              className={`px-2.5 py-1 text-[11px] font-black uppercase transition-all ${
+                              className={`px-2.5 py-1 text-[11px] font-semibold rounded-md transition-all ${
                                 counterLedgerMode === 'AUTO'
-                                  ? 'bg-[#ffd615] text-black border border-black shadow-[1px_1px_0px_rgba(0,0,0,1)]'
-                                  : 'text-slate-600 hover:text-black hover:bg-slate-200'
+                                  ? 'bg-white text-slate-900 shadow-sm'
+                                  : 'text-slate-600 hover:text-slate-900'
                               }`}
                             >
                               ✨ Auto
@@ -3684,10 +3897,10 @@ export default function App() {
                             <button
                               type="button"
                               onClick={() => handleToggleCounterLedgerMode('CUSTOM')}
-                              className={`px-2.5 py-1 text-[11px] font-black uppercase transition-all ${
+                              className={`px-2.5 py-1 text-[11px] font-semibold rounded-md transition-all ${
                                 counterLedgerMode === 'CUSTOM'
-                                  ? 'bg-black text-white border border-black shadow-[1px_1px_0px_rgba(0,0,0,1)]'
-                                  : 'text-slate-600 hover:text-black hover:bg-slate-200'
+                                  ? 'bg-slate-900 text-white shadow-sm'
+                                  : 'text-slate-600 hover:text-slate-900'
                               }`}
                             >
                               ✍️ Custom
@@ -3696,35 +3909,35 @@ export default function App() {
                         </div>
 
                         {counterLedgerMode === 'AUTO' ? (
-                          <div className="bg-[#3affaa]/25 border-2 border-black p-2 text-xs font-bold text-black flex items-center justify-between">
+                          <div className="bg-emerald-50/70 border border-emerald-200/90 rounded-xl p-3 text-xs font-medium text-slate-700 flex items-center justify-between">
                             <div>
-                              <span className="font-black text-emerald-950 block uppercase text-[11px]">✨ Smart Categorization Active</span>
-                              <span className="text-[10px] text-slate-700">Per-row ledgers: ATM → Cash, Salary, Rent, Vendor, etc.</span>
+                              <span className="font-bold text-emerald-950 block text-[11px]">✨ Smart Categorization Active</span>
+                              <span className="text-[10px] text-slate-500">ATM → Cash, Salary, Rent, Vendor, etc.</span>
                             </div>
-                            <span className="text-[9px] bg-white border border-black px-1.5 py-0.5 font-mono font-black uppercase">
+                            <span className="text-[9px] bg-white border border-emerald-200 px-2 py-0.5 rounded-full font-mono font-semibold text-emerald-800 uppercase">
                               Rules/AI
                             </span>
                           </div>
                         ) : (
-                          <div className="space-y-1">
+                          <div className="space-y-1.5">
                             <div className="flex gap-1.5">
                               <input
                                 type="text"
                                 placeholder="e.g. Suspense Account or Cash"
                                 value={customCounterLedger || counterLedgerName}
                                 onChange={(e) => handleCustomCounterLedgerChange(e.target.value)}
-                                className="flex-1 px-2.5 py-1.5 border-2 border-black text-xs font-bold bg-white focus:outline-none focus:bg-yellow-50"
+                                className="flex-1 px-3 py-1.5 border border-slate-300 rounded-xl text-xs font-medium bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
                               />
                               <button
                                 type="button"
                                 onClick={() => handleApplyCustomLedgerToAll(customCounterLedger || counterLedgerName)}
-                                className="px-3 py-1.5 bg-black text-white hover:bg-slate-800 border-2 border-black text-[10px] font-black uppercase shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px]"
+                                className="px-3 py-1.5 bg-slate-900 text-white hover:bg-slate-800 rounded-xl text-xs font-semibold shadow-sm transition-all"
                                 title="Apply this counter ledger to all transaction rows"
                               >
                                 Apply All
                               </button>
                             </div>
-                            <span className="text-[9px] text-slate-600 font-bold block">
+                            <span className="text-[10px] text-slate-400 font-medium block">
                               Sets a single uniform counter ledger for all vouchers in Tally.
                             </span>
                           </div>
@@ -3732,13 +3945,13 @@ export default function App() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
                       <div>
-                        <label className="block text-xs font-black text-black uppercase mb-1">Credit Voucher Type (Money In)</label>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1.5">Credit Voucher Type (Money In)</label>
                         <select
                           value={creditVoucherType}
                           onChange={(e) => setCreditVoucherType(e.target.value)}
-                          className="w-full px-3 py-2 border-2 border-black text-sm font-bold bg-white focus:outline-none"
+                          className="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-xs font-medium bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
                         >
                           <option>Receipt</option>
                           <option>Contra</option>
@@ -3746,11 +3959,11 @@ export default function App() {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-xs font-black text-black uppercase mb-1">Debit Voucher Type (Money Out)</label>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1.5">Debit Voucher Type (Money Out)</label>
                         <select
                           value={debitVoucherType}
                           onChange={(e) => setDebitVoucherType(e.target.value)}
-                          className="w-full px-3 py-2 border-2 border-black text-sm font-bold bg-white focus:outline-none"
+                          className="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-xs font-medium bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
                         >
                           <option>Payment</option>
                           <option>Contra</option>
@@ -3761,36 +3974,36 @@ export default function App() {
                   </div>
 
                   {/* Right: Conversion Billing & Trigger Actions */}
-                  <div className="bg-[#ffd615] border-4 border-black shadow-[6px_6px_0px_rgba(0,0,0,1)] p-6 flex flex-col justify-between">
-                    <div className="space-y-3">
-                      <h4 className="text-md font-black text-black uppercase">Run Conversion</h4>
-                      <div className="bg-white p-3 border-2 border-black text-xs font-bold space-y-1">
-                        <p>Deduction: <span className="font-extrabold">{parsedSummary.pages_count} credits</span></p>
-                        <p>Your Balance: <span className="font-extrabold">{user.page_credits} credits</span></p>
+                  <div className="bg-slate-900 text-white rounded-2xl border border-slate-800 shadow-md p-6 flex flex-col justify-between">
+                    <div className="space-y-3.5">
+                      <h4 className="text-base font-bold text-white tracking-tight">Run Conversion</h4>
+                      <div className="bg-slate-800/80 rounded-xl p-3.5 border border-slate-700/80 text-xs font-medium space-y-1.5 text-slate-300">
+                        <p className="flex justify-between"><span>Deduction:</span> <span className="font-bold text-white font-mono">{parsedSummary.pages_count} credits</span></p>
+                        <p className="flex justify-between"><span>Your Balance:</span> <span className="font-bold text-emerald-400 font-mono">{user.page_credits} credits</span></p>
                         {user.page_credits < parsedSummary.pages_count && (
-                          <p className="text-[#ff4b3f] font-black uppercase mt-1">Insufficient credits to execute!</p>
+                          <p className="text-rose-400 font-bold uppercase mt-1 text-[11px]">Insufficient credits to execute!</p>
                         )}
                       </div>
                       
                       {executeError && (
-                        <div className="bg-[#ff5757] text-white p-2 border-2 border-black font-bold text-xs">
+                        <div className="bg-rose-900/40 text-rose-300 p-2.5 rounded-xl border border-rose-800 font-medium text-xs">
                           {String(executeError)}
                         </div>
                       )}
                     </div>
 
-                    <div className="space-y-3 mt-6">
+                    <div className="space-y-2.5 mt-6">
                       <button
                         onClick={handleExecuteConversion}
                         disabled={executeLoading || user.page_credits < parsedSummary.pages_count}
-                        className="w-full py-3 px-4 border-2 border-black font-black text-black bg-white hover:bg-slate-50 hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[4px_4px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all uppercase disabled:opacity-50"
+                        className="w-full py-3 px-4 rounded-xl font-semibold text-white bg-indigo-600 hover:bg-indigo-500 shadow-sm transition-all text-xs uppercase tracking-wide disabled:opacity-50"
                       >
                         {executeLoading ? 'GENERATING XML...' : 'CONVERT TO TALLY XML'}
                       </button>
 
                       <button
                         onClick={handleDownloadExcel}
-                        className="w-full py-2.5 px-4 border-2 border-black font-black text-black bg-[#3fecff] hover:bg-cyan-300 hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[4px_4px_0px_rgba(0,0,0,1)] shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all uppercase text-xs"
+                        className="w-full py-2.5 px-4 rounded-xl font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-all text-xs"
                       >
                         EXCEL RECONCILIATION EXPORT (FREE)
                       </button>
@@ -3802,19 +4015,20 @@ export default function App() {
             )}
           </div>
         )}
-
         {/* --- TAB: CSV TO TALLY MULTI-VOUCHER CONVERTER --- */}
         {activeTab === 'csv' && (
-          <div className="space-y-8 max-w-7xl mx-auto">
-            {/* Top Neo-Brutalist Banner */}
-            <div className="bg-black text-white p-6 border-4 border-black shadow-[6px_6px_0px_rgba(0,0,0,1)] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="space-y-6 max-w-7xl mx-auto">
+            {/* Top Brand Banner */}
+            <div className="bg-slate-900 text-white p-6 rounded-2xl border border-slate-800 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div className="flex items-center space-x-3.5">
-                <img src="/symbol_mark.svg" alt="CSV to Tally" className="w-10 h-10 border border-[#FFD629] bg-black p-0.5 flex-shrink-0" />
+                <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center p-1.5 flex-shrink-0">
+                  <img src="/symbol_mark.svg" alt="CSV to Tally" className="w-full h-full object-contain" />
+                </div>
                 <div>
-                  <h3 className="text-xl font-black text-[#FFD629] uppercase tracking-tight">
+                  <h3 className="text-base font-bold text-white tracking-tight">
                     CSV To Tally Prime Multi-Voucher Converter
                   </h3>
-                  <p className="text-xs font-bold text-slate-300">
+                  <p className="text-xs text-slate-300 font-medium mt-0.5">
                     Import Payment, Receipt, Contra, Journal, Sales & Purchase entries from any CSV. Map columns, edit inline, and generate Tally XML.
                   </p>
                 </div>
@@ -3822,21 +4036,21 @@ export default function App() {
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   onClick={handleDownloadBlankCsv}
-                  className="px-3 py-2 bg-white text-black font-black text-xs uppercase border-2 border-white shadow-[2px_2px_0px_rgba(255,255,255,1)] hover:bg-yellow-100 transition-all flex items-center space-x-1.5"
+                  className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs rounded-lg border border-slate-700 transition-all flex items-center space-x-1.5 shadow-sm"
                   title="Download clean blank CSV template"
                 >
                   <span>⬇ Blank CSV</span>
                 </button>
                 <button
                   onClick={handleDownloadSampleCsv}
-                  className="px-3 py-2 bg-[#ffd615] text-black font-black text-xs uppercase border-2 border-black shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all flex items-center space-x-1.5"
+                  className="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-lg transition-all flex items-center space-x-1.5 shadow-sm"
                   title="Download CSV pre-filled with Payment, Receipt, Contra & Journal examples"
                 >
                   <span>★ Sample CSV</span>
                 </button>
                 <button
                   onClick={handleOpenCreateMapping}
-                  className="px-3 py-2 bg-[#3affaa] text-black font-black text-xs uppercase border-2 border-black shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all flex items-center space-x-1.5"
+                  className="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-lg transition-all flex items-center space-x-1.5 shadow-sm"
                 >
                   <span>+ New Mapping</span>
                 </button>
@@ -3844,13 +4058,13 @@ export default function App() {
             </div>
 
             {/* Upload & Mapping Card */}
-            <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 space-y-6">
-              <div className="flex items-center justify-between border-b-2 border-black pb-3">
-                <h4 className="text-sm font-black text-black uppercase flex items-center space-x-2">
-                  <span className="w-3 h-3 bg-[#ffd615] border border-black inline-block"></span>
+            <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-6 space-y-6">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h4 className="text-sm font-bold text-slate-900 tracking-tight flex items-center space-x-2">
+                  <span className="w-2 h-2 rounded-full bg-indigo-600 inline-block"></span>
                   <span>1. Upload CSV & Choose Column Mapping Template</span>
                 </h4>
-                <div className="text-[11px] font-bold text-slate-500">
+                <div className="text-[11px] font-medium text-slate-400 bg-slate-100 px-2.5 py-0.5 rounded-full">
                   Step 1 of 2
                 </div>
               </div>
@@ -3858,7 +4072,7 @@ export default function App() {
               <form onSubmit={handleUploadAndPreviewCsv} className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
                 {/* File input */}
                 <div className="lg:col-span-5">
-                  <label className="block text-xs font-black uppercase text-black mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                     Select CSV File
                   </label>
                   <input
@@ -3870,10 +4084,10 @@ export default function App() {
                         setCsvError('');
                       }
                     }}
-                    className="w-full text-xs font-bold p-2 border-2 border-black bg-slate-50 file:mr-3 file:py-1.5 file:px-3 file:border-2 file:border-black file:text-xs file:font-black file:bg-[#ffd615] file:uppercase file:cursor-pointer hover:file:bg-yellow-400 cursor-pointer"
+                    className="w-full text-xs font-medium p-2 border border-slate-300 rounded-xl bg-slate-50/50 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-900 file:text-white file:cursor-pointer hover:file:bg-slate-800 cursor-pointer transition-all"
                   />
                   {csvFile && (
-                    <div className="text-[11px] font-bold text-green-700 mt-1 flex items-center space-x-1">
+                    <div className="text-[11px] font-medium text-emerald-700 mt-1.5 flex items-center space-x-1">
                       <span>✓ Ready: {csvFile.name} ({(csvFile.size / 1024).toFixed(1)} KB)</span>
                     </div>
                   )}
@@ -3881,14 +4095,14 @@ export default function App() {
 
                 {/* Mapping Selector */}
                 <div className="lg:col-span-4">
-                  <div className="flex justify-between items-center mb-1">
-                    <label className="text-xs font-black uppercase text-black">
+                  <div className="flex justify-between items-center mb-1.5">
+                    <label className="text-xs font-semibold text-slate-700">
                       Mapping Template
                     </label>
                     <button
                       type="button"
                       onClick={handleOpenCreateMapping}
-                      className="text-[10px] font-black text-black underline uppercase hover:text-blue-700"
+                      className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-500 hover:underline"
                     >
                       + Create Custom
                     </button>
@@ -3896,7 +4110,7 @@ export default function App() {
                   <select
                     value={selectedCsvMappingId}
                     onChange={(e) => setSelectedCsvMappingId(e.target.value)}
-                    className="w-full p-2.5 text-xs font-bold border-2 border-black bg-white focus:outline-none focus:bg-yellow-50"
+                    className="w-full px-3.5 py-2.5 text-xs font-medium border border-slate-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all"
                   >
                     <option value="default">Standard Sheet Buddy CSV (Default)</option>
                     {csvMappings.map(tmpl => (
@@ -3912,7 +4126,7 @@ export default function App() {
                   <button
                     type="submit"
                     disabled={csvUploading || !csvFile}
-                    className="flex-1 py-2.5 px-4 bg-[#ffd615] text-black border-2 border-black font-black text-xs uppercase shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:translate-x-[-1px] hover:translate-y-[-1px] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    className="flex-1 py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-semibold text-xs shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                   >
                     {csvUploading ? 'Processing...' : 'Process & Preview'}
                   </button>
@@ -3925,7 +4139,7 @@ export default function App() {
                         if (targetTmpl) handleOpenEditMapping(targetTmpl);
                       }}
                       title="Edit this template"
-                      className="px-3 py-2.5 bg-white border-2 border-black font-black text-xs hover:bg-slate-100 shadow-[2px_2px_0px_rgba(0,0,0,1)]"
+                      className="px-3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold text-xs border border-slate-200 transition-all"
                     >
                       ✎
                     </button>
@@ -3934,24 +4148,24 @@ export default function App() {
               </form>
 
               {csvError && (
-                <div className="p-3 bg-red-100 border-2 border-[#ff5757] text-[#ff5757] font-black text-xs flex items-center justify-between">
+                <div className="p-3.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl font-medium text-xs flex items-center justify-between">
                   <span>⚠ {csvError}</span>
-                  <button onClick={() => setCsvError('')} className="font-bold underline text-[11px]">DISMISS</button>
+                  <button onClick={() => setCsvError('')} className="font-bold underline text-[11px] ml-2">Dismiss</button>
                 </div>
               )}
             </div>
 
             {/* Vouchers Preview & Interactive Spreadsheet */}
             {csvVouchers.length > 0 && (
-              <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 space-y-6">
+              <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-6 space-y-6">
                 {/* Header Metrics */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between border-b-2 border-black pb-4 gap-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-100 pb-4 gap-4">
                   <div>
-                    <h4 className="text-sm font-black text-black uppercase flex items-center space-x-2">
-                      <span className="w-3 h-3 bg-[#3affaa] border border-black inline-block"></span>
+                    <h4 className="text-sm font-bold text-slate-900 tracking-tight flex items-center space-x-2">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
                       <span>2. Interactive Vouchers Review & Multi-Voucher Grid</span>
                     </h4>
-                    <p className="text-xs font-bold text-slate-500 mt-0.5">
+                    <p className="text-xs text-slate-500 font-medium mt-0.5">
                       Double-check dates, ledger accounts, and voucher types. Edit inline before converting to Tally Prime.
                     </p>
                   </div>
@@ -3959,26 +4173,26 @@ export default function App() {
                   <div className="flex flex-wrap items-center gap-2">
                     <button
                       onClick={handleAddVoucherRow}
-                      className="px-3 py-1.5 bg-slate-100 text-black border-2 border-black font-black text-xs uppercase hover:bg-slate-200 shadow-[2px_2px_0px_rgba(0,0,0,1)]"
+                      className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-semibold text-xs transition-all"
                     >
                       + Add Row
                     </button>
                     <button
                       onClick={handleExportCsvToExcel}
-                      className="px-3 py-1.5 bg-[#3fecff] text-black border-2 border-black font-black text-xs uppercase hover:bg-cyan-300 shadow-[2px_2px_0px_rgba(0,0,0,1)]"
+                      className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-semibold text-xs border border-slate-700 transition-all"
                     >
                       Export Excel (.xlsx)
                     </button>
                     <button
                       onClick={handleConvertCsvToXml}
                       disabled={csvConverting}
-                      className="px-4 py-1.5 bg-[#ffd615] text-black border-2 border-black font-black text-xs uppercase hover:bg-yellow-400 shadow-[2px_2px_0px_rgba(0,0,0,1)] disabled:opacity-50 flex items-center space-x-1.5"
+                      className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-semibold text-xs shadow-sm disabled:opacity-50 flex items-center space-x-1.5 transition-all"
                     >
                       <span>{csvConverting ? 'Generating XML...' : 'Convert to Tally XML'}</span>
                       {(() => {
                         const pricing = getCsvCreditPricing(csvVouchers.length);
                         return (
-                          <span className="text-[10px] bg-black text-white px-1.5 py-0.5 font-black rounded-none">
+                          <span className="text-[10px] bg-indigo-950 text-indigo-300 px-1.5 py-0.5 font-bold rounded">
                             {pricing} {pricing === 1 ? 'Credit' : 'Credits'}
                           </span>
                         );
@@ -3988,63 +4202,63 @@ export default function App() {
                 </div>
 
                 {/* Metric Summary Badges */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-7 gap-2.5">
-                  <div className="p-2.5 bg-slate-100 border-2 border-black text-center">
-                    <div className="text-[10px] font-black uppercase text-slate-600">Total Vouchers</div>
-                    <div className="text-lg font-black text-black">{csvVouchers.length}</div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-7 gap-3">
+                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 text-center">
+                    <div className="text-[10px] font-semibold uppercase text-slate-500">Total Vouchers</div>
+                    <div className="text-xl font-bold font-mono text-slate-900 mt-0.5">{csvVouchers.length}</div>
                   </div>
-                  <div className="p-2.5 bg-green-50 border-2 border-black text-center">
-                    <div className="text-[10px] font-black uppercase text-green-800">Valid Entries</div>
-                    <div className="text-lg font-black text-green-700">
+                  <div className="p-3 bg-emerald-50/70 rounded-xl border border-emerald-200 text-center">
+                    <div className="text-[10px] font-semibold uppercase text-emerald-800">Valid Entries</div>
+                    <div className="text-xl font-bold font-mono text-emerald-700 mt-0.5">
                       {csvVouchers.filter(v => v.is_valid).length}
                     </div>
                   </div>
-                  <div className={`p-2.5 border-2 border-black text-center ${csvVouchers.filter(v => !v.is_valid).length > 0 ? 'bg-red-100 text-red-700' : 'bg-slate-50 text-slate-400'}`}>
-                    <div className="text-[10px] font-black uppercase">Validation Errors</div>
-                    <div className="text-lg font-black">
+                  <div className={`p-3 rounded-xl border text-center ${csvVouchers.filter(v => !v.is_valid).length > 0 ? 'bg-rose-50 border-rose-200 text-rose-700' : 'bg-slate-50 border-slate-200/80 text-slate-400'}`}>
+                    <div className="text-[10px] font-semibold uppercase">Validation Errors</div>
+                    <div className="text-xl font-bold font-mono mt-0.5">
                       {csvVouchers.filter(v => !v.is_valid).length}
                     </div>
                   </div>
-                  <div className="p-2.5 bg-blue-50 border-2 border-black text-center">
-                    <div className="text-[10px] font-black uppercase text-blue-800">Payments</div>
-                    <div className="text-lg font-black text-blue-700">
+                  <div className="p-3 bg-blue-50/70 rounded-xl border border-blue-200 text-center">
+                    <div className="text-[10px] font-semibold uppercase text-blue-800">Payments</div>
+                    <div className="text-xl font-bold font-mono text-blue-700 mt-0.5">
                       {csvVouchers.filter(v => v.voucher_type === 'Payment').length}
                     </div>
                   </div>
-                  <div className="p-2.5 bg-emerald-50 border-2 border-black text-center">
-                    <div className="text-[10px] font-black uppercase text-emerald-800">Receipts</div>
-                    <div className="text-lg font-black text-emerald-700">
+                  <div className="p-3 bg-teal-50/70 rounded-xl border border-teal-200 text-center">
+                    <div className="text-[10px] font-semibold uppercase text-teal-800">Receipts</div>
+                    <div className="text-xl font-bold font-mono text-teal-700 mt-0.5">
                       {csvVouchers.filter(v => v.voucher_type === 'Receipt').length}
                     </div>
                   </div>
-                  <div className="p-2.5 bg-purple-50 border-2 border-black text-center">
-                    <div className="text-[10px] font-black uppercase text-purple-800">Contra / Journal</div>
-                    <div className="text-lg font-black text-purple-700">
+                  <div className="p-3 bg-purple-50/70 rounded-xl border border-purple-200 text-center">
+                    <div className="text-[10px] font-semibold uppercase text-purple-800">Contra / Journal</div>
+                    <div className="text-xl font-bold font-mono text-purple-700 mt-0.5">
                       {csvVouchers.filter(v => ['Contra', 'Journal'].includes(v.voucher_type)).length}
                     </div>
                   </div>
-                  <div className="p-2.5 bg-yellow-100 border-2 border-black text-center">
-                    <div className="text-[10px] font-black uppercase text-black">Total ₹</div>
-                    <div className="text-sm font-black text-black truncate" title={`₹${csvVouchers.reduce((acc, v) => acc + (parseFloat(v.amount) || 0), 0).toLocaleString('en-IN')}`}>
+                  <div className="p-3 bg-slate-900 rounded-xl border border-slate-800 text-center text-white">
+                    <div className="text-[10px] font-semibold uppercase text-slate-400">Total ₹</div>
+                    <div className="text-sm font-bold font-mono tabular-nums text-white truncate mt-1" title={`₹${csvVouchers.reduce((acc, v) => acc + (parseFloat(v.amount) || 0), 0).toLocaleString('en-IN')}`}>
                       ₹{csvVouchers.reduce((acc, v) => acc + (parseFloat(v.amount) || 0), 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
                     </div>
                   </div>
                 </div>
 
                 {csvConvertError && (
-                  <div className="p-3 bg-red-100 border-2 border-[#ff5757] text-[#ff5757] font-black text-xs">
+                  <div className="p-3.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl font-medium text-xs">
                     ⚠ {csvConvertError}
                   </div>
                 )}
 
                 {/* Filters & Search Toolbar */}
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2">
-                  <div className="flex flex-wrap items-center gap-1">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-1">
+                  <div className="flex flex-wrap items-center gap-1.5">
                     {['ALL', 'Payment', 'Receipt', 'Contra', 'Journal', 'Sales', 'Purchase'].map(vt => (
                       <button
                         key={vt}
                         onClick={() => setCsvFilterType(vt)}
-                        className={`px-2.5 py-1 text-xs font-black border border-black uppercase transition-all ${csvFilterType === vt ? 'bg-black text-white shadow-[1px_1px_0px_rgba(0,0,0,1)]' : 'bg-white hover:bg-slate-100'}`}
+                        className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${csvFilterType === vt ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
                       >
                         {vt}
                       </button>
@@ -4052,7 +4266,7 @@ export default function App() {
                     {csvVouchers.some(v => !v.is_valid) && (
                       <button
                         onClick={() => setCsvFilterType('INVALID')}
-                        className={`px-2.5 py-1 text-xs font-black border border-black uppercase transition-all ${csvFilterType === 'INVALID' ? 'bg-[#ff5757] text-white shadow-[1px_1px_0px_rgba(0,0,0,1)]' : 'bg-red-50 text-red-600 hover:bg-red-100'}`}
+                        className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${csvFilterType === 'INVALID' ? 'bg-rose-600 text-white shadow-sm' : 'bg-rose-50 text-rose-700 hover:bg-rose-100'}`}
                       >
                         ⚠ Issues Only ({csvVouchers.filter(v => !v.is_valid).length})
                       </button>
@@ -4065,12 +4279,12 @@ export default function App() {
                       placeholder="Search ledgers, narration, voucher..."
                       value={csvSearchQuery}
                       onChange={(e) => setCsvSearchQuery(e.target.value)}
-                      className="w-full px-3 py-1.5 text-xs font-bold border-2 border-black focus:outline-none focus:bg-yellow-50"
+                      className="w-full px-3.5 py-1.5 text-xs font-medium border border-slate-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 placeholder:text-slate-400"
                     />
                     {csvSearchQuery && (
                       <button
                         onClick={() => setCsvSearchQuery('')}
-                        className="absolute right-2 top-1.5 text-xs font-bold text-slate-400 hover:text-black"
+                        className="absolute right-2.5 top-1.5 text-xs font-bold text-slate-400 hover:text-slate-700"
                       >
                         ✕
                       </button>
@@ -4079,30 +4293,30 @@ export default function App() {
                 </div>
 
                 {/* Spreadsheet Table */}
-                <div className="overflow-x-auto border-2 border-black max-h-[500px]">
+                <div className="overflow-x-auto rounded-xl border border-slate-200 max-h-[500px]">
                   <table className="min-w-[1050px] w-full text-left text-xs border-collapse">
-                    <thead className="bg-black text-white sticky top-0 z-10 select-none">
+                    <thead className="bg-slate-50/95 sticky top-0 z-10 select-none border-b border-slate-200 text-slate-600 font-semibold uppercase text-[11px] backdrop-blur-sm">
                       <tr>
-                        <th className="p-2 border border-slate-700 w-10 text-center font-black">#</th>
-                        <th className="p-2 border border-slate-700 w-28 font-black">Date</th>
-                        <th className="p-2 border border-slate-700 w-28 font-black">Voucher Type</th>
-                        <th className="p-2 border border-slate-700 w-28 font-black">Voucher No</th>
-                        <th className="p-2 border border-slate-700 font-black">
-                          <span className="bg-red-600 text-white px-1 py-0.5 text-[9px] mr-1">Dr</span>
+                        <th className="p-2.5 w-10 text-center font-bold">#</th>
+                        <th className="p-2.5 w-28 font-bold">Date</th>
+                        <th className="p-2.5 w-28 font-bold">Voucher Type</th>
+                        <th className="p-2.5 w-28 font-bold">Voucher No</th>
+                        <th className="p-2.5 font-bold">
+                          <span className="bg-rose-100 text-rose-800 px-1.5 py-0.5 rounded text-[9px] mr-1.5 font-bold">Dr</span>
                           Debit Ledger
                         </th>
-                        <th className="p-2 border border-slate-700 font-black">
-                          <span className="bg-green-600 text-white px-1 py-0.5 text-[9px] mr-1">Cr</span>
+                        <th className="p-2.5 font-bold">
+                          <span className="bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded text-[9px] mr-1.5 font-bold">Cr</span>
                           Credit Ledger
                         </th>
-                        <th className="p-2 border border-slate-700 w-28 text-right font-black">Amount (₹)</th>
-                        <th className="p-2 border border-slate-700 font-black">Narration</th>
-                        <th className="p-2 border border-slate-700 w-24 font-black">Ref / Cheque</th>
-                        <th className="p-2 border border-slate-700 w-16 text-center font-black">Status</th>
-                        <th className="p-2 border border-slate-700 w-10 text-center font-black">✕</th>
+                        <th className="p-2.5 w-28 text-right font-bold">Amount (₹)</th>
+                        <th className="p-2.5 font-bold">Narration</th>
+                        <th className="p-2.5 w-24 font-bold">Ref / Cheque</th>
+                        <th className="p-2.5 w-16 text-center font-bold">Status</th>
+                        <th className="p-2.5 w-10 text-center font-bold">✕</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-black font-bold">
+                    <tbody className="divide-y divide-slate-100 text-xs text-slate-800">
                       {csvVouchers
                         .map((vch, originalIdx) => ({ vch, originalIdx }))
                         .filter(({ vch }) => {
@@ -4125,24 +4339,24 @@ export default function App() {
                           return true;
                         })
                         .map(({ vch, originalIdx }) => (
-                          <tr key={originalIdx} className={`hover:bg-yellow-50/70 transition-colors ${!vch.is_valid ? 'bg-red-50/70' : originalIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}`}>
-                            <td className="p-1.5 border border-slate-300 text-center text-slate-500 font-mono text-[11px]">
+                          <tr key={originalIdx} className={`hover:bg-slate-50/80 transition-colors ${!vch.is_valid ? 'bg-rose-50/40' : originalIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'}`}>
+                            <td className="p-2 text-center text-slate-400 font-mono text-[11px]">
                               {originalIdx + 1}
                             </td>
-                            <td className="p-1 border border-slate-300">
+                            <td className="p-1">
                               <input
                                 type="text"
                                 value={vch.date || ''}
                                 onChange={(e) => handleUpdateVoucherCell(originalIdx, 'date', e.target.value)}
-                                className="w-full px-1.5 py-1 text-xs border border-transparent hover:border-black focus:border-black bg-transparent focus:bg-white focus:outline-none"
+                                className="w-full px-2 py-1 text-xs rounded-md font-mono border border-transparent hover:border-slate-300 focus:border-indigo-500 focus:bg-white focus:outline-none transition-all"
                                 placeholder="YYYY-MM-DD"
                               />
                             </td>
-                            <td className="p-1 border border-slate-300">
+                            <td className="p-1">
                               <select
                                 value={vch.voucher_type || 'Payment'}
                                 onChange={(e) => handleUpdateVoucherCell(originalIdx, 'voucher_type', e.target.value)}
-                                className="w-full px-1 py-1 text-xs font-black border border-transparent hover:border-black focus:border-black bg-transparent focus:bg-white focus:outline-none"
+                                className="w-full px-2 py-1 text-xs font-semibold rounded-md border border-transparent hover:border-slate-300 focus:border-indigo-500 focus:bg-white focus:outline-none transition-all"
                               >
                                 <option value="Payment">Payment</option>
                                 <option value="Receipt">Receipt</option>
@@ -4152,78 +4366,78 @@ export default function App() {
                                 <option value="Purchase">Purchase</option>
                               </select>
                             </td>
-                            <td className="p-1 border border-slate-300">
+                            <td className="p-1">
                               <input
                                 type="text"
                                 value={vch.voucher_number || ''}
                                 onChange={(e) => handleUpdateVoucherCell(originalIdx, 'voucher_number', e.target.value)}
-                                className="w-full px-1.5 py-1 text-xs border border-transparent hover:border-black focus:border-black bg-transparent focus:bg-white focus:outline-none"
+                                className="w-full px-2 py-1 text-xs rounded-md font-mono border border-transparent hover:border-slate-300 focus:border-indigo-500 focus:bg-white focus:outline-none transition-all"
                                 placeholder="Auto / No"
                               />
                             </td>
-                            <td className="p-1 border border-slate-300">
+                            <td className="p-1">
                               <input
                                 type="text"
                                 value={vch.debit_ledger || ''}
                                 onChange={(e) => handleUpdateVoucherCell(originalIdx, 'debit_ledger', e.target.value)}
-                                className={`w-full px-1.5 py-1 text-xs font-bold border ${!vch.debit_ledger ? 'border-red-400 bg-red-50' : 'border-transparent hover:border-black focus:border-black bg-transparent focus:bg-white'} focus:outline-none`}
+                                className={`w-full px-2 py-1 text-xs font-medium rounded-md border ${!vch.debit_ledger ? 'border-rose-300 bg-rose-50/50' : 'border-transparent hover:border-slate-300 focus:border-indigo-500 focus:bg-white'} focus:outline-none transition-all`}
                                 placeholder="Debit Ledger Name"
                               />
                             </td>
-                            <td className="p-1 border border-slate-300">
+                            <td className="p-1">
                               <input
                                 type="text"
                                 value={vch.credit_ledger || ''}
                                 onChange={(e) => handleUpdateVoucherCell(originalIdx, 'credit_ledger', e.target.value)}
-                                className={`w-full px-1.5 py-1 text-xs font-bold border ${!vch.credit_ledger ? 'border-red-400 bg-red-50' : 'border-transparent hover:border-black focus:border-black bg-transparent focus:bg-white'} focus:outline-none`}
+                                className={`w-full px-2 py-1 text-xs font-medium rounded-md border ${!vch.credit_ledger ? 'border-rose-300 bg-rose-50/50' : 'border-transparent hover:border-slate-300 focus:border-indigo-500 focus:bg-white'} focus:outline-none transition-all`}
                                 placeholder="Credit Ledger Name"
                               />
                             </td>
-                            <td className="p-1 border border-slate-300">
+                            <td className="p-1">
                               <input
                                 type="number"
                                 step="0.01"
                                 value={vch.amount}
                                 onChange={(e) => handleUpdateVoucherCell(originalIdx, 'amount', e.target.value)}
-                                className={`w-full px-1.5 py-1 text-xs text-right font-black border ${!vch.amount || vch.amount <= 0 ? 'border-red-400 bg-red-50 text-red-600' : 'border-transparent hover:border-black focus:border-black bg-transparent focus:bg-white'} focus:outline-none`}
+                                className={`w-full px-2 py-1 text-xs text-right font-mono tabular-nums font-semibold rounded-md border ${!vch.amount || vch.amount <= 0 ? 'border-rose-300 bg-rose-50 text-rose-700' : 'border-transparent hover:border-slate-300 focus:border-indigo-500 focus:bg-white'} focus:outline-none transition-all`}
                               />
                             </td>
-                            <td className="p-1 border border-slate-300">
+                            <td className="p-1">
                               <input
                                 type="text"
                                 value={vch.narration || ''}
                                 onChange={(e) => handleUpdateVoucherCell(originalIdx, 'narration', e.target.value)}
-                                className="w-full px-1.5 py-1 text-xs border border-transparent hover:border-black focus:border-black bg-transparent focus:bg-white focus:outline-none"
+                                className="w-full px-2 py-1 text-xs rounded-md border border-transparent hover:border-slate-300 focus:border-indigo-500 focus:bg-white focus:outline-none transition-all"
                                 placeholder="Narration description"
                               />
                             </td>
-                            <td className="p-1 border border-slate-300">
+                            <td className="p-1">
                               <input
                                 type="text"
                                 value={vch.ref_no || ''}
                                 onChange={(e) => handleUpdateVoucherCell(originalIdx, 'ref_no', e.target.value)}
-                                className="w-full px-1.5 py-1 text-xs border border-transparent hover:border-black focus:border-black bg-transparent focus:bg-white focus:outline-none"
+                                className="w-full px-2 py-1 text-xs font-mono text-slate-600 rounded-md border border-transparent hover:border-slate-300 focus:border-indigo-500 focus:bg-white focus:outline-none transition-all"
                                 placeholder="Ref/Chq"
                               />
                             </td>
-                            <td className="p-1 border border-slate-300 text-center">
+                            <td className="p-1 text-center">
                               {vch.is_valid ? (
-                                <span className="text-[10px] bg-green-200 text-green-900 px-1 py-0.5 font-black uppercase">
+                                <span className="text-[9px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-bold uppercase">
                                   OK
                                 </span>
                               ) : (
                                 <span
-                                  className="text-[10px] bg-red-200 text-red-900 px-1 py-0.5 font-black uppercase cursor-help"
+                                  className="text-[9px] bg-rose-50 text-rose-700 border border-rose-200 px-2 py-0.5 rounded-full font-bold uppercase cursor-help"
                                   title={(vch.error_reasons && vch.error_reasons.length > 0) ? vch.error_reasons.join(', ') : (vch.validation_error || 'Missing required ledger, date or amount')}
                                 >
                                   ERR
                                 </span>
                               )}
                             </td>
-                            <td className="p-1 border border-slate-300 text-center">
+                            <td className="p-1 text-center">
                               <button
                                 onClick={() => handleDeleteVoucherRow(originalIdx)}
-                                className="text-slate-400 hover:text-red-600 font-black text-xs px-1"
+                                className="text-slate-400 hover:text-rose-600 font-bold text-xs px-1 transition-colors"
                                 title="Remove row"
                               >
                                 ✕
@@ -4236,27 +4450,27 @@ export default function App() {
                 </div>
 
                 {/* Bottom Conversion Call to Action */}
-                <div className="flex flex-col sm:flex-row items-center justify-between p-4 bg-[#ffd615]/30 border-2 border-black gap-3">
-                  <div className="text-xs font-bold text-black">
+                <div className="flex flex-col sm:flex-row items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200 gap-3">
+                  <div className="text-xs font-medium text-slate-700">
                     Ready to post to Tally? Click below to generate XML for your company data.
                   </div>
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-2.5">
                     <button
                       onClick={handleExportCsvToExcel}
-                      className="px-4 py-2 bg-white text-black border-2 border-black font-black text-xs uppercase shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:bg-slate-50"
+                      className="px-3.5 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-xl font-semibold text-xs transition-all shadow-sm"
                     >
                       Export Excel
                     </button>
                     <button
                       onClick={handleConvertCsvToXml}
                       disabled={csvConverting}
-                      className="px-6 py-2 bg-black text-white border-2 border-black font-black text-xs uppercase shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:bg-slate-800 disabled:opacity-50 flex items-center space-x-2"
+                      className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-semibold text-xs shadow-sm disabled:opacity-50 flex items-center space-x-2 transition-all"
                     >
                       <span>{csvConverting ? 'Generating...' : 'CONVERT TO TALLY PRIME XML'}</span>
                       {(() => {
                         const pricing = getCsvCreditPricing(csvVouchers.length);
                         return (
-                          <span className="text-[10px] bg-[#ffd615] text-black px-1.5 py-0.5 font-black">
+                          <span className="text-[10px] bg-indigo-600 text-white px-2 py-0.5 rounded-full font-bold">
                             {pricing} {pricing === 1 ? 'Credit' : 'Credits'}
                           </span>
                         );
@@ -4268,45 +4482,45 @@ export default function App() {
             )}
 
             {/* Saved Mapping Templates Section */}
-            <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 space-y-4">
-              <div className="flex items-center justify-between border-b-2 border-black pb-3">
-                <h4 className="text-sm font-black text-black uppercase">
+            <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-6 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h4 className="text-sm font-bold text-slate-900 tracking-tight">
                   Saved CSV Column Mapping Templates ({csvMappings.length})
                 </h4>
                 <button
                   onClick={handleOpenCreateMapping}
-                  className="px-3 py-1.5 bg-[#ffd615] text-black border-2 border-black font-black text-xs uppercase shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:bg-yellow-400"
+                  className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-semibold text-xs shadow-sm transition-all"
                 >
                   + Add Template
                 </button>
               </div>
 
               {csvMappings.length === 0 ? (
-                <div className="text-center py-6 text-xs font-bold text-slate-500">
+                <div className="text-center py-8 text-xs font-medium text-slate-400">
                   No custom mapping templates saved yet. You can use the standard Sheet Buddy template or click "+ Add Template" to map your custom ERP/bank CSV columns.
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {csvMappings.map((tmpl) => (
-                    <div key={tmpl.id} className="border-2 border-black p-4 bg-slate-50 shadow-[3px_3px_0px_rgba(0,0,0,1)] space-y-2.5">
+                    <div key={tmpl.id} className="rounded-xl border border-slate-200 p-4.5 bg-slate-50/60 shadow-sm space-y-3 hover:border-slate-300 transition-all">
                       <div className="flex justify-between items-start">
                         <div>
-                          <div className="font-black text-xs uppercase text-black">{tmpl.name}</div>
+                          <div className="font-bold text-xs text-slate-900">{tmpl.name}</div>
                           {tmpl.description && (
-                            <div className="text-[11px] text-slate-600 font-bold">{tmpl.description}</div>
+                            <div className="text-[11px] text-slate-500 font-medium mt-0.5">{tmpl.description}</div>
                           )}
                         </div>
-                        <div className="flex items-center space-x-1.5">
+                        <div className="flex items-center space-x-1">
                           <button
                             onClick={() => handleOpenEditMapping(tmpl)}
-                            className="p-1 border border-black bg-white hover:bg-yellow-100 text-[10px] font-black"
+                            className="p-1.5 rounded-md hover:bg-slate-200/80 text-slate-600 text-xs transition-colors"
                             title="Edit template"
                           >
                             ✎
                           </button>
                           <button
                             onClick={() => handleDeleteMapping(tmpl.id)}
-                            className="p-1 border border-black bg-white hover:bg-red-100 text-[10px] font-black text-red-600"
+                            className="p-1.5 rounded-md hover:bg-rose-50 text-slate-400 hover:text-rose-600 text-xs transition-colors"
                             title="Delete template"
                           >
                             ✕
@@ -4314,26 +4528,26 @@ export default function App() {
                         </div>
                       </div>
 
-                      <div className="text-[11px] font-bold space-y-1 divide-y divide-slate-200">
-                        <div className="flex justify-between pt-1">
-                          <span className="text-slate-500">Date Column:</span>
-                          <span className="font-mono font-black">{tmpl.date_column} ({tmpl.date_format})</span>
+                      <div className="text-xs font-medium space-y-1.5 divide-y divide-slate-200/60">
+                        <div className="flex justify-between pt-1 text-slate-600">
+                          <span className="text-slate-400 text-[11px]">Date Column:</span>
+                          <span className="font-mono font-semibold text-slate-800 text-[11px]">{tmpl.date_column} ({tmpl.date_format})</span>
                         </div>
-                        <div className="flex justify-between pt-1">
-                          <span className="text-slate-500">Voucher Type:</span>
-                          <span>{tmpl.voucher_type_column || tmpl.default_voucher_type}</span>
+                        <div className="flex justify-between pt-1 text-slate-600">
+                          <span className="text-slate-400 text-[11px]">Voucher Type:</span>
+                          <span className="text-slate-800 text-[11px] font-medium">{tmpl.voucher_type_column || tmpl.default_voucher_type}</span>
                         </div>
-                        <div className="flex justify-between pt-1">
-                          <span className="text-slate-500">Dr Ledger:</span>
-                          <span className="truncate max-w-[150px]">{tmpl.debit_ledger_column || tmpl.default_debit_ledger || 'Unassigned'}</span>
+                        <div className="flex justify-between pt-1 text-slate-600">
+                          <span className="text-slate-400 text-[11px]">Dr Ledger:</span>
+                          <span className="truncate max-w-[150px] text-slate-800 text-[11px]">{tmpl.debit_ledger_column || tmpl.default_debit_ledger || 'Unassigned'}</span>
                         </div>
-                        <div className="flex justify-between pt-1">
-                          <span className="text-slate-500">Cr Ledger:</span>
-                          <span className="truncate max-w-[150px]">{tmpl.credit_ledger_column || tmpl.default_credit_ledger || 'Unassigned'}</span>
+                        <div className="flex justify-between pt-1 text-slate-600">
+                          <span className="text-slate-400 text-[11px]">Cr Ledger:</span>
+                          <span className="truncate max-w-[150px] text-slate-800 text-[11px]">{tmpl.credit_ledger_column || tmpl.default_credit_ledger || 'Unassigned'}</span>
                         </div>
-                        <div className="flex justify-between pt-1">
-                          <span className="text-slate-500">Amount Column:</span>
-                          <span>{tmpl.amount_column || `${tmpl.debit_amount_column || ''} / ${tmpl.credit_amount_column || ''}`}</span>
+                        <div className="flex justify-between pt-1 text-slate-600">
+                          <span className="text-slate-400 text-[11px]">Amount Column:</span>
+                          <span className="text-slate-800 text-[11px]">{tmpl.amount_column || `${tmpl.debit_amount_column || ''} / ${tmpl.credit_amount_column || ''}`}</span>
                         </div>
                       </div>
 
@@ -4342,7 +4556,7 @@ export default function App() {
                           setSelectedCsvMappingId(String(tmpl.id));
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                         }}
-                        className={`w-full py-1 text-center text-xs font-black uppercase border border-black transition-all ${selectedCsvMappingId === String(tmpl.id) ? 'bg-black text-white' : 'bg-white hover:bg-yellow-200'}`}
+                        className={`w-full py-1.5 text-center text-xs font-semibold rounded-lg transition-all ${selectedCsvMappingId === String(tmpl.id) ? 'bg-slate-900 text-white shadow-sm' : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-300'}`}
                       >
                         {selectedCsvMappingId === String(tmpl.id) ? '✓ Currently Selected' : 'Use This Template'}
                       </button>
@@ -4353,62 +4567,62 @@ export default function App() {
             </div>
           </div>
         )}
-
-        {/* --- TAB: LEDGER RULES ENGINE --- */}
         {activeTab === 'rules' && (
-          <div className="space-y-8 max-w-6xl mx-auto">
+          <div className="space-y-6 max-w-6xl mx-auto">
             
             {/* Header Banner */}
-            <div className="bg-black text-white p-6 border-4 border-black shadow-[6px_6px_0px_rgba(0,0,0,1)] flex items-center justify-between">
+            <div className="bg-slate-900 text-white p-6 rounded-2xl border border-slate-800 shadow-md flex items-center justify-between">
               <div className="flex items-center space-x-3.5">
-                <img src="/symbol_mark.svg" alt="Rules" className="w-10 h-10 border border-[#FFD629] bg-black p-0.5 flex-shrink-0" />
+                <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center p-1.5 flex-shrink-0">
+                  <img src="/symbol_mark.svg" alt="Rules" className="w-full h-full object-contain" />
+                </div>
                 <div>
-                  <h3 className="text-xl font-black text-[#FFD629] uppercase tracking-tight">
+                  <h3 className="text-base font-bold text-white tracking-tight">
                     Smart Ledger Suggestion & Categorization Rules
                   </h3>
-                  <p className="text-xs font-bold text-slate-300">
+                  <p className="text-xs text-slate-300 font-medium mt-0.5">
                     Define keyword rules to automatically categorize narrations and assign specific Tally counter-ledgers.
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               
               {/* Left: Create Rule Form */}
-              <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 space-y-4">
-                <h4 className="text-md font-black text-black uppercase border-b-2 border-black pb-2">Add New Rule</h4>
-                <form onSubmit={handleCreateRule} className="space-y-3 text-xs">
+              <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-6 space-y-4">
+                <h4 className="text-sm font-bold text-slate-900 tracking-tight border-b border-slate-100 pb-2.5">Add New Rule</h4>
+                <form onSubmit={handleCreateRule} className="space-y-3.5 text-xs font-medium">
                   <div>
-                    <label className="block font-black text-black uppercase mb-1">Rule Name</label>
+                    <label className="block text-slate-700 font-semibold mb-1">Rule Name</label>
                     <input
                       type="text"
                       placeholder="e.g. Electricity Bill Rule"
                       value={ruleNameInput}
                       onChange={(e) => setRuleNameInput(e.target.value)}
-                      className="w-full px-3 py-2 border-2 border-black font-bold bg-white focus:outline-none focus:bg-yellow-50"
+                      className="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-xs font-medium bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all"
                     />
                   </div>
 
                   <div>
-                    <label className="block font-black text-black uppercase mb-1">Narration Match Pattern / Keyword</label>
+                    <label className="block text-slate-700 font-semibold mb-1">Narration Match Pattern / Keyword</label>
                     <input
                       type="text"
                       required
                       placeholder="e.g. BESCOM or SALARY or SWIGGY"
                       value={rulePatternInput}
                       onChange={(e) => setRulePatternInput(e.target.value)}
-                      className="w-full px-3 py-2 border-2 border-black font-bold bg-white focus:outline-none focus:bg-yellow-50 uppercase"
+                      className="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-xs font-mono uppercase bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all"
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="block font-black text-black uppercase mb-1">Match Type</label>
+                      <label className="block text-slate-700 font-semibold mb-1">Match Type</label>
                       <select
                         value={ruleMatchType}
                         onChange={(e) => setRuleMatchType(e.target.value)}
-                        className="w-full px-2 py-2 border-2 border-black font-bold bg-white focus:outline-none"
+                        className="w-full px-2.5 py-2 border border-slate-300 rounded-xl text-xs font-medium bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
                       >
                         <option value="CONTAINS">CONTAINS</option>
                         <option value="STARTS_WITH">STARTS WITH</option>
@@ -4419,11 +4633,11 @@ export default function App() {
                     </div>
 
                     <div>
-                      <label className="block font-black text-black uppercase mb-1">Voucher Type</label>
+                      <label className="block text-slate-700 font-semibold mb-1">Voucher Type</label>
                       <select
                         value={ruleVoucherType}
                         onChange={(e) => setRuleVoucherType(e.target.value)}
-                        className="w-full px-2 py-2 border-2 border-black font-bold bg-white focus:outline-none"
+                        className="w-full px-2.5 py-2 border border-slate-300 rounded-xl text-xs font-medium bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
                       >
                         <option value="Payment">Payment</option>
                         <option value="Receipt">Receipt</option>
@@ -4434,84 +4648,84 @@ export default function App() {
                   </div>
 
                   <div>
-                    <label className="block font-black text-black uppercase mb-1">Target Counter Ledger Name</label>
+                    <label className="block text-slate-700 font-semibold mb-1">Target Counter Ledger Name</label>
                     <input
                       type="text"
                       required
                       placeholder="e.g. Electricity Expenses"
                       value={ruleLedgerInput}
                       onChange={(e) => setRuleLedgerInput(e.target.value)}
-                      className="w-full px-3 py-2 border-2 border-black font-bold bg-white focus:outline-none focus:bg-yellow-50"
+                      className="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-xs font-medium bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all"
                     />
                   </div>
 
                   <div>
-                    <label className="block font-black text-black uppercase mb-1">Category</label>
+                    <label className="block text-slate-700 font-semibold mb-1">Category</label>
                     <input
                       type="text"
                       placeholder="e.g. Utilities, Vendor, Salary"
                       value={ruleCategoryInput}
                       onChange={(e) => setRuleCategoryInput(e.target.value)}
-                      className="w-full px-3 py-2 border-2 border-black font-bold bg-white focus:outline-none focus:bg-yellow-50"
+                      className="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-xs font-medium bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all"
                     />
                   </div>
 
                   <button
                     type="submit"
-                    className="w-full py-2.5 px-4 border-2 border-black font-black text-black bg-[#ffd615] hover:bg-yellow-400 uppercase shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-all mt-2"
+                    className="w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-semibold text-xs shadow-sm transition-all mt-2"
                   >
-                    SAVE LEDGER RULE
+                    Save Ledger Rule
                   </button>
                 </form>
               </div>
 
               {/* Right: Existing Rules Directory */}
-              <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 space-y-4 lg:col-span-2">
-                <div className="flex justify-between items-center border-b-2 border-black pb-2">
-                  <h4 className="text-md font-black text-black uppercase">Active Rules Directory ({userRules.length})</h4>
+              <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-6 space-y-4 lg:col-span-2">
+                <div className="flex justify-between items-center border-b border-slate-100 pb-2.5">
+                  <h4 className="text-sm font-bold text-slate-900 tracking-tight">Active Rules Directory ({userRules.length})</h4>
                   <button
                     onClick={fetchUserRules}
-                    className="text-xs font-black underline hover:no-underline"
+                    className="text-xs font-semibold text-indigo-600 hover:text-indigo-500 hover:underline"
                   >
                     Refresh
                   </button>
                 </div>
 
                 {userRules.length === 0 ? (
-                  <div className="py-8 text-center text-slate-500 font-bold text-xs">
+                  <div className="py-10 text-center text-slate-400 font-medium text-xs">
                     No custom ledger rules created yet. Add rules on the left to automate ledger mapping!
                   </div>
                 ) : (
-                  <div className="overflow-x-auto max-h-[380px]">
-                    <table className="min-w-full divide-y divide-black border-2 border-black text-xs">
-                      <thead className="bg-slate-100 font-black text-black uppercase border-b border-black">
+                  <div className="overflow-x-auto rounded-xl border border-slate-200 max-h-[380px]">
+                    <table className="min-w-full divide-y divide-slate-100 text-xs">
+                      <thead className="bg-slate-50 text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200 sticky top-0">
                         <tr>
-                          <th className="px-3 py-2 text-left border-r border-black">Rule Name</th>
-                          <th className="px-3 py-2 text-left border-r border-black">Pattern</th>
-                          <th className="px-3 py-2 text-center border-r border-black">Type</th>
-                          <th className="px-3 py-2 text-left border-r border-black">Assigned Ledger</th>
-                          <th className="px-3 py-2 text-center border-r border-black">Voucher</th>
-                          <th className="px-3 py-2 text-center">Action</th>
+                          <th className="px-3.5 py-2.5 text-left font-bold">Rule Name</th>
+                          <th className="px-3.5 py-2.5 text-left font-bold">Pattern</th>
+                          <th className="px-3.5 py-2.5 text-center font-bold">Type</th>
+                          <th className="px-3.5 py-2.5 text-left font-bold">Assigned Ledger</th>
+                          <th className="px-3.5 py-2.5 text-center font-bold">Voucher</th>
+                          <th className="px-3.5 py-2.5 text-center font-bold">Action</th>
                         </tr>
                       </thead>
-                      <tbody className="bg-white divide-y divide-black font-bold text-black">
+                      <tbody className="bg-white divide-y divide-slate-100 font-medium text-slate-800">
                         {userRules.map((rule) => (
-                          <tr key={rule.id} className="hover:bg-slate-50">
-                            <td className="px-3 py-2.5 border-r border-black font-black">{rule.rule_name}</td>
-                            <td className="px-3 py-2.5 border-r border-black font-mono uppercase text-slate-800">{rule.pattern}</td>
-                            <td className="px-3 py-2.5 border-r border-black text-center text-[10px]">
-                              <span className="bg-slate-100 px-1 py-0.5 border border-black font-mono">
+                          <tr key={rule.id} className="hover:bg-slate-50/80 transition-colors">
+                            <td className="px-3.5 py-2.5 font-semibold text-slate-900">{rule.rule_name}</td>
+                            <td className="px-3.5 py-2.5 font-mono uppercase text-slate-600 text-[11px]">{rule.pattern}</td>
+                            <td className="px-3.5 py-2.5 text-center">
+                              <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-[10px] font-mono">
                                 {rule.match_type}
                               </span>
                             </td>
-                            <td className="px-3 py-2.5 border-r border-black text-emerald-700 font-bold">{rule.ledger_name}</td>
-                            <td className="px-3 py-2.5 border-r border-black text-center text-[10px]">{rule.voucher_type}</td>
-                            <td className="px-3 py-2 text-center">
+                            <td className="px-3.5 py-2.5 text-emerald-700 font-semibold">{rule.ledger_name}</td>
+                            <td className="px-3.5 py-2.5 text-center text-[11px] text-slate-600">{rule.voucher_type}</td>
+                            <td className="px-3.5 py-2.5 text-center">
                               <button
                                 onClick={() => handleDeleteRule(rule.id)}
-                                className="px-2 py-0.5 bg-white hover:bg-[#ff5757] hover:text-white border border-black text-[10px] font-black uppercase transition-colors"
+                                className="text-slate-400 hover:text-rose-600 text-xs font-semibold transition-colors"
                               >
-                                DELETE
+                                Delete
                               </button>
                             </td>
                           </tr>
@@ -4534,28 +4748,28 @@ export default function App() {
               /* --- 1. INDIVIDUAL CLIENT DOSSIER VIEW --- */
               <div className="space-y-6">
                 {/* Back Navigation & Client Header */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-black text-white p-6 border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)]">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900 text-white p-6 rounded-2xl border border-slate-800 shadow-md">
                   <div>
                     <button
                       type="button"
                       onClick={() => setSelectedDossierClient(null)}
-                      className="inline-flex items-center text-xs font-black uppercase text-[#ffd615] hover:underline mb-2"
+                      className="inline-flex items-center text-xs font-semibold text-indigo-400 hover:text-indigo-300 hover:underline mb-2 transition-colors"
                     >
                       ← Back to All Clients
                     </button>
-                    <div className="flex flex-wrap items-center gap-3">
-                      <h2 className="text-2xl font-black uppercase tracking-tight text-white">
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <h2 className="text-xl font-bold tracking-tight text-white">
                         {selectedDossierClient.name}
                       </h2>
-                      <span className="bg-[#ffd615] text-black text-xs font-black px-2 py-0.5 border border-black uppercase">
+                      <span className="bg-slate-800 text-indigo-300 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-slate-700">
                         FY {selectedDossierClient.financial_year || '2024-25'}
                       </span>
-                      <span className="bg-[#3affaa] text-black text-xs font-black px-2 py-0.5 border border-black uppercase">
+                      <span className="bg-emerald-500/20 text-emerald-400 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-emerald-500/30">
                         {selectedDossierClient.business_type || 'Proprietorship'}
                       </span>
                     </div>
                     {selectedDossierClient.notes && (
-                      <p className="text-xs font-mono text-zinc-300 mt-1 max-w-xl truncate">
+                      <p className="text-xs text-slate-400 mt-1 max-w-xl truncate font-medium">
                         {selectedDossierClient.notes}
                       </p>
                     )}
@@ -4567,14 +4781,14 @@ export default function App() {
                         setActiveClientId(selectedDossierClient.id);
                         setActiveTab('convert');
                       }}
-                      className="px-4 py-2 bg-[#ffd615] text-black font-black text-xs border-2 border-black hover:bg-yellow-400 shadow-[3px_3px_0px_rgba(255,255,255,1)] uppercase active:translate-x-[1px] active:translate-y-[1px]"
+                      className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-xl shadow-sm transition-all"
                     >
                       + Import Statement PDF
                     </button>
                     <button
                       type="button"
                       onClick={() => handleOpenClientModal(selectedDossierClient)}
-                      className="px-3 py-2 bg-white text-black font-black text-xs border-2 border-black hover:bg-slate-200 shadow-[2px_2px_0px_rgba(255,255,255,1)] uppercase"
+                      className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs rounded-xl border border-slate-700 transition-all"
                     >
                       Edit ✏️
                     </button>
@@ -4583,53 +4797,53 @@ export default function App() {
 
                 {/* Dossier Meta KPI Bar */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-white border-4 border-black p-4 shadow-[4px_4px_0px_rgba(0,0,0,1)]">
-                    <span className="text-[10px] font-black uppercase text-slate-500 block">Tax Identifiers</span>
-                    <span className="text-sm font-black font-mono text-black block mt-1">
+                  <div className="bg-white rounded-2xl border border-slate-200/90 p-4.5 shadow-sm">
+                    <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Tax Identifiers</span>
+                    <span className="text-sm font-bold font-mono text-slate-900 block mt-1">
                       {selectedDossierClient.pan || 'NO PAN'}
                     </span>
-                    <span className="text-[10px] font-mono text-slate-600 truncate block">
+                    <span className="text-[11px] font-mono text-slate-500 truncate block mt-0.5">
                       {selectedDossierClient.gstin || 'Unregistered / No GST'}
                     </span>
                   </div>
-                  <div className="bg-white border-4 border-black p-4 shadow-[4px_4px_0px_rgba(0,0,0,1)]">
-                    <span className="text-[10px] font-black uppercase text-slate-500 block">Total Statements Converted</span>
-                    <span className="text-2xl font-black text-black block mt-1">
+                  <div className="bg-white rounded-2xl border border-slate-200/90 p-4.5 shadow-sm">
+                    <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Statements Converted</span>
+                    <span className="text-2xl font-bold font-mono text-slate-900 block mt-1">
                       {dossierData ? dossierData.total_statements : (selectedDossierClient.conversions_count || 0)}
                     </span>
                   </div>
-                  <div className="bg-white border-4 border-black p-4 shadow-[4px_4px_0px_rgba(0,0,0,1)]">
-                    <span className="text-[10px] font-black uppercase text-slate-500 block">Total Vouchers Generated</span>
-                    <span className="text-2xl font-black text-emerald-600 block mt-1">
+                  <div className="bg-white rounded-2xl border border-slate-200/90 p-4.5 shadow-sm">
+                    <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Vouchers Generated</span>
+                    <span className="text-2xl font-bold font-mono text-emerald-600 block mt-1">
                       {dossierData ? dossierData.total_vouchers : (selectedDossierClient.vouchers_count || 0)}
                     </span>
                   </div>
-                  <div className="bg-white border-4 border-black p-4 shadow-[4px_4px_0px_rgba(0,0,0,1)]">
-                    <span className="text-[10px] font-black uppercase text-slate-500 block">Associated Bank Accounts</span>
-                    <span className="text-xs font-bold text-slate-800 block mt-1 truncate" title={dossierData?.bank_accounts?.join(', ')}>
+                  <div className="bg-white rounded-2xl border border-slate-200/90 p-4.5 shadow-sm">
+                    <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Associated Bank Accounts</span>
+                    <span className="text-xs font-semibold text-slate-800 block mt-1 truncate" title={dossierData?.bank_accounts?.join(', ')}>
                       {dossierData?.bank_accounts?.length > 0 ? dossierData.bank_accounts.join(', ') : 'Statements Pending'}
                     </span>
                   </div>
                 </div>
 
                 {/* Financial Year Monthly Reconciliation Tracker (April - March) */}
-                <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0px_rgba(0,0,0,1)] space-y-4">
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b-2 border-black pb-3">
+                <div className="bg-white rounded-2xl border border-slate-200/90 p-6 shadow-sm space-y-4">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-100 pb-3">
                     <div>
-                      <h3 className="text-lg font-black uppercase text-black">
-                        📅 Financial Year Reconciliation Tracker (April to March)
+                      <h3 className="text-base font-bold text-slate-900 tracking-tight flex items-center space-x-2">
+                        <span>📅 Financial Year Reconciliation Tracker (April to March)</span>
                       </h3>
-                      <p className="text-xs font-bold text-slate-600 mt-0.5">
+                      <p className="text-xs text-slate-500 font-medium mt-0.5">
                         Audit completion checklist for FY {selectedDossierClient.financial_year || '2024-25'}. Green signifies completed statement imports; yellow indicates missing months.
                       </p>
                     </div>
-                    <span className="bg-[#3affaa] text-black text-[10px] font-black px-2 py-1 border border-black uppercase">
+                    <span className="bg-emerald-50 text-emerald-700 text-[10px] font-semibold px-2.5 py-1 rounded-full border border-emerald-200 uppercase">
                       ✓ Audit Matrix Active
                     </span>
                   </div>
 
                   {dossierLoading ? (
-                    <div className="py-12 text-center text-sm font-bold text-slate-500">
+                    <div className="py-12 text-center text-xs font-medium text-slate-400">
                       Loading financial year dossier...
                     </div>
                   ) : (
@@ -4637,43 +4851,43 @@ export default function App() {
                       {(dossierData?.monthly_matrix || []).map((m, idx) => (
                         <div
                           key={idx}
-                          className={`p-3 border-2 border-black flex flex-col justify-between h-32 transition-all ${
+                          className={`p-3.5 rounded-xl border flex flex-col justify-between h-32 transition-all shadow-sm ${
                             m.is_completed
-                              ? 'bg-emerald-50 border-emerald-800 shadow-[3px_3px_0px_rgba(16,185,129,1)]'
-                              : 'bg-amber-50/50 border-amber-400 shadow-[2px_2px_0px_rgba(0,0,0,1)]'
+                              ? 'bg-emerald-50/60 border-emerald-200 hover:border-emerald-300'
+                              : 'bg-slate-50/80 border-slate-200 hover:border-slate-300'
                           }`}
                         >
                           <div>
                             <div className="flex items-center justify-between">
-                              <span className="text-xs font-black uppercase text-black">
+                              <span className="text-xs font-bold text-slate-900 uppercase">
                                 {m.month}
                               </span>
-                              <span className="text-[10px] font-mono text-slate-500 font-bold">
+                              <span className="text-[10px] font-mono text-slate-400 font-medium">
                                 '{String(m.year).slice(-2)}
                               </span>
                             </div>
                             <div className="mt-2">
                               {m.is_completed ? (
-                                <span className="inline-block bg-[#3affaa] text-black text-[9px] font-black uppercase px-1.5 py-0.5 border border-black">
+                                <span className="inline-block bg-emerald-100 text-emerald-800 text-[9px] font-bold uppercase px-2 py-0.5 rounded-full">
                                   ✓ Converted
                                 </span>
                               ) : (
-                                <span className="inline-block bg-amber-200 text-amber-900 text-[9px] font-black uppercase px-1.5 py-0.5 border border-black">
+                                <span className="inline-block bg-amber-100 text-amber-800 text-[9px] font-semibold uppercase px-2 py-0.5 rounded-full">
                                   ⏳ Pending
                                 </span>
                               )}
                             </div>
                           </div>
 
-                          <div className="pt-2 border-t border-slate-300 flex items-center justify-between">
+                          <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between text-xs">
                             {m.is_completed ? (
-                              <div className="text-[10px] font-bold text-slate-700">
+                              <div className="text-[11px] font-medium text-slate-600">
                                 <div>{m.vouchers_count} Vouchers</div>
                                 {m.latest_conversion_id && (
                                   <button
                                     type="button"
                                     onClick={() => handleDownloadCachedXml(m.latest_conversion_id, selectedDossierClient.name, m.month)}
-                                    className="text-[9px] text-blue-700 font-black underline uppercase"
+                                    className="text-[10px] text-indigo-600 font-semibold hover:underline"
                                   >
                                     Get XML 📥
                                   </button>
@@ -4686,7 +4900,7 @@ export default function App() {
                                   setActiveClientId(selectedDossierClient.id);
                                   setActiveTab('convert');
                                 }}
-                                className="text-[9px] bg-black text-white hover:bg-zinc-800 px-1.5 py-0.5 border border-black uppercase font-black"
+                                className="text-[10px] bg-slate-900 hover:bg-slate-800 text-white px-2 py-0.5 rounded-md font-semibold transition-all"
                               >
                                 + Upload
                               </button>
@@ -4699,64 +4913,64 @@ export default function App() {
                 </div>
 
                 {/* Client's Cloud XML Vault Table */}
-                <div className="bg-white border-4 border-black p-6 shadow-[8px_8px_0px_rgba(0,0,0,1)] space-y-4">
-                  <div className="flex justify-between items-center border-b-2 border-black pb-3">
-                    <h3 className="text-lg font-black uppercase text-black">
+                <div className="bg-white rounded-2xl border border-slate-200/90 p-6 shadow-sm space-y-4">
+                  <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                    <h3 className="text-base font-bold text-slate-900 tracking-tight">
                       ☁️ Client Cloud XML Vault ({dossierData?.conversions?.length || 0} Files)
                     </h3>
-                    <span className="text-xs font-bold text-slate-500">
+                    <span className="text-xs text-slate-500 font-medium">
                       Permanent cloud archive for this client. Download anytime on any device.
                     </span>
                   </div>
 
                   {(!dossierData?.conversions || dossierData.conversions.length === 0) ? (
-                    <p className="text-slate-500 font-bold text-sm py-6 text-center">
+                    <p className="text-slate-400 font-medium text-xs py-8 text-center">
                       No converted Tally XML files for this client yet. Convert a bank statement or CSV to automatically store it in the cloud vault.
                     </p>
                   ) : (
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full divide-y divide-black border-2 border-black">
-                        <thead className="bg-[#ffd615] text-[10px] font-black text-black uppercase tracking-wider border-b-2 border-black">
+                    <div className="overflow-x-auto rounded-xl border border-slate-200">
+                      <table className="min-w-full divide-y divide-slate-100 text-xs">
+                        <thead className="bg-slate-50 text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200">
                           <tr>
-                            <th className="px-4 py-2.5 text-left border-r border-black">Date Converted</th>
-                            <th className="px-4 py-2.5 text-left border-r border-black">File Name / Bank</th>
-                            <th className="px-4 py-2.5 text-left border-r border-black">Statement Period</th>
-                            <th className="px-4 py-2.5 text-center border-r border-black">Vouchers</th>
-                            <th className="px-4 py-2.5 text-center border-r border-black">Size</th>
-                            <th className="px-4 py-2.5 text-right">Actions</th>
+                            <th className="px-4 py-2.5 text-left font-bold">Date Converted</th>
+                            <th className="px-4 py-2.5 text-left font-bold">File Name / Bank</th>
+                            <th className="px-4 py-2.5 text-left font-bold">Statement Period</th>
+                            <th className="px-4 py-2.5 text-center font-bold">Vouchers</th>
+                            <th className="px-4 py-2.5 text-center font-bold">Size</th>
+                            <th className="px-4 py-2.5 text-right font-bold">Actions</th>
                           </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-black text-xs font-bold text-black">
+                        <tbody className="bg-white divide-y divide-slate-100 font-medium text-slate-800">
                           {dossierData.conversions.map((conv) => (
-                            <tr key={conv.id} className="hover:bg-slate-50">
-                              <td className="px-4 py-3 border-r border-black whitespace-nowrap font-mono text-[11px]">
+                            <tr key={conv.id} className="hover:bg-slate-50/80 transition-colors">
+                              <td className="px-4 py-3 whitespace-nowrap font-mono text-[11px] text-slate-600">
                                 {formatDisplayDate(conv.created_at)}
                               </td>
-                              <td className="px-4 py-3 border-r border-black">
-                                <div className="font-black uppercase text-black">{conv.bank_name}</div>
-                                <div className="text-[10px] font-mono text-slate-500">{conv.file_name}</div>
+                              <td className="px-4 py-3">
+                                <div className="font-bold text-slate-900">{conv.bank_name}</div>
+                                <div className="text-[11px] font-mono text-slate-400 mt-0.5">{conv.file_name}</div>
                               </td>
-                              <td className="px-4 py-3 border-r border-black text-slate-700">
+                              <td className="px-4 py-3 text-slate-600">
                                 {conv.statement_period || 'Consolidated'}
                               </td>
-                              <td className="px-4 py-3 border-r border-black text-center font-mono">
+                              <td className="px-4 py-3 text-center font-mono font-semibold">
                                 {conv.transactions_count}
                               </td>
-                              <td className="px-4 py-3 border-r border-black text-center font-mono text-slate-600">
+                              <td className="px-4 py-3 text-center font-mono text-slate-500">
                                 {conv.xml_size_kb ? `${conv.xml_size_kb} KB` : '-'}
                               </td>
                               <td className="px-4 py-3 text-right whitespace-nowrap space-x-2">
                                 <button
                                   type="button"
                                   onClick={() => handleDownloadCachedXml(conv.id, conv.bank_name, conv.statement_period)}
-                                  className="px-3 py-1 bg-[#3fecff] hover:bg-cyan-300 border-2 border-black text-xs font-black uppercase shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px]"
+                                  className="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
                                 >
-                                  📥 DOWNLOAD XML
+                                  📥 Download XML
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => handleDeleteHistoryXml(conv.id)}
-                                  className="px-2 py-1 bg-white hover:bg-[#ff5757] hover:text-white border-2 border-black text-xs font-black uppercase transition-colors"
+                                  className="px-2 py-1 text-slate-400 hover:text-rose-600 rounded-lg text-xs font-semibold transition-colors"
                                   title="Delete from vault"
                                 >
                                   🗑️
@@ -4772,48 +4986,50 @@ export default function App() {
               </div>
             ) : (
               /* --- 2. ALL CLIENTS DIRECTORY & KPI GRID --- */
-              <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 space-y-6">
+              <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-6 sm:p-8 space-y-6">
                 {/* Header */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b-4 border-black pb-4">
-                  <div className="flex items-center space-x-3">
-                    <span className="text-3xl">🏢</span>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-5">
+                  <div className="flex items-center space-x-3.5">
+                    <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center p-1.5 text-xl flex-shrink-0">
+                      🏢
+                    </div>
                     <div>
-                      <h3 className="text-xl font-black text-black uppercase">Multi-Client Practice Workspace</h3>
-                      <p className="text-xs font-bold text-slate-500 mt-0.5">
-                        Manage all client companies, track monthly April to March financial year progress, and archive Tally XML files in the cloud.
+                      <h3 className="text-base font-bold text-slate-900 tracking-tight">Multi-Client Practice Workspace</h3>
+                      <p className="text-xs text-slate-500 font-medium mt-0.5">
+                        Manage client companies, track monthly April to March financial year progress, and archive Tally XML files in the cloud.
                       </p>
                     </div>
                   </div>
-                  <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                  <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
                     <input
                       type="text"
                       placeholder="Search clients by name, PAN, GSTIN..."
                       value={clientSearchQuery}
                       onChange={(e) => setClientSearchQuery(e.target.value)}
-                      className="px-3 py-2 border-2 border-black text-xs font-bold focus:outline-none w-full sm:w-64"
+                      className="px-3.5 py-2 border border-slate-300 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 w-full sm:w-64 placeholder:text-slate-400"
                     />
                     <button
                       type="button"
                       onClick={() => handleOpenClientModal()}
-                      className="px-4 py-2 bg-[#ffd615] hover:bg-yellow-400 border-2 border-black text-xs font-black uppercase shadow-[3px_3px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] whitespace-nowrap"
+                      className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-sm transition-all whitespace-nowrap"
                     >
-                      + ADD NEW CLIENT
+                      + Add New Client
                     </button>
                   </div>
                 </div>
 
                 {/* Clients Grid */}
                 {clientsList.length === 0 ? (
-                  <div className="py-12 text-center space-y-3">
+                  <div className="py-14 text-center space-y-3">
                     <div className="text-4xl">🏢</div>
-                    <p className="text-base font-black text-black uppercase">No Clients Added Yet</p>
-                    <p className="text-xs font-bold text-slate-500 max-w-md mx-auto">
+                    <p className="text-base font-bold text-slate-900">No Clients Added Yet</p>
+                    <p className="text-xs text-slate-500 max-w-md mx-auto font-medium">
                       Add your client companies to organize statements, track April to March financial year completion, and keep their Tally XML files saved in the cloud.
                     </p>
                     <button
                       type="button"
                       onClick={() => handleOpenClientModal()}
-                      className="mt-2 px-5 py-2.5 bg-[#ffd615] hover:bg-yellow-400 border-2 border-black font-black text-xs uppercase shadow-[4px_4px_0px_rgba(0,0,0,1)]"
+                      className="mt-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-semibold text-xs shadow-sm transition-all"
                     >
                       Create First Client
                     </button>
@@ -4835,35 +5051,35 @@ export default function App() {
                         return (
                           <div
                             key={client.id}
-                            className={`border-4 border-black p-5 flex flex-col justify-between space-y-4 transition-all ${
+                            className={`rounded-2xl border p-5 flex flex-col justify-between space-y-4 transition-all shadow-sm ${
                               isCurrentActive
-                                ? 'bg-yellow-50/70 shadow-[6px_6px_0px_rgba(0,0,0,1)] ring-2 ring-black'
-                                : 'bg-white shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_rgba(0,0,0,1)]'
+                                ? 'bg-indigo-50/30 border-indigo-500 ring-2 ring-indigo-500/20'
+                                : 'bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-md'
                             }`}
                           >
                             <div>
                               <div className="flex items-start justify-between gap-2">
                                 <div>
-                                  <h4 className="text-base font-black text-black uppercase tracking-tight">
+                                  <h4 className="text-sm font-bold text-slate-900 tracking-tight">
                                     {client.name}
                                   </h4>
-                                  <span className="text-[10px] font-black uppercase text-slate-500">
+                                  <span className="text-[11px] font-medium text-slate-500 block mt-0.5">
                                     {client.business_type || 'Proprietorship'}
                                   </span>
                                 </div>
-                                <span className="bg-[#ffd615] text-black text-[10px] font-black px-2 py-0.5 border border-black uppercase whitespace-nowrap">
+                                <span className="bg-slate-100 text-slate-700 text-[10px] font-semibold px-2 py-0.5 rounded-full border border-slate-200 whitespace-nowrap">
                                   FY {client.financial_year || '2024-25'}
                                 </span>
                               </div>
 
                               <div className="flex flex-wrap gap-1.5 mt-3">
                                 {client.pan && (
-                                  <span className="bg-slate-100 text-slate-800 text-[10px] font-mono font-bold px-1.5 py-0.5 border border-slate-300">
+                                  <span className="bg-slate-100 text-slate-700 text-[10px] font-mono font-medium px-2 py-0.5 rounded border border-slate-200">
                                     PAN: {client.pan}
                                   </span>
                                 )}
                                 {client.gstin && (
-                                  <span className="bg-slate-100 text-slate-800 text-[10px] font-mono font-bold px-1.5 py-0.5 border border-slate-300">
+                                  <span className="bg-slate-100 text-slate-700 text-[10px] font-mono font-medium px-2 py-0.5 rounded border border-slate-200">
                                     GST: {client.gstin}
                                   </span>
                                 )}
@@ -4871,38 +5087,38 @@ export default function App() {
                             </div>
 
                             {/* Stats */}
-                            <div className="grid grid-cols-2 gap-2 pt-2 border-t-2 border-black text-center">
-                              <div className="bg-slate-50 border border-black p-2">
-                                <span className="text-[9px] font-black uppercase text-slate-500 block">Statements</span>
-                                <span className="text-sm font-black text-black">{client.conversions_count || 0}</span>
+                            <div className="grid grid-cols-2 gap-2 pt-3 border-t border-slate-100 text-center">
+                              <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-200/70">
+                                <span className="text-[10px] font-semibold uppercase text-slate-400 block">Statements</span>
+                                <span className="text-sm font-bold font-mono text-slate-900">{client.conversions_count || 0}</span>
                               </div>
-                              <div className="bg-slate-50 border border-black p-2">
-                                <span className="text-[9px] font-black uppercase text-slate-500 block">Vouchers</span>
-                                <span className="text-sm font-black text-emerald-600">{client.vouchers_count || 0}</span>
+                              <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-200/70">
+                                <span className="text-[10px] font-semibold uppercase text-slate-400 block">Vouchers</span>
+                                <span className="text-sm font-bold font-mono text-emerald-600">{client.vouchers_count || 0}</span>
                               </div>
                             </div>
 
                             {/* Actions */}
-                            <div className="space-y-2 pt-2">
+                            <div className="space-y-2 pt-1">
                               <button
                                 type="button"
                                 onClick={() => {
                                   setSelectedDossierClient(client);
                                   fetchClientDossier(client.id);
                                 }}
-                                className="w-full py-2 bg-black text-white hover:bg-zinc-800 border-2 border-black text-xs font-black uppercase shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px]"
+                                className="w-full py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-sm transition-all"
                               >
-                                📂 OPEN DOSSIER & XML VAULT
+                                📂 Open Dossier & XML Vault
                               </button>
 
                               <div className="flex gap-2">
                                 <button
                                   type="button"
                                   onClick={() => setActiveClientId(isCurrentActive ? '' : client.id)}
-                                  className={`flex-1 py-1.5 text-[10px] font-black border-2 border-black uppercase transition-all ${
+                                  className={`flex-1 py-1.5 text-[11px] font-semibold rounded-lg border transition-all ${
                                     isCurrentActive
-                                      ? 'bg-[#3affaa] text-black font-black'
-                                      : 'bg-white hover:bg-yellow-100 text-black'
+                                      ? 'bg-emerald-50 text-emerald-800 border-emerald-300 font-bold'
+                                      : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-300'
                                   }`}
                                 >
                                   {isCurrentActive ? '✓ Active Workspace' : 'Set Active'}
@@ -4910,7 +5126,7 @@ export default function App() {
                                 <button
                                   type="button"
                                   onClick={() => handleOpenClientModal(client)}
-                                  className="px-2.5 py-1.5 bg-white hover:bg-slate-100 border-2 border-black text-[10px] font-black uppercase"
+                                  className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 text-xs transition-colors"
                                   title="Edit Client"
                                 >
                                   ✏️
@@ -4918,7 +5134,7 @@ export default function App() {
                                 <button
                                   type="button"
                                   onClick={() => handleDeleteClient(client.id, client.name)}
-                                  className="px-2.5 py-1.5 bg-white hover:bg-[#ff5757] hover:text-white border-2 border-black text-[10px] font-black uppercase"
+                                  className="px-2.5 py-1.5 bg-slate-100 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg text-xs transition-colors"
                                   title="Delete Client"
                                 >
                                   🗑️
@@ -4934,18 +5150,19 @@ export default function App() {
             )}
           </div>
         )}
-
         {/* --- TAB: CLOUD XML VAULT & CONVERSION ARCHIVE --- */}
         {activeTab === 'history' && (
-          <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 space-y-6 max-w-6xl mx-auto">
+          <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-6 sm:p-8 space-y-6 max-w-6xl mx-auto">
             
             {/* Header, Search and Filter */}
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b-4 border-black pb-4">
-              <div className="flex items-center space-x-3">
-                <span className="text-3xl">☁️</span>
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b border-slate-100 pb-5">
+              <div className="flex items-center space-x-3.5">
+                <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center p-1.5 text-xl flex-shrink-0">
+                  ☁️
+                </div>
                 <div>
-                  <h3 className="text-xl font-black text-black uppercase">Cloud XML Vault & Archive</h3>
-                  <p className="text-xs font-bold text-slate-500 mt-0.5">
+                  <h3 className="text-base font-bold text-slate-900 tracking-tight">Cloud XML Vault & Archive</h3>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">
                     All generated Tally Prime XML files are securely preserved in the cloud. Re-download anytime on any device.
                   </p>
                 </div>
@@ -4953,11 +5170,11 @@ export default function App() {
               
               <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
                 <div className="w-full sm:w-48">
-                  <label className="block text-[10px] font-black text-black uppercase mb-1">Filter By Client</label>
+                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Filter By Client</label>
                   <select
                     value={historyClientFilter}
                     onChange={(e) => setHistoryClientFilter(e.target.value)}
-                    className="w-full px-2.5 py-1.5 border-2 border-black text-xs font-bold bg-white focus:outline-none"
+                    className="w-full px-3 py-1.5 border border-slate-300 rounded-xl text-xs font-medium bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
                   >
                     <option value="">All Clients</option>
                     {clientsList.map(c => (
@@ -4967,13 +5184,13 @@ export default function App() {
                 </div>
 
                 <div className="w-full sm:w-64">
-                  <label className="block text-[10px] font-black text-black uppercase mb-1">Search Archives</label>
+                  <label className="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Search Archives</label>
                   <input
                     type="text"
                     placeholder="Search bank, period, file name..."
                     value={historySearch}
                     onChange={(e) => setHistorySearch(e.target.value)}
-                    className="w-full px-3 py-1.5 border-2 border-black text-xs font-bold focus:outline-none"
+                    className="w-full px-3.5 py-1.5 border border-slate-300 rounded-xl text-xs font-medium bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 placeholder:text-slate-400"
                   />
                 </div>
               </div>
@@ -4981,71 +5198,71 @@ export default function App() {
 
             {/* Table */}
             {filteredHistory.length === 0 ? (
-              <p className="text-slate-500 font-bold text-sm py-8 text-center">
+              <p className="text-slate-400 font-medium text-xs py-10 text-center">
                 No XML files matching the filter criteria found in Cloud Vault.
               </p>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-black border-2 border-black">
-                  <thead className="bg-[#ffd615] text-[10px] font-black text-black uppercase tracking-wider border-b-2 border-black">
+              <div className="overflow-x-auto rounded-xl border border-slate-200">
+                <table className="min-w-full divide-y divide-slate-100 text-xs">
+                  <thead className="bg-slate-50 text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200">
                     <tr>
-                      <th className="px-4 py-3 text-left border-r border-black">Date Converted</th>
-                      <th className="px-4 py-3 text-left border-r border-black">Client Company</th>
-                      <th className="px-4 py-3 text-left border-r border-black">Bank / Source</th>
-                      <th className="px-4 py-3 text-left border-r border-black">Statement Period</th>
-                      <th className="px-4 py-3 text-center border-r border-black">Vouchers</th>
-                      <th className="px-4 py-3 text-center border-r border-black">File Size</th>
-                      <th className="px-4 py-3 text-right">Actions</th>
+                      <th className="px-4 py-2.5 text-left font-bold">Date Converted</th>
+                      <th className="px-4 py-2.5 text-left font-bold">Client Company</th>
+                      <th className="px-4 py-2.5 text-left font-bold">Bank / Source</th>
+                      <th className="px-4 py-2.5 text-left font-bold">Statement Period</th>
+                      <th className="px-4 py-2.5 text-center font-bold">Vouchers</th>
+                      <th className="px-4 py-2.5 text-center font-bold">File Size</th>
+                      <th className="px-4 py-2.5 text-right font-bold">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-black text-xs font-bold text-black">
+                  <tbody className="bg-white divide-y divide-slate-100 font-medium text-slate-800">
                     {filteredHistory.map((conv) => (
-                      <tr key={conv.id} className="hover:bg-slate-50">
-                        <td className="px-4 py-3 border-r border-black whitespace-nowrap font-mono text-[11px]">
+                      <tr key={conv.id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="px-4 py-3 whitespace-nowrap font-mono text-[11px] text-slate-600">
                           {formatDisplayDate(conv.created_at)}
                         </td>
-                        <td className="px-4 py-3 border-r border-black font-black">
+                        <td className="px-4 py-3">
                           {conv.client_name ? (
-                            <span className="bg-blue-50 text-blue-900 border border-blue-400 px-1.5 py-0.5 text-[10px] font-black uppercase">
+                            <span className="bg-indigo-50 text-indigo-700 border border-indigo-200/80 px-2 py-0.5 rounded-full text-[10px] font-semibold">
                               🏢 {conv.client_name}
                             </span>
                           ) : (
-                            <span className="text-slate-400 text-[10px]">General / Unassigned</span>
+                            <span className="text-slate-400 text-[11px]">General / Unassigned</span>
                           )}
                         </td>
-                        <td className="px-4 py-3 border-r border-black">
-                          <div className="font-black uppercase text-black">{conv.bank_name}</div>
+                        <td className="px-4 py-3">
+                          <div className="font-bold text-slate-900">{conv.bank_name}</div>
                           {conv.source_type === 'CSV_TALLY' ? (
-                            <span className="text-[9px] bg-purple-100 text-purple-900 px-1 border border-purple-300 uppercase font-mono">
+                            <span className="text-[9px] bg-purple-50 text-purple-700 border border-purple-200 px-1.5 py-0.2 rounded font-mono uppercase inline-block mt-0.5">
                               CSV Import
                             </span>
                           ) : (
-                            <span className="text-[9px] bg-slate-100 text-slate-700 px-1 border border-slate-300 uppercase font-mono">
+                            <span className="text-[9px] bg-slate-100 text-slate-600 border border-slate-200 px-1.5 py-0.2 rounded font-mono uppercase inline-block mt-0.5">
                               PDF Statement
                             </span>
                           )}
                         </td>
-                        <td className="px-4 py-3 border-r border-black text-slate-700">
+                        <td className="px-4 py-3 text-slate-600">
                           {conv.statement_period || 'Consolidated Period'}
                         </td>
-                        <td className="px-4 py-3 border-r border-black text-center font-mono font-black">
+                        <td className="px-4 py-3 text-center font-mono font-semibold">
                           {conv.transactions_count}
                         </td>
-                        <td className="px-4 py-3 border-r border-black text-center font-mono text-slate-600">
+                        <td className="px-4 py-3 text-center font-mono text-slate-500">
                           {conv.xml_size_kb ? `${conv.xml_size_kb} KB` : '-'}
                         </td>
                         <td className="px-4 py-3 text-right whitespace-nowrap space-x-2">
                           <button
                             type="button"
                             onClick={() => handleDownloadCachedXml(conv.id, conv.bank_name, conv.statement_period)}
-                            className="inline-flex items-center px-3 py-1.5 border-2 border-black text-xs font-black bg-[#3fecff] hover:bg-cyan-300 text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] transition-all uppercase"
+                            className="inline-flex items-center px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
                           >
                             📥 GET XML
                           </button>
                           <button
                             type="button"
                             onClick={() => handleDeleteHistoryXml(conv.id)}
-                            className="px-2.5 py-1.5 bg-white hover:bg-[#ff5757] hover:text-white border-2 border-black text-xs font-black uppercase transition-colors"
+                            className="px-2 py-1 text-slate-400 hover:text-rose-600 rounded-lg text-xs font-semibold transition-colors"
                             title="Delete from cloud vault"
                           >
                             🗑️
@@ -5062,82 +5279,84 @@ export default function App() {
 
           {/* --- TAB 3: WALLET & PLANS --- */}
           {activeTab === 'wallet' && (
-            <div className="space-y-8 max-w-6xl mx-auto">
+            <div className="space-y-6 max-w-6xl mx-auto">
               
               {/* Purchase plans */}
               <div className="space-y-6">
-                <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6">
-                  <div className="flex items-center space-x-3 mb-6">
-                    <img src="/symbol_mark.svg" alt="SB" className="w-10 h-10 border-2 border-black bg-black shadow-[2px_2px_0px_rgba(0,0,0,1)] flex-shrink-0" />
+                <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-6 sm:p-8 space-y-6">
+                  <div className="flex items-center space-x-3.5 border-b border-slate-100 pb-4">
+                    <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center p-1.5 flex-shrink-0">
+                      <img src="/symbol_mark.svg" alt="SB" className="w-full h-full object-contain" />
+                    </div>
                     <div>
-                      <h3 className="text-xl font-black text-black uppercase mb-0.5">Buy Credit Vouchers</h3>
-                      <p className="text-xs font-bold text-slate-500">Purchase page credits directly. Base pricing is **25 paise per page** with bulk volume extra credits. Failed conversions are never charged.</p>
+                      <h3 className="text-base font-bold text-slate-900 tracking-tight">Buy Credit Vouchers</h3>
+                      <p className="text-xs text-slate-500 font-medium mt-0.5">Purchase page credits directly. Base pricing is 25 paise per page with bulk volume extra credits. Failed conversions are never charged.</p>
                     </div>
                   </div>
-                  
+
                   {purchaseMessage && (
-                    <div className="bg-[#3fecff] text-black border-2 border-black p-3 text-sm font-black shadow-[2px_2px_0px_rgba(0,0,0,1)] mb-6 uppercase">
+                    <div className="bg-indigo-50 text-indigo-700 border border-indigo-200 p-3.5 rounded-xl text-xs font-semibold">
                       {String(purchaseMessage)}
                     </div>
                   )}
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {/* Pack 1 */}
-                    <div className="border-4 border-black p-5 text-center flex flex-col justify-between bg-[#f4f2ed] shadow-[4px_4px_0px_rgba(0,0,0,1)]">
+                    <div className="rounded-2xl border border-slate-200/90 p-6 text-center flex flex-col justify-between bg-slate-50/60 shadow-sm hover:border-slate-300 transition-all">
                       <div>
-                        <h4 className="font-black text-black text-sm uppercase">Starter Pack</h4>
-                        <p className="text-[10px] font-bold text-slate-400 mt-1">₹0.25 per page</p>
-                        <div className="mt-4 text-4xl font-black text-black">100</div>
-                        <p className="text-[10px] font-black uppercase tracking-wider mt-0.5">Page Credits</p>
+                        <h4 className="font-bold text-slate-900 text-sm">Starter Pack</h4>
+                        <p className="text-[11px] font-medium text-slate-400 mt-0.5">₹0.25 per page</p>
+                        <div className="mt-4 text-3xl font-extrabold font-mono text-slate-900">100</div>
+                        <p className="text-[11px] font-semibold text-slate-500 mt-0.5">Page Credits</p>
                       </div>
                       <div className="mt-6">
                         <button
                           onClick={() => setCheckoutSession({ planName: 'Starter Pack', pages: 100, amount: 25.0 })}
-                          className="w-full py-2.5 px-3 border-2 border-black font-black text-black bg-white hover:bg-slate-50 uppercase text-xs"
+                          className="w-full py-2.5 px-3 bg-white hover:bg-slate-100 border border-slate-300 rounded-xl font-semibold text-slate-800 text-xs shadow-sm transition-all"
                         >
-                          BUY FOR ₹25
+                          Buy for ₹25
                         </button>
                       </div>
                     </div>
 
                     {/* Pack 2 */}
-                    <div className="border-4 border-black p-5 text-center flex flex-col justify-between bg-[#f4f2ed] shadow-[4px_4px_0px_rgba(0,0,0,1)] relative">
-                      <span className="absolute top-0 right-1/2 translate-x-1/2 -translate-y-1/2 px-3 py-1 border-2 border-black text-[9px] font-black uppercase tracking-wider bg-white text-black">
+                    <div className="rounded-2xl border border-slate-200/90 p-6 text-center flex flex-col justify-between bg-white shadow-sm hover:border-slate-300 transition-all relative">
+                      <span className="absolute top-0 right-1/2 translate-x-1/2 -translate-y-1/2 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/80 shadow-sm">
                         +100 EXTRA FREE
                       </span>
                       <div>
-                        <h4 className="font-black text-black text-sm uppercase">Standard Pack</h4>
-                        <p className="text-[10px] font-bold text-slate-500 mt-1">₹0.21 per page value</p>
-                        <div className="mt-4 text-4xl font-black text-black">600</div>
-                        <p className="text-[9px] font-black uppercase tracking-wider mt-0.5">Pages (500 + 100 Free)</p>
+                        <h4 className="font-bold text-slate-900 text-sm">Standard Pack</h4>
+                        <p className="text-[11px] font-medium text-slate-400 mt-0.5">₹0.21 per page value</p>
+                        <div className="mt-4 text-3xl font-extrabold font-mono text-slate-900">600</div>
+                        <p className="text-[11px] font-semibold text-slate-500 mt-0.5">Pages (500 + 100 Free)</p>
                       </div>
                       <div className="mt-6">
                         <button
                           onClick={() => setCheckoutSession({ planName: 'Standard Pack', pages: 500, amount: 125.0 })}
-                          className="w-full py-2.5 px-3 border-2 border-black font-black text-black bg-white hover:bg-slate-50 uppercase text-xs shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-all"
+                          className="w-full py-2.5 px-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-semibold text-xs shadow-sm transition-all"
                         >
-                          BUY FOR ₹125
+                          Buy for ₹125
                         </button>
                       </div>
                     </div>
 
                     {/* Pack 3 */}
-                    <div className="border-4 border-black p-5 text-center flex flex-col justify-between bg-[#ffd615] shadow-[6px_6px_0px_rgba(0,0,0,1)] relative border-black">
-                      <span className="absolute top-0 right-1/2 translate-x-1/2 -translate-y-1/2 px-3 py-1 border-2 border-black text-[9px] font-black uppercase tracking-wider bg-black text-[#3affaa]">
+                    <div className="rounded-2xl border-2 border-indigo-600 p-6 text-center flex flex-col justify-between bg-indigo-50/30 shadow-md relative">
+                      <span className="absolute top-0 right-1/2 translate-x-1/2 -translate-y-1/2 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-600 text-white shadow-sm">
                         +250 EXTRA FREE
                       </span>
                       <div>
-                        <h4 className="font-black text-black text-sm uppercase">Business Pack</h4>
-                        <p className="text-[10px] font-bold text-slate-600 mt-1">₹0.20 per page value</p>
-                        <div className="mt-4 text-4xl font-black text-black">1250</div>
-                        <p className="text-[9px] font-black uppercase tracking-wider mt-0.5">Pages (1000 + 250 Free)</p>
+                        <h4 className="font-bold text-slate-900 text-sm">Business Pack</h4>
+                        <p className="text-[11px] font-medium text-slate-500 mt-0.5">₹0.20 per page value</p>
+                        <div className="mt-4 text-3xl font-extrabold font-mono text-indigo-600">1,250</div>
+                        <p className="text-[11px] font-semibold text-slate-600 mt-0.5">Pages (1000 + 250 Free)</p>
                       </div>
                       <div className="mt-6">
                         <button
                           onClick={() => setCheckoutSession({ planName: 'Business Pack', pages: 1000, amount: 250.0 })}
-                          className="w-full py-2.5 px-3 border-2 border-black font-black text-black bg-white hover:bg-slate-50 uppercase text-xs shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[4px_4px_0px_rgba(0,0,0,1)] transition-all"
+                          className="w-full py-2.5 px-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-semibold text-xs shadow-sm transition-all"
                         >
-                          BUY FOR ₹250
+                          Buy for ₹250
                         </button>
                       </div>
                     </div>
@@ -5145,29 +5364,29 @@ export default function App() {
                 </div>
 
                 {/* Promo Code Redemption Card */}
-                <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 mt-6">
-                  <h4 className="text-md font-black text-black uppercase mb-1">Redeem Promo Code</h4>
-                  <p className="text-xs font-bold text-slate-500 mb-4">Enter a promo code below to claim free page credits (once in your lifetime per user account).</p>
+                <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-6 sm:p-8">
+                  <h4 className="text-sm font-bold text-slate-900 tracking-tight">Redeem Promo Code</h4>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5 mb-4">Enter a promo code below to claim free page credits (once per user account).</p>
                   
-                  <div className="flex space-x-2">
+                  <div className="flex space-x-2.5 max-w-md">
                     <input
                       type="text"
                       placeholder="e.g. SHEETBUDDY50"
                       value={promoCode}
                       onChange={(e) => setPromoCode(e.target.value)}
-                      className="flex-1 px-3 py-2.5 border-2 border-black text-sm font-bold bg-white focus:outline-none focus:bg-yellow-50"
+                      className="flex-1 px-3.5 py-2.5 border border-slate-300 rounded-xl text-xs font-medium uppercase font-mono bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
                     />
                     <button
                       onClick={handleClaimPromoCode}
                       disabled={redeemLoading || !promoCode.trim()}
-                      className="px-6 py-2.5 border-2 border-black font-black bg-[#ffd615] text-xs uppercase shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:bg-yellow-400 active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-all"
+                      className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-sm transition-all disabled:opacity-50"
                     >
-                      {redeemLoading ? 'REDEEMING...' : 'REDEEM CODE'}
+                      {redeemLoading ? 'Redeeming...' : 'Redeem Code'}
                     </button>
                   </div>
                   
                   {redeemStatusMsg && (
-                    <div className="mt-4 p-3 border-2 border-black text-xs font-black text-black uppercase bg-[#3fecff] shadow-[2px_2px_0px_rgba(0,0,0,1)]">
+                    <div className="mt-3.5 p-3 rounded-xl border border-indigo-200 text-xs font-semibold text-indigo-800 bg-indigo-50 max-w-md">
                       {String(redeemStatusMsg)}
                     </div>
                   )}
@@ -5175,31 +5394,31 @@ export default function App() {
               </div>
 
               {/* Wallet Ledger */}
-              <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 flex flex-col">
-                <h3 className="text-md font-black text-black border-b-2 border-black pb-3 mb-4 uppercase">Wallet Activity Log</h3>
+              <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-6 sm:p-8 flex flex-col">
+                <h3 className="text-sm font-bold text-slate-900 tracking-tight border-b border-slate-100 pb-3 mb-4">Wallet Activity Log</h3>
                 
                 {walletTransactions.length === 0 ? (
-                  <p className="text-slate-400 text-xs py-4 text-center font-bold">No transactions found.</p>
+                  <p className="text-slate-400 text-xs py-6 text-center font-medium">No transactions found.</p>
                 ) : (
-                  <div className="space-y-4 max-h-[350px] overflow-y-auto pr-1">
+                  <div className="space-y-3.5 max-h-[350px] overflow-y-auto pr-1 divide-y divide-slate-100">
                     {walletTransactions.map((tx) => (
-                      <div key={tx.id} className="flex justify-between items-start text-xs border-b border-slate-100 pb-2">
+                      <div key={tx.id} className="flex justify-between items-start text-xs pt-3.5 first:pt-0">
                         <div>
-                          <div className="flex items-center">
-                            <p className="font-bold text-black uppercase">{tx.description || tx.type}</p>
+                          <div className="flex items-center space-x-2">
+                            <p className="font-bold text-slate-900">{tx.description || tx.type}</p>
                             {tx.type === 'PURCHASE' && (
-                              <span className={`inline-block ml-2 px-1.5 py-0.5 text-[8px] font-black uppercase border border-black ${tx.status === 'APPROVED' || tx.status === 'COMPLETED' ? 'bg-[#3affaa] text-black' : tx.status === 'REJECTED' ? 'bg-[#ff5757] text-white' : 'bg-[#ffd615] text-black'}`}>
+                              <span className={`inline-block px-2 py-0.5 text-[9px] font-bold rounded-full uppercase ${tx.status === 'APPROVED' || tx.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : tx.status === 'REJECTED' ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
                                 {tx.status}
                               </span>
                             )}
                           </div>
-                          <p className="text-slate-400 mt-0.5">{formatDisplayDate(tx.created_at, false)}</p>
+                          <p className="text-slate-400 text-[11px] font-mono mt-0.5">{formatDisplayDate(tx.created_at, false)}</p>
                         </div>
                         <div className="text-right">
-                          <p className={`font-black text-sm ${tx.pages_purchased > 0 ? 'text-emerald-500' : 'text-[#ff4b3f]'}`}>
+                          <p className={`font-mono font-bold text-sm ${tx.pages_purchased > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
                             {tx.pages_purchased > 0 ? `+${tx.pages_purchased}` : tx.pages_purchased}
                           </p>
-                          {tx.amount_in_inr > 0 && <p className="text-[10px] font-bold text-slate-500">₹{tx.amount_in_inr}</p>}
+                          {tx.amount_in_inr > 0 && <p className="text-[11px] font-mono text-slate-400">₹{tx.amount_in_inr}</p>}
                         </div>
                       </div>
                     ))}
@@ -5209,93 +5428,91 @@ export default function App() {
 
             </div>
           )}
-
-          {/* --- TAB 5: ADMIN CONSOLE --- */}
           {activeTab === 'admin' && user.is_admin && (
             <div className="space-y-8 max-w-6xl mx-auto">
               
               {/* Analytics Header Grid */}
-              <div className="bg-[#ffd615] border-4 border-black shadow-[6px_6px_0px_rgba(0,0,0,1)] p-6">
-                <div className="flex items-center space-x-3 mb-4 border-b-2 border-black pb-3">
-                  <img src="/symbol_mark.svg" alt="Admin" className="w-10 h-10 border-2 border-black bg-black shadow-[2px_2px_0px_rgba(0,0,0,1)] flex-shrink-0" />
+              <div className="bg-indigo-600 text-white hover:bg-indigo-500 border border-slate-200/90 rounded-2xl shadow-sm p-6">
+                <div className="flex items-center space-x-3 mb-4 border-b border-slate-100 pb-3">
+                  <img src="/symbol_mark.svg" alt="Admin" className="w-10 h-10 border border-slate-200 rounded-xl bg-black shadow-sm flex-shrink-0" />
                   <div>
-                    <h3 className="text-xl font-black text-black uppercase">Sheet Buddy Global System Overview</h3>
+                    <h3 className="text-xl font-bold text-black uppercase">Sheet Buddy Global System Overview</h3>
                     <p className="text-xs font-bold text-black opacity-80">Administrative Management Dashboard</p>
                   </div>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="bg-white p-4 border-2 border-black shadow-[3px_3px_0px_rgba(0,0,0,1)]">
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Total Users Registered</p>
-                    <p className="text-2xl font-black text-black mt-1">{adminStats?.total_users || 0}</p>
+                  <div className="bg-white p-4 border border-slate-200 rounded-xl shadow-sm">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Users Registered</p>
+                    <p className="text-2xl font-bold text-black mt-1">{adminStats?.total_users || 0}</p>
                   </div>
                   
-                  <div className="bg-white p-4 border-2 border-black shadow-[3px_3px_0px_rgba(0,0,0,1)]">
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Total processed conversions</p>
-                    <p className="text-2xl font-black text-black mt-1">{adminStats?.total_conversions || 0}</p>
+                  <div className="bg-white p-4 border border-slate-200 rounded-xl shadow-sm">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total processed conversions</p>
+                    <p className="text-2xl font-bold text-black mt-1">{adminStats?.total_conversions || 0}</p>
                   </div>
                   
-                  <div className="bg-white p-4 border-2 border-black shadow-[3px_3px_0px_rgba(0,0,0,1)]">
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Global Credits Issued</p>
-                    <p className="text-2xl font-black text-black mt-1">{adminStats?.total_credits || 0}</p>
+                  <div className="bg-white p-4 border border-slate-200 rounded-xl shadow-sm">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Global Credits Issued</p>
+                    <p className="text-2xl font-bold text-black mt-1">{adminStats?.total_credits || 0}</p>
                   </div>
                   
-                  <div className="bg-white p-4 border-2 border-black shadow-[3px_3px_0px_rgba(0,0,0,1)]">
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-wider">Pending Support Queries</p>
-                    <p className="text-2xl font-black text-black mt-1">{adminStats?.pending_queries || 0}</p>
+                  <div className="bg-white p-4 border border-slate-200 rounded-xl shadow-sm">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Pending Support Queries</p>
+                    <p className="text-2xl font-bold text-black mt-1">{adminStats?.pending_queries || 0}</p>
                   </div>
                 </div>
               </div>
 
               {/* Create New User Card */}
-              <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 space-y-4">
-                <h4 className="text-md font-black text-black uppercase border-b-2 border-black pb-2">Create New Client Account</h4>
+              <div className="bg-white border border-slate-200/90 rounded-2xl shadow-sm p-6 space-y-4">
+                <h4 className="text-md font-bold text-black uppercase border-b border-slate-100 pb-2">Create New Client Account</h4>
                 <p className="text-xs font-bold text-slate-500">Since open self-registration is disabled, administrators provision accounts directly for clients here.</p>
                 <form onSubmit={handleAdminCreateUser} className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
                   <div>
-                    <label className="block text-xs font-black text-black uppercase mb-1">Email Address</label>
+                    <label className="block text-xs font-bold text-black uppercase mb-1">Email Address</label>
                     <input
                       type="email"
                       required
                       placeholder="client@example.com"
                       value={adminNewUserEmail}
                       onChange={(e) => setAdminNewUserEmail(e.target.value)}
-                      className="w-full px-3 py-2 border-2 border-black text-xs font-bold bg-white focus:outline-none"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold bg-white focus:outline-none"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-black text-black uppercase mb-1">Password</label>
+                    <label className="block text-xs font-bold text-black uppercase mb-1">Password</label>
                     <input
                       type="text"
                       required
                       placeholder="Initial password"
                       value={adminNewUserPassword}
                       onChange={(e) => setAdminNewUserPassword(e.target.value)}
-                      className="w-full px-3 py-2 border-2 border-black text-xs font-bold bg-white focus:outline-none"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold bg-white focus:outline-none"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-black text-black uppercase mb-1">Initial Page Credits</label>
+                    <label className="block text-xs font-bold text-black uppercase mb-1">Initial Page Credits</label>
                     <input
                       type="number"
                       required
                       min={0}
                       value={adminNewUserCredits}
                       onChange={(e) => setAdminNewUserCredits(e.target.value)}
-                      className="w-full px-3 py-2 border-2 border-black text-xs font-bold bg-white focus:outline-none"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold bg-white focus:outline-none"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-black text-black uppercase mb-1 text-center">Is Admin?</label>
-                    <div className="flex justify-center items-center h-[38px] border-2 border-black bg-slate-50">
+                    <label className="block text-xs font-bold text-black uppercase mb-1 text-center">Is Admin?</label>
+                    <div className="flex justify-center items-center h-[38px] border border-slate-200 rounded-xl bg-slate-50">
                       <input
                         type="checkbox"
                         checked={adminNewUserIsAdmin}
                         onChange={(e) => setAdminNewUserIsAdmin(e.target.checked)}
-                        className="w-4 h-4 border-2 border-black focus:ring-0 cursor-pointer accent-black"
+                        className="w-4 h-4 border border-slate-200 rounded-xl focus:ring-0 cursor-pointer accent-black"
                       />
                     </div>
                   </div>
@@ -5304,7 +5521,7 @@ export default function App() {
                     <button
                       type="submit"
                       disabled={adminNewUserLoading}
-                      className="w-full py-2.5 px-4 border-2 border-black font-black text-white bg-black hover:bg-zinc-800 uppercase shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-all text-xs disabled:opacity-50"
+                      className="w-full py-2.5 px-4 border border-slate-200 rounded-xl font-bold text-white bg-black hover:bg-zinc-800 uppercase shadow-sm active:scale-[0.99] transition-all text-xs disabled:opacity-50"
                     >
                       {adminNewUserLoading ? 'Creating...' : 'Create Account'}
                     </button>
@@ -5312,42 +5529,42 @@ export default function App() {
                 </form>
 
                 {adminNewUserError && (
-                  <div className="bg-[#ff5757] text-white p-3 border-2 border-black font-bold text-xs">
+                  <div className="bg-rose-600 text-white hover:bg-rose-500 text-white p-3 border border-slate-200 rounded-xl font-bold text-xs">
                     ERROR: {String(adminNewUserError)}
                   </div>
                 )}
 
                 {adminNewUserSuccess && (
-                  <div className="bg-[#25D366] text-white p-3 border-2 border-black font-bold text-xs">
+                  <div className="bg-emerald-600 text-white hover:bg-emerald-500 text-white p-3 border border-slate-200 rounded-xl font-bold text-xs">
                     SUCCESS: {adminNewUserSuccess}
                   </div>
                 )}
               </div>
 
               {/* Manage Users Card */}
-              <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 space-y-4">
-                <h4 className="text-md font-black text-black uppercase border-b-2 border-black pb-2">Manage User Profiles & Wallets</h4>
+              <div className="bg-white border border-slate-200/90 rounded-2xl shadow-sm p-6 space-y-4">
+                <h4 className="text-md font-bold text-black uppercase border-b border-slate-100 pb-2">Manage User Profiles & Wallets</h4>
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-black border-2 border-black">
-                    <thead className="bg-slate-100 text-[10px] font-black text-black uppercase tracking-wider border-b-2 border-black">
+                  <table className="min-w-full divide-y divide-slate-100 border border-slate-200 rounded-xl">
+                    <thead className="bg-slate-100 text-[10px] font-bold text-black uppercase tracking-wider border-b border-slate-100">
                       <tr>
-                        <th className="px-4 py-3 text-left border-r border-black">Email</th>
-                        <th className="px-4 py-3 text-center border-r border-black">Balance</th>
-                        <th className="px-4 py-3 text-center border-r border-black">Conversions</th>
-                        <th className="px-4 py-3 text-center border-r border-black">Admin Role</th>
+                        <th className="px-4 py-3 text-left border-r border-slate-100">Email</th>
+                        <th className="px-4 py-3 text-center border-r border-slate-100">Balance</th>
+                        <th className="px-4 py-3 text-center border-r border-slate-100">Conversions</th>
+                        <th className="px-4 py-3 text-center border-r border-slate-100">Admin Role</th>
                         <th className="px-4 py-3 text-center">Adjust Credits</th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-black text-xs font-bold text-black">
+                    <tbody className="bg-white divide-y divide-slate-100 text-xs font-bold text-black">
                       {adminUsers.map((u) => (
                         <tr key={u.id} className="hover:bg-slate-50">
-                          <td className="px-4 py-3 border-r border-black truncate max-w-xs">{u.email}</td>
-                          <td className="px-4 py-3 border-r border-black text-center">{u.page_credits}</td>
-                          <td className="px-4 py-3 border-r border-black text-center">{u.conversion_count}</td>
-                          <td className="px-4 py-3 border-r border-black text-center">
+                          <td className="px-4 py-3 border-r border-slate-100 truncate max-w-xs">{u.email}</td>
+                          <td className="px-4 py-3 border-r border-slate-100 text-center">{u.page_credits}</td>
+                          <td className="px-4 py-3 border-r border-slate-100 text-center">{u.conversion_count}</td>
+                          <td className="px-4 py-3 border-r border-slate-100 text-center">
                             <button
                               onClick={() => handleToggleAdmin(u.id)}
-                              className={`px-3 py-1.5 border-2 border-black text-[10px] font-black uppercase tracking-wide transition-all shadow-[1px_1px_0px_rgba(0,0,0,1)] ${u.is_admin ? 'bg-[#ffd615] text-black' : 'bg-white hover:bg-slate-100'}`}
+                              className={`px-3 py-1.5 border border-slate-200 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-all shadow-sm ${u.is_admin ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-white text-slate-700 hover:bg-slate-50'}`}
                             >
                               {u.is_admin ? 'ADMIN ✓' : 'USER'}
                             </button>
@@ -5358,11 +5575,11 @@ export default function App() {
                               placeholder="e.g. 50 or -20"
                               value={creditAdjustmentInputs[u.id] || ''}
                               onChange={(e) => setCreditAdjustmentInputs(prev => ({ ...prev, [u.id]: e.target.value }))}
-                              className="w-24 px-2 py-1 border-2 border-black text-xs font-mono font-bold bg-white focus:outline-none"
+                              className="w-24 px-2 py-1 border border-slate-200 rounded-xl text-xs font-mono font-bold bg-white focus:outline-none"
                             />
                             <button
                               onClick={() => handleAdjustCredits(u.id)}
-                              className="px-3 py-1.5 border-2 border-black text-[10px] font-black bg-[#3fecff] hover:bg-cyan-300 uppercase shadow-[1px_1px_0px_rgba(0,0,0,1)]"
+                              className="px-3 py-1.5 border border-slate-200 rounded-lg text-[10px] font-bold bg-slate-900 text-white hover:bg-slate-800 uppercase shadow-sm transition-all"
                             >
                               ADJUST
                             </button>
@@ -5375,32 +5592,32 @@ export default function App() {
               </div>
 
               {/* Global Conversion Audits Log */}
-              <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 space-y-4">
-                <h4 className="text-md font-black text-black uppercase border-b-2 border-black pb-2">Global System Conversion Log</h4>
+              <div className="bg-white border border-slate-200/90 rounded-2xl shadow-sm p-6 space-y-4">
+                <h4 className="text-md font-bold text-black uppercase border-b border-slate-100 pb-2">Global System Conversion Log</h4>
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-black border-2 border-black">
-                    <thead className="bg-slate-100 text-[10px] font-black text-black uppercase tracking-wider border-b-2 border-black">
+                  <table className="min-w-full divide-y divide-slate-100 border border-slate-200 rounded-xl">
+                    <thead className="bg-slate-100 text-[10px] font-bold text-black uppercase tracking-wider border-b border-slate-100">
                       <tr>
-                        <th className="px-4 py-3 text-left border-r border-black">Date</th>
-                        <th className="px-4 py-3 text-left border-r border-black">User Email</th>
-                        <th className="px-4 py-3 text-left border-r border-black">Bank Name</th>
-                        <th className="px-4 py-3 text-center border-r border-black">Pages</th>
-                        <th className="px-4 py-3 text-center border-r border-black">Transactions</th>
+                        <th className="px-4 py-3 text-left border-r border-slate-100">Date</th>
+                        <th className="px-4 py-3 text-left border-r border-slate-100">User Email</th>
+                        <th className="px-4 py-3 text-left border-r border-slate-100">Bank Name</th>
+                        <th className="px-4 py-3 text-center border-r border-slate-100">Pages</th>
+                        <th className="px-4 py-3 text-center border-r border-slate-100">Transactions</th>
                         <th className="px-4 py-3 text-right">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-black text-xs font-bold text-black">
+                    <tbody className="bg-white divide-y divide-slate-100 text-xs font-bold text-black">
                       {adminConversions.map((conv) => (
                         <tr key={conv.id} className="hover:bg-slate-50">
-                          <td className="px-4 py-3 border-r border-black whitespace-nowrap">{parseUtcDate(conv.created_at).toLocaleString()}</td>
-                          <td className="px-4 py-3 border-r border-black truncate max-w-xs">{conv.user_email}</td>
-                          <td className="px-4 py-3 border-r border-black font-black uppercase">{conv.bank_name}</td>
-                          <td className="px-4 py-3 border-r border-black text-center">{conv.pages_count}</td>
-                          <td className="px-4 py-3 border-r border-black text-center">{conv.transactions_count}</td>
+                          <td className="px-4 py-3 border-r border-slate-100 whitespace-nowrap">{parseUtcDate(conv.created_at).toLocaleString()}</td>
+                          <td className="px-4 py-3 border-r border-slate-100 truncate max-w-xs">{conv.user_email}</td>
+                          <td className="px-4 py-3 border-r border-slate-100 font-bold uppercase">{conv.bank_name}</td>
+                          <td className="px-4 py-3 border-r border-slate-100 text-center">{conv.pages_count}</td>
+                          <td className="px-4 py-3 border-r border-slate-100 text-center">{conv.transactions_count}</td>
                           <td className="px-4 py-3 text-right">
                             <button
                               onClick={() => handleDownloadCachedXml(conv.id, conv.bank_name, conv.statement_period)}
-                              className="px-3 py-1.5 border-2 border-black text-[10px] font-black bg-[#3fecff] hover:bg-cyan-300 uppercase shadow-[1px_1px_0px_rgba(0,0,0,1)]"
+                              className="px-3 py-1.5 border border-slate-200 rounded-lg text-[10px] font-bold bg-slate-900 text-white hover:bg-slate-800 uppercase shadow-sm transition-all"
                             >
                               GET XML
                             </button>
@@ -5413,34 +5630,34 @@ export default function App() {
               </div>
 
               {/* Payments Received Log */}
-              <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 space-y-4">
-                <h4 className="text-md font-black text-black uppercase border-b-2 border-black pb-2">Global Payments Received Log</h4>
+              <div className="bg-white border border-slate-200/90 rounded-2xl shadow-sm p-6 space-y-4">
+                <h4 className="text-md font-bold text-black uppercase border-b border-slate-100 pb-2">Global Payments Received Log</h4>
                 <div className="overflow-x-auto">
                   {adminPayments.length === 0 ? (
                     <p className="text-slate-500 font-bold text-sm py-4 text-center">No payment entries found.</p>
                   ) : (
-                    <table className="min-w-full divide-y divide-black border-2 border-black">
-                      <thead className="bg-slate-100 text-[10px] font-black text-black uppercase tracking-wider border-b-2 border-black">
+                    <table className="min-w-full divide-y divide-slate-100 border border-slate-200 rounded-xl">
+                      <thead className="bg-slate-100 text-[10px] font-bold text-black uppercase tracking-wider border-b border-slate-100">
                         <tr>
-                          <th className="px-4 py-3 text-left border-r border-black">Date</th>
-                          <th className="px-4 py-3 text-left border-r border-black">User Email</th>
-                          <th className="px-4 py-3 text-center border-r border-black">Pages Purchased</th>
-                          <th className="px-4 py-3 text-center border-r border-black">Amount Paid</th>
-                          <th className="px-4 py-3 text-left border-r border-black">Description</th>
-                          <th className="px-4 py-3 text-center border-r border-black">Status</th>
+                          <th className="px-4 py-3 text-left border-r border-slate-100">Date</th>
+                          <th className="px-4 py-3 text-left border-r border-slate-100">User Email</th>
+                          <th className="px-4 py-3 text-center border-r border-slate-100">Pages Purchased</th>
+                          <th className="px-4 py-3 text-center border-r border-slate-100">Amount Paid</th>
+                          <th className="px-4 py-3 text-left border-r border-slate-100">Description</th>
+                          <th className="px-4 py-3 text-center border-r border-slate-100">Status</th>
                           <th className="px-4 py-3 text-center">Actions</th>
                         </tr>
                       </thead>
-                      <tbody className="bg-white divide-y divide-black text-xs font-bold text-black">
+                      <tbody className="bg-white divide-y divide-slate-100 text-xs font-bold text-black">
                         {adminPayments.map((pay) => (
                           <tr key={pay.id} className="hover:bg-slate-50">
-                            <td className="px-4 py-3 border-r border-black whitespace-nowrap">{formatDisplayDate(pay.created_at)}</td>
-                            <td className="px-4 py-3 border-r border-black truncate max-w-xs">{pay.user_email}</td>
-                            <td className="px-4 py-3 border-r border-black text-center text-emerald-600 font-black">+{pay.pages_purchased}</td>
-                            <td className="px-4 py-3 border-r border-black text-center font-black">₹{pay.amount_in_inr.toFixed(2)}</td>
-                            <td className="px-4 py-3 border-r border-black truncate max-w-xs">{pay.description || 'UPI Credit Purchase'}</td>
-                            <td className="px-4 py-3 border-r border-black text-center whitespace-nowrap">
-                              <span className={`px-2 py-0.5 border border-black font-black uppercase text-[9px] ${pay.status === 'APPROVED' || pay.status === 'COMPLETED' ? 'bg-[#3affaa] text-black' : pay.status === 'REJECTED' ? 'bg-[#ff5757] text-white' : 'bg-[#ffd615] text-black'}`}>
+                            <td className="px-4 py-3 border-r border-slate-100 whitespace-nowrap">{formatDisplayDate(pay.created_at)}</td>
+                            <td className="px-4 py-3 border-r border-slate-100 truncate max-w-xs">{pay.user_email}</td>
+                            <td className="px-4 py-3 border-r border-slate-100 text-center text-emerald-600 font-bold">+{pay.pages_purchased}</td>
+                            <td className="px-4 py-3 border-r border-slate-100 text-center font-bold">₹{pay.amount_in_inr.toFixed(2)}</td>
+                            <td className="px-4 py-3 border-r border-slate-100 truncate max-w-xs">{pay.description || 'UPI Credit Purchase'}</td>
+                            <td className="px-4 py-3 border-r border-slate-100 text-center whitespace-nowrap">
+                              <span className={`px-2.5 py-0.5 border rounded-full font-bold uppercase text-[9px] ${pay.status === 'APPROVED' || pay.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : pay.status === 'REJECTED' ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-indigo-50 text-indigo-700 border-indigo-200'}`}>
                                 {pay.status}
                               </span>
                             </td>
@@ -5449,19 +5666,19 @@ export default function App() {
                                 <>
                                   <button
                                     onClick={() => handleApprovePayment(pay.id)}
-                                    className="px-2.5 py-1 border-2 border-black font-black text-black bg-[#3affaa] hover:bg-emerald-400 text-[10px] uppercase shadow-[1px_1px_0px_rgba(0,0,0,1)] active:translate-x-[0.5px] active:translate-y-[0.5px] active:shadow-[0.5px_0.5px_0px_rgba(0,0,0,1)] transition-all"
+                                    className="px-2.5 py-1 border border-emerald-300 rounded-lg font-bold bg-emerald-600 text-white hover:bg-emerald-700 text-[10px] uppercase shadow-sm transition-all"
                                   >
                                     Approve
                                   </button>
                                   <button
                                     onClick={() => handleRejectPayment(pay.id)}
-                                    className="px-2.5 py-1 border-2 border-black font-black text-white bg-[#ff5757] hover:bg-red-600 text-[10px] uppercase shadow-[1px_1px_0px_rgba(0,0,0,1)] active:translate-x-[0.5px] active:translate-y-[0.5px] active:shadow-[0.5px_0.5px_0px_rgba(0,0,0,1)] transition-all"
+                                    className="px-2.5 py-1 border border-rose-300 rounded-lg font-bold bg-rose-600 text-white hover:bg-rose-700 text-[10px] uppercase shadow-sm transition-all"
                                   >
                                     Reject
                                   </button>
                                 </>
                               ) : (
-                                <span className="text-[10px] text-slate-400 uppercase font-black">PROCESSED</span>
+                                <span className="text-[10px] text-slate-400 uppercase font-bold">PROCESSED</span>
                               )}
                             </td>
                           </tr>
@@ -5473,34 +5690,34 @@ export default function App() {
               </div>
 
               {/* User Support Queries Log */}
-              <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 space-y-4">
-                <h4 className="text-md font-black text-black uppercase border-b-2 border-black pb-2">User Support Queries</h4>
+              <div className="bg-white border border-slate-200/90 rounded-2xl shadow-sm p-6 space-y-4">
+                <h4 className="text-md font-bold text-black uppercase border-b border-slate-100 pb-2">User Support Queries</h4>
                 <div className="overflow-x-auto">
                   {adminQueries.length === 0 ? (
                     <p className="text-slate-500 font-bold text-sm py-4 text-center">No support queries found.</p>
                   ) : (
-                    <table className="min-w-full divide-y divide-black border-2 border-black">
-                      <thead className="bg-slate-100 text-[10px] font-black text-black uppercase tracking-wider border-b-2 border-black">
+                    <table className="min-w-full divide-y divide-slate-100 border border-slate-200 rounded-xl">
+                      <thead className="bg-slate-100 text-[10px] font-bold text-black uppercase tracking-wider border-b border-slate-100">
                         <tr>
-                          <th className="px-4 py-3 text-left border-r border-black">Date</th>
-                          <th className="px-4 py-3 text-left border-r border-black">User Email</th>
-                          <th className="px-4 py-3 text-left border-r border-black">WhatsApp Number</th>
-                          <th className="px-4 py-3 text-left border-r border-black">Subject</th>
+                          <th className="px-4 py-3 text-left border-r border-slate-100">Date</th>
+                          <th className="px-4 py-3 text-left border-r border-slate-100">User Email</th>
+                          <th className="px-4 py-3 text-left border-r border-slate-100">WhatsApp Number</th>
+                          <th className="px-4 py-3 text-left border-r border-slate-100">Subject</th>
                           <th className="px-4 py-3 text-left">Description</th>
                         </tr>
                       </thead>
-                      <tbody className="bg-white divide-y divide-black text-xs font-bold text-black">
+                      <tbody className="bg-white divide-y divide-slate-100 text-xs font-bold text-black">
                         {adminQueries.map((query) => (
                           <tr key={query.id} className="hover:bg-slate-50">
-                            <td className="px-4 py-3 border-r border-black whitespace-nowrap">{formatDisplayDate(query.created_at)}</td>
-                            <td className="px-4 py-3 border-r border-black truncate max-w-[200px]">{query.user_email}</td>
-                            <td className="px-4 py-3 border-r border-black whitespace-nowrap">
+                            <td className="px-4 py-3 border-r border-slate-100 whitespace-nowrap">{formatDisplayDate(query.created_at)}</td>
+                            <td className="px-4 py-3 border-r border-slate-100 truncate max-w-[200px]">{query.user_email}</td>
+                            <td className="px-4 py-3 border-r border-slate-100 whitespace-nowrap">
                               {query.whatsapp_number ? (
                                 <a 
                                   href={`https://wa.me/${query.whatsapp_number.replace(/\D/g, '')}`}
                                   target="_blank" 
                                   rel="noreferrer"
-                                  className="text-emerald-600 hover:underline font-black"
+                                  className="text-emerald-600 hover:underline font-bold"
                                 >
                                   {query.whatsapp_number}
                                 </a>
@@ -5508,7 +5725,7 @@ export default function App() {
                                 <span className="text-slate-400 font-normal">None Provided</span>
                               )}
                             </td>
-                            <td className="px-4 py-3 border-r border-black truncate max-w-[200px]">{query.subject}</td>
+                            <td className="px-4 py-3 border-r border-slate-100 truncate max-w-[200px]">{query.subject}</td>
                             <td className="px-4 py-3 font-medium text-slate-700">{query.description}</td>
                           </tr>
                         ))}
@@ -5521,45 +5738,45 @@ export default function App() {
               {/* Promo Codes Manager Section */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Left side: list of promo codes */}
-                <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 space-y-4 lg:col-span-2">
-                  <h4 className="text-md font-black text-black uppercase border-b-2 border-black pb-2">Promo Codes Directory</h4>
+                <div className="bg-white border border-slate-200/90 rounded-2xl shadow-sm p-6 space-y-4 lg:col-span-2">
+                  <h4 className="text-md font-bold text-black uppercase border-b border-slate-100 pb-2">Promo Codes Directory</h4>
                   <div className="overflow-x-auto">
                     {adminPromoCodes.length === 0 ? (
                       <p className="text-slate-500 font-bold text-sm py-4 text-center">No promo codes registered.</p>
                     ) : (
-                      <table className="min-w-full divide-y divide-black border-2 border-black text-xs">
-                        <thead className="bg-slate-100 font-black text-black uppercase border-b border-black">
+                      <table className="min-w-full divide-y divide-slate-100 border border-slate-200 rounded-xl text-xs">
+                        <thead className="bg-slate-50 font-bold text-slate-700 uppercase border-b border-slate-200">
                           <tr>
-                            <th className="px-3 py-2 text-left border-r border-black">Promo Code</th>
-                            <th className="px-3 py-2 text-center border-r border-black">Credits</th>
-                            <th className="px-3 py-2 text-left border-r border-black">Expiry Type</th>
-                            <th className="px-3 py-2 text-left border-r border-black">Expires At</th>
-                            <th className="px-3 py-2 text-center border-r border-black">Status</th>
+                            <th className="px-3 py-2 text-left border-r border-slate-100">Promo Code</th>
+                            <th className="px-3 py-2 text-center border-r border-slate-100">Credits</th>
+                            <th className="px-3 py-2 text-left border-r border-slate-100">Expiry Type</th>
+                            <th className="px-3 py-2 text-left border-r border-slate-100">Expires At</th>
+                            <th className="px-3 py-2 text-center border-r border-slate-100">Status</th>
                             <th className="px-3 py-2 text-center">Actions</th>
                           </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-black font-bold text-black">
+                        <tbody className="bg-white divide-y divide-slate-100 font-bold text-black">
                           {adminPromoCodes.map((promo) => (
                             <tr key={promo.id} className="hover:bg-slate-50">
-                              <td className="px-3 py-2.5 border-r border-black font-black uppercase text-slate-800">{promo.code}</td>
-                              <td className="px-3 py-2.5 border-r border-black text-center text-emerald-600 font-black">+{promo.credits}</td>
-                              <td className="px-3 py-2.5 border-r border-black truncate text-[10px]">
+                              <td className="px-3 py-2.5 border-r border-slate-100 font-bold uppercase text-slate-800">{promo.code}</td>
+                              <td className="px-3 py-2.5 border-r border-slate-100 text-center text-emerald-600 font-bold">+{promo.credits}</td>
+                              <td className="px-3 py-2.5 border-r border-slate-100 truncate text-[10px]">
                                 {promo.type === 'UNIVERSAL_ONCE' && 'One-time Universal'}
                                 {promo.type === 'PER_USER_ONCE' && 'One-time per User'}
                                 {promo.type === 'TIME_BASED' && 'Time-based'}
                               </td>
-                              <td className="px-3 py-2.5 border-r border-black text-slate-500 font-normal">
+                              <td className="px-3 py-2.5 border-r border-slate-100 text-slate-500 font-normal">
                                 {promo.expires_at ? formatDisplayDate(promo.expires_at) : 'Never'}
                               </td>
-                              <td className="px-3 py-2.5 border-r border-black text-center">
-                                <span className={`px-1.5 py-0.5 border border-black text-[9px] font-black uppercase ${promo.is_active ? 'bg-[#3affaa] text-black' : 'bg-[#ff5757] text-white'}`}>
+                              <td className="px-3 py-2.5 border-r border-slate-100 text-center">
+                                <span className={`px-2 py-0.5 border border-slate-200 rounded-full text-[9px] font-bold uppercase ${promo.is_active ? 'bg-emerald-50 text-emerald-700 border-emerald-200 text-black' : 'bg-rose-600 text-white hover:bg-rose-500 text-white'}`}>
                                   {promo.is_active ? 'Active' : 'Inactive'}
                                 </span>
                               </td>
                               <td className="px-3 py-2 text-center">
                                 <button
                                   onClick={() => handleTogglePromoCode(promo.id)}
-                                  className={`px-2 py-0.5 border border-black font-black text-[10px] uppercase shadow-[1px_1px_0px_rgba(0,0,0,1)] active:translate-x-[0.5px] active:translate-y-[0.5px] active:shadow-[0px_0px_0px_rgba(0,0,0,1)] transition-all ${promo.is_active ? 'bg-white text-black hover:bg-slate-100' : 'bg-[#3affaa] text-black hover:bg-emerald-400'}`}
+                                  className={`px-2.5 py-1 border rounded-lg font-bold text-[10px] uppercase shadow-sm transition-all ${promo.is_active ? 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50' : 'border-emerald-300 bg-emerald-600 text-white hover:bg-emerald-700'}`}
                                 >
                                   {promo.is_active ? 'Deactivate' : 'Activate'}
                                 </button>
@@ -5573,37 +5790,37 @@ export default function App() {
                 </div>
 
                 {/* Right side: create promo code form */}
-                <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 space-y-4">
-                  <h4 className="text-md font-black text-black uppercase border-b-2 border-black pb-2">Generate Promo Code</h4>
+                <div className="bg-white border border-slate-200/90 rounded-2xl shadow-sm p-6 space-y-4">
+                  <h4 className="text-md font-bold text-black uppercase border-b border-slate-100 pb-2">Generate Promo Code</h4>
                   <form onSubmit={handleCreatePromoCode} className="space-y-4">
                     <div>
-                      <label className="block text-[10px] font-black text-black uppercase mb-1">Code String</label>
+                      <label className="block text-[10px] font-bold text-black uppercase mb-1">Code String</label>
                       <input
                         type="text"
                         required
                         value={promoFormCode}
                         onChange={(e) => setPromoFormCode(e.target.value.toUpperCase())}
                         placeholder="e.g. WELCOME100"
-                        className="w-full px-3 py-2 border-2 border-black text-xs font-bold focus:outline-none bg-white"
+                        className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none bg-white"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-black text-black uppercase mb-1">Credits Awarded</label>
+                      <label className="block text-[10px] font-bold text-black uppercase mb-1">Credits Awarded</label>
                       <input
                         type="number"
                         required
                         value={promoFormCredits}
                         onChange={(e) => setPromoFormCredits(e.target.value)}
                         placeholder="50"
-                        className="w-full px-3 py-2 border-2 border-black text-xs font-bold focus:outline-none bg-white"
+                        className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none bg-white"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-black text-black uppercase mb-1">Expiry Type</label>
+                      <label className="block text-[10px] font-bold text-black uppercase mb-1">Expiry Type</label>
                       <select
                         value={promoFormType}
                         onChange={(e) => setPromoFormType(e.target.value)}
-                        className="w-full px-3 py-2 border-2 border-black text-xs font-black bg-white focus:outline-none"
+                        className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold bg-white focus:outline-none"
                       >
                         <option value="UNIVERSAL_ONCE">One-time Universal</option>
                         <option value="PER_USER_ONCE">One-time per User</option>
@@ -5613,26 +5830,26 @@ export default function App() {
 
                     {promoFormType === 'TIME_BASED' && (
                       <div>
-                        <label className="block text-[10px] font-black text-black uppercase mb-1">Expires At</label>
+                        <label className="block text-[10px] font-bold text-black uppercase mb-1">Expires At</label>
                         <input
                           type="datetime-local"
                           required
                           value={promoFormExpiresAt}
                           onChange={(e) => setPromoFormExpiresAt(e.target.value)}
-                          className="w-full px-3 py-2 border-2 border-black text-xs font-bold focus:outline-none bg-white"
+                          className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none bg-white"
                         />
                       </div>
                     )}
 
                     {promoFormError && (
-                      <div className="bg-[#ff5757] text-white p-2 border-2 border-black font-bold text-[10px] uppercase">
+                      <div className="bg-rose-600 text-white hover:bg-rose-500 text-white p-2 border border-slate-200 rounded-xl font-bold text-[10px] uppercase">
                         ERROR: {String(promoFormError)}
                       </div>
                     )}
 
                     <button
                       type="submit"
-                      className="w-full py-2.5 px-4 border-2 border-black font-black text-black bg-[#ffd615] hover:bg-yellow-400 uppercase shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-all text-xs"
+                      className="w-full py-2.5 px-4 border border-slate-200 rounded-xl font-bold text-black bg-indigo-600 text-white hover:bg-indigo-500 hover:bg-yellow-400 uppercase shadow-sm active:scale-[0.99] transition-all text-xs"
                     >
                       GENERATE CODE
                     </button>
@@ -5644,38 +5861,38 @@ export default function App() {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 
                 {/* Left side: list of supported formats */}
-                <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 space-y-4 lg:col-span-2">
-                  <h4 className="text-md font-black text-black uppercase border-b-2 border-black pb-2">Supported Banks & Parsers List</h4>
+                <div className="bg-white border border-slate-200/90 rounded-2xl shadow-sm p-6 space-y-4 lg:col-span-2">
+                  <h4 className="text-md font-bold text-black uppercase border-b border-slate-100 pb-2">Supported Banks & Parsers List</h4>
                   <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-black border-2 border-black text-xs">
-                      <thead className="bg-slate-100 font-black text-black uppercase tracking-wider border-b-2 border-black">
+                    <table className="min-w-full divide-y divide-slate-100 border border-slate-200 rounded-xl text-xs">
+                      <thead className="bg-slate-100 font-bold text-black uppercase tracking-wider border-b border-slate-100">
                         <tr>
-                          <th className="px-3 py-2 text-left border-r border-black">Name</th>
-                          <th className="px-3 py-2 text-center border-r border-black">Type</th>
-                          <th className="px-3 py-2 text-left border-r border-black">Match Patterns</th>
+                          <th className="px-3 py-2 text-left border-r border-slate-100">Name</th>
+                          <th className="px-3 py-2 text-center border-r border-slate-100">Type</th>
+                          <th className="px-3 py-2 text-left border-r border-slate-100">Match Patterns</th>
                           <th className="px-3 py-2 text-right">Actions</th>
                         </tr>
                       </thead>
-                      <tbody className="bg-white divide-y divide-black font-bold text-black">
+                      <tbody className="bg-white divide-y divide-slate-100 font-bold text-black">
                         {adminBanks.map((bank) => (
                           <tr key={bank.id} className="hover:bg-slate-50">
-                            <td className="px-3 py-2 border-r border-black font-black uppercase">{bank.name}</td>
-                            <td className="px-3 py-2 border-r border-black text-center">
-                              <span className={`px-2 py-0.5 border border-black font-black text-[9px] ${bank.parser_type === 'NATIVE' ? 'bg-[#ffd615]' : bank.parser_type === 'SIMULATOR' ? 'bg-cyan-200' : 'bg-emerald-200'}`}>
+                            <td className="px-3 py-2 border-r border-slate-100 font-bold uppercase">{bank.name}</td>
+                            <td className="px-3 py-2 border-r border-slate-100 text-center">
+                              <span className={`px-2 py-0.5 border border-slate-200 rounded-full font-bold text-[9px] ${bank.parser_type === 'NATIVE' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : bank.parser_type === 'SIMULATOR' ? 'bg-sky-50 text-sky-700 border-sky-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
                                 {bank.parser_type}
                               </span>
                             </td>
-                            <td className="px-3 py-2 border-r border-black font-mono">{bank.match_patterns}</td>
+                            <td className="px-3 py-2 border-r border-slate-100 font-mono">{bank.match_patterns}</td>
                             <td className="px-3 py-2 text-right space-x-1.5 whitespace-nowrap">
                               <button
                                 onClick={() => handleSelectEditBank(bank)}
-                                className="px-2 py-1 border-2 border-black font-black bg-white hover:bg-slate-100 uppercase text-[9px] shadow-[1px_1px_0px_rgba(0,0,0,1)]"
+                                className="px-2.5 py-1 border border-slate-200 rounded-lg font-bold bg-white hover:bg-slate-50 uppercase text-[9px] shadow-sm transition-all"
                               >
                                 EDIT
                               </button>
                               <button
                                 onClick={() => handleDeleteBankConfig(bank.id)}
-                                className="px-2 py-1 border-2 border-black font-black bg-white hover:bg-[#ff5757] hover:text-white uppercase text-[9px] shadow-[1px_1px_0px_rgba(0,0,0,1)]"
+                                className="px-2.5 py-1 border border-rose-200 rounded-lg font-bold bg-white text-rose-600 hover:bg-rose-50 uppercase text-[9px] shadow-sm transition-all"
                               >
                                 DELETE
                               </button>
@@ -5688,14 +5905,14 @@ export default function App() {
                 </div>
 
                 {/* Right side: Add / Edit bank config form */}
-                <div className="bg-white border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] p-6 space-y-4">
-                  <h4 className="text-md font-black text-black uppercase border-b-2 border-black pb-2">
+                <div className="bg-white border border-slate-200/90 rounded-2xl shadow-sm p-6 space-y-4">
+                  <h4 className="text-md font-bold text-black uppercase border-b border-slate-100 pb-2">
                     {selectedBankConfig ? "Edit Bank Config" : "Add Bank Format"}
                   </h4>
                   
                   <form onSubmit={handleSaveBankConfig} className="space-y-4 text-xs">
                     <div>
-                      <label className="block font-black text-black uppercase mb-1">Unique Bank Key</label>
+                      <label className="block font-bold text-black uppercase mb-1">Unique Bank Key</label>
                       <input
                         type="text"
                         placeholder="e.g. hdfc"
@@ -5703,36 +5920,36 @@ export default function App() {
                         disabled={selectedBankConfig !== null}
                         value={bankFormKey}
                         onChange={(e) => setBankFormKey(e.target.value)}
-                        className="w-full px-3 py-2 border-2 border-black font-bold bg-white focus:outline-none"
+                        className="w-full px-3 py-2 border border-slate-200 rounded-xl font-bold bg-white focus:outline-none"
                       />
                     </div>
 
                     <div>
-                      <label className="block font-black text-black uppercase mb-1">Bank Name</label>
+                      <label className="block font-bold text-black uppercase mb-1">Bank Name</label>
                       <input
                         type="text"
                         placeholder="e.g. HDFC Bank"
                         required
                         value={bankFormName}
                         onChange={(e) => setBankFormName(e.target.value)}
-                        className="w-full px-3 py-2 border-2 border-black font-bold bg-white focus:outline-none"
+                        className="w-full px-3 py-2 border border-slate-200 rounded-xl font-bold bg-white focus:outline-none"
                       />
                     </div>
 
                     <div>
-                      <label className="block font-black text-black uppercase mb-1">Match Patterns (comma-separated)</label>
+                      <label className="block font-bold text-black uppercase mb-1">Match Patterns (comma-separated)</label>
                       <input
                         type="text"
                         placeholder="e.g. HDFC, HDFCBANK"
                         required
                         value={bankFormPatterns}
                         onChange={(e) => setBankFormPatterns(e.target.value)}
-                        className="w-full px-3 py-2 border-2 border-black font-bold bg-white focus:outline-none"
+                        className="w-full px-3 py-2 border border-slate-200 rounded-xl font-bold bg-white focus:outline-none"
                       />
                     </div>
 
                     <div>
-                      <label className="block font-black text-black uppercase mb-1">Parser Type</label>
+                      <label className="block font-bold text-black uppercase mb-1">Parser Type</label>
                       <select
                         value={bankFormType}
                         onChange={(e) => {
@@ -5746,7 +5963,7 @@ export default function App() {
                             setBankFormConfigJson('{\n  \n}');
                           }
                         }}
-                        className="w-full px-3 py-2 border-2 border-black font-bold bg-white focus:outline-none"
+                        className="w-full px-3 py-2 border border-slate-200 rounded-xl font-bold bg-white focus:outline-none"
                       >
                         <option value="SIMULATOR">SIMULATOR</option>
                         <option value="RULE_BASED">RULE_BASED (COLUMN MAPPING)</option>
@@ -5756,7 +5973,7 @@ export default function App() {
 
                     <div>
                       <div className="flex justify-between items-center mb-1">
-                        <label className="block font-black text-black uppercase">Configuration JSON File</label>
+                        <label className="block font-bold text-black uppercase">Configuration JSON File</label>
                         <button
                           type="button"
                           onClick={() => {
@@ -5776,12 +5993,12 @@ export default function App() {
                         required
                         value={bankFormConfigJson}
                         onChange={(e) => setBankFormConfigJson(e.target.value)}
-                        className="w-full px-3 py-2 border-2 border-black font-mono font-bold bg-white focus:outline-none"
+                        className="w-full px-3 py-2 border border-slate-200 rounded-xl font-mono font-bold bg-white focus:outline-none"
                       />
                     </div>
 
                     {bankFormError && (
-                      <div className="bg-[#ff5757] text-white p-2.5 border-2 border-black font-bold text-[10px] uppercase">
+                      <div className="bg-rose-600 text-white hover:bg-rose-500 text-white p-2.5 border border-slate-200 rounded-xl font-bold text-[10px] uppercase">
                         ERROR: {String(bankFormError)}
                       </div>
                     )}
@@ -5789,7 +6006,7 @@ export default function App() {
                     <div className="pt-2 space-y-2">
                       <button
                         type="submit"
-                        className="w-full py-2.5 px-4 border-2 border-black font-black text-black bg-[#3affaa] hover:bg-emerald-400 uppercase shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-all"
+                        className="w-full py-2.5 px-4 border border-slate-200 rounded-xl font-bold text-black bg-emerald-600 text-white hover:bg-emerald-500 hover:bg-emerald-400 uppercase shadow-sm active:scale-[0.99] transition-all"
                       >
                         {selectedBankConfig ? "UPDATE CONFIG" : "SAVE CONFIGURATION"}
                       </button>
@@ -5806,7 +6023,7 @@ export default function App() {
                             setBankFormConfigJson('{\n  \n}');
                             setBankFormError('');
                           }}
-                          className="w-full py-2 border-2 border-black font-black bg-white hover:bg-slate-100 uppercase text-center"
+                          className="w-full py-2 border border-slate-200 rounded-xl font-bold bg-white hover:bg-slate-100 uppercase text-center"
                         >
                           CANCEL EDIT
                         </button>
@@ -5822,11 +6039,11 @@ export default function App() {
 
           {/* --- TAB 6: SUPPORT PAGE --- */}
           {activeTab === 'support' && (
-            <div className="space-y-6 max-w-2xl mx-auto bg-white p-8 border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)]">
-              <div className="flex items-center space-x-4 mb-2 border-b-2 border-black pb-3">
-                <img src="/social_square.svg" alt="Support" className="w-14 h-14 border-2 border-black shadow-[2px_2px_0px_rgba(0,0,0,1)] flex-shrink-0" />
+            <div className="space-y-6 max-w-2xl mx-auto bg-white p-8 border border-slate-200/90 rounded-2xl shadow-sm">
+              <div className="flex items-center space-x-4 mb-2 border-b border-slate-100 pb-3">
+                <img src="/social_square.svg" alt="Support" className="w-14 h-14 border border-slate-200 rounded-xl shadow-sm flex-shrink-0" />
                 <div>
-                  <h3 className="text-xl font-black text-black uppercase">Support & Assistance</h3>
+                  <h3 className="text-xl font-bold text-black uppercase">Support & Assistance</h3>
                   <p className="text-xs font-bold text-slate-600">Technical help, statement format requests & custom Tally ledgers</p>
                 </div>
               </div>
@@ -5835,9 +6052,9 @@ export default function App() {
               </p>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                <div className="border-2 border-black p-4 bg-slate-50 flex flex-col justify-between">
+                <div className="border border-slate-200 rounded-xl p-4 bg-slate-50 flex flex-col justify-between">
                   <div>
-                    <h4 className="font-black text-black uppercase text-sm mb-1">WhatsApp Chat Support</h4>
+                    <h4 className="font-bold text-black uppercase text-sm mb-1">WhatsApp Chat Support</h4>
                     <p className="text-[10px] font-bold text-slate-500 leading-relaxed mb-4">
                       Get instant resolutions and share statement files or screenshots with the admin directly on WhatsApp.
                     </p>
@@ -5846,70 +6063,70 @@ export default function App() {
                     href="https://wa.me/919204915729?text=Hello%20Sheet%20Buddy%20Support!%20I%20have%20an%20issue%20with..."
                     target="_blank"
                     rel="noreferrer"
-                    className="w-full text-center py-2.5 px-4 border-2 border-black font-black text-white bg-[#25D366] hover:bg-emerald-600 uppercase shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-all flex items-center justify-center space-x-2 text-xs"
+                    className="w-full text-center py-2.5 px-4 border border-slate-200 rounded-xl font-bold text-white bg-emerald-600 text-white hover:bg-emerald-500 hover:bg-emerald-600 uppercase shadow-sm active:scale-[0.99] transition-all flex items-center justify-center space-x-2 text-xs"
                   >
                     <span>Chat on WhatsApp</span>
                   </a>
                 </div>
 
-                <div className="border-2 border-black p-4 bg-slate-50 flex flex-col justify-between">
+                <div className="border border-slate-200 rounded-xl p-4 bg-slate-50 flex flex-col justify-between">
                   <div>
-                    <h4 className="font-black text-black uppercase text-sm mb-1">Email Support</h4>
+                    <h4 className="font-bold text-black uppercase text-sm mb-1">Email Support</h4>
                     <p className="text-[10px] font-bold text-slate-500 leading-relaxed mb-4">
                       For detailed inquiries, you can send an email with your attachments directly to our helpdesk.
                     </p>
                   </div>
                   <a
                     href="mailto:sheetbuddyorg@gmail.com?subject=Sheet%20Buddy%20Inquiry"
-                    className="w-full text-center py-2.5 px-4 border-2 border-black font-black text-black bg-[#ffd615] hover:bg-yellow-400 uppercase shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-all text-xs"
+                    className="w-full text-center py-2.5 px-4 border border-slate-200 rounded-xl font-bold text-black bg-indigo-600 text-white hover:bg-indigo-500 hover:bg-yellow-400 uppercase shadow-sm active:scale-[0.99] transition-all text-xs"
                   >
                     Email Admin
                   </a>
                 </div>
               </div>
 
-              <div className="border-2 border-black p-6 bg-white pt-4">
-                <h4 className="font-black text-black uppercase text-sm mb-2 border-b border-black pb-1">Raise a Support Query</h4>
+              <div className="border border-slate-200 rounded-xl p-6 bg-white pt-4">
+                <h4 className="font-bold text-slate-900 uppercase text-sm mb-2 border-b border-slate-100 pb-2">Raise a Support Query</h4>
                 <form 
                   onSubmit={handleSupportQuerySubmit}
                   className="space-y-4"
                 >
                   <div>
-                    <label className="block text-[10px] font-black text-black uppercase mb-1">Subject</label>
+                    <label className="block text-[10px] font-bold text-black uppercase mb-1">Subject</label>
                     <input
                       type="text"
                       required
                       value={supportSubject}
                       onChange={(e) => setSupportSubject(e.target.value)}
                       placeholder="e.g. Credit balance not updated / BOB Statement parsing failed"
-                      className="w-full px-3 py-2 border-2 border-black font-bold focus:outline-none bg-white text-xs"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl font-bold focus:outline-none bg-white text-xs"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-black text-black uppercase mb-1">WhatsApp Number (Optional)</label>
+                    <label className="block text-[10px] font-bold text-black uppercase mb-1">WhatsApp Number (Optional)</label>
                     <input
                       type="text"
                       value={supportWhatsapp}
                       onChange={(e) => setSupportWhatsapp(e.target.value)}
                       placeholder="e.g. +91 98765 43210"
-                      className="w-full px-3 py-2 border-2 border-black font-bold focus:outline-none bg-white text-xs"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl font-bold focus:outline-none bg-white text-xs"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-black text-black uppercase mb-1">Describe your Issue</label>
+                    <label className="block text-[10px] font-bold text-black uppercase mb-1">Describe your Issue</label>
                     <textarea
                       rows="4"
                       required
                       value={supportDescription}
                       onChange={(e) => setSupportDescription(e.target.value)}
                       placeholder="Please provide details about your issue, statement file type, or payment details..."
-                      className="w-full px-3 py-2 border-2 border-black font-bold focus:outline-none bg-white text-xs"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl font-bold focus:outline-none bg-white text-xs"
                     />
                   </div>
                   <button
                     type="submit"
                     disabled={supportLoading}
-                    className="w-full py-2.5 px-4 border-2 border-black font-black text-white bg-black hover:bg-zinc-800 uppercase shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-all text-xs disabled:opacity-50"
+                    className="w-full py-2.5 px-4 border border-slate-200 rounded-xl font-bold text-white bg-black hover:bg-zinc-800 uppercase shadow-sm active:scale-[0.99] transition-all text-xs disabled:opacity-50"
                   >
                     {supportLoading ? "SUBMITTING..." : "Submit Support Ticket"}
                   </button>
@@ -5922,72 +6139,72 @@ export default function App() {
 
           {/* --- TAB 7: PROFILE SECURITY PAGE --- */}
           {activeTab === 'settings' && (
-            <div className="space-y-6 max-w-md mx-auto bg-white p-8 border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)]">
-              <div className="flex items-center space-x-3 mb-2 border-b-2 border-black pb-2">
-                <img src="/app_icon_yellow.svg" alt="Profile" className="w-8 h-8 border-2 border-black" />
-                <h3 className="text-xl font-black text-black uppercase">Profile Security</h3>
+            <div className="space-y-6 max-w-md mx-auto bg-white p-8 border border-slate-200/90 rounded-2xl shadow-sm">
+              <div className="flex items-center space-x-3 mb-2 border-b border-slate-100 pb-2">
+                <img src="/app_icon_yellow.svg" alt="Profile" className="w-8 h-8 border border-slate-200 rounded-xl" />
+                <h3 className="text-xl font-bold text-black uppercase">Profile Security</h3>
               </div>
               
               <div className="space-y-4">
-                <div className="border-2 border-black p-4 bg-slate-50">
-                  <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest">Logged In Email</span>
-                  <span className="block font-black text-black text-sm">{user.email}</span>
+                <div className="border border-slate-200 rounded-xl p-4 bg-slate-50">
+                  <span className="block text-[8px] font-bold text-slate-500 uppercase tracking-widest">Logged In Email</span>
+                  <span className="block font-bold text-black text-sm">{user.email}</span>
                 </div>
 
-                <div className="border-2 border-black p-4 bg-slate-50">
-                  <span className="block text-[8px] font-black text-slate-500 uppercase tracking-widest">Available Page Credits</span>
-                  <span className="block font-black text-black text-lg">{user.page_credits} Credits</span>
+                <div className="border border-slate-200 rounded-xl p-4 bg-slate-50">
+                  <span className="block text-[8px] font-bold text-slate-500 uppercase tracking-widest">Available Page Credits</span>
+                  <span className="block font-bold text-black text-lg">{user.page_credits} Credits</span>
                 </div>
               </div>
 
-              <div className="border-2 border-black p-6 bg-white pt-4">
-                <h4 className="font-black text-black uppercase text-sm mb-4 border-b border-black pb-1">Change Account Password</h4>
+              <div className="border border-slate-200 rounded-xl p-6 bg-white pt-4">
+                <h4 className="font-bold text-slate-900 uppercase text-sm mb-4 border-b border-slate-100 pb-2">Change Account Password</h4>
                 
                 <form onSubmit={handleProfileChangePassword} className="space-y-4">
                   <div>
-                    <label className="block text-[10px] font-black text-black uppercase mb-1">Current Password</label>
+                    <label className="block text-[10px] font-bold text-black uppercase mb-1">Current Password</label>
                     <input
                       type="password"
                       required
                       value={currentPassword}
                       onChange={(e) => setCurrentPassword(e.target.value)}
                       placeholder="Enter current password"
-                      className="w-full px-3 py-2 border-2 border-black font-bold focus:outline-none bg-white text-xs"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl font-bold focus:outline-none bg-white text-xs"
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-[10px] font-black text-black uppercase mb-1">New Password</label>
+                    <label className="block text-[10px] font-bold text-black uppercase mb-1">New Password</label>
                     <input
                       type="password"
                       required
                       value={profileNewPassword}
                       onChange={(e) => setProfileNewPassword(e.target.value)}
                       placeholder="Enter new password"
-                      className="w-full px-3 py-2 border-2 border-black font-bold focus:outline-none bg-white text-xs"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl font-bold focus:outline-none bg-white text-xs"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-black text-black uppercase mb-1">Confirm New Password</label>
+                    <label className="block text-[10px] font-bold text-black uppercase mb-1">Confirm New Password</label>
                     <input
                       type="password"
                       required
                       value={profileConfirmNewPassword}
                       onChange={(e) => setProfileConfirmNewPassword(e.target.value)}
                       placeholder="Confirm new password"
-                      className="w-full px-3 py-2 border-2 border-black font-bold focus:outline-none bg-white text-xs"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl font-bold focus:outline-none bg-white text-xs"
                     />
                   </div>
 
                   {profileErrorMsg && (
-                    <div className="bg-[#ff5757] text-white p-3 border-2 border-black font-bold text-xs">
+                    <div className="bg-rose-600 text-white hover:bg-rose-500 text-white p-3 border border-slate-200 rounded-xl font-bold text-xs">
                       ERROR: {String(profileErrorMsg)}
                     </div>
                   )}
 
                   {profileSuccessMsg && (
-                    <div className="bg-[#25D366] text-white p-3 border-2 border-black font-bold text-xs">
+                    <div className="bg-emerald-600 text-white hover:bg-emerald-500 text-white p-3 border border-slate-200 rounded-xl font-bold text-xs">
                       SUCCESS: {profileSuccessMsg}
                     </div>
                   )}
@@ -5995,7 +6212,7 @@ export default function App() {
                   <button
                     type="submit"
                     disabled={profileLoading}
-                    className="w-full py-2.5 px-4 border-2 border-black font-black text-white bg-black hover:bg-zinc-800 uppercase shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-all text-xs disabled:opacity-50"
+                    className="w-full py-2.5 px-4 border border-slate-200 rounded-xl font-bold text-white bg-black hover:bg-zinc-800 uppercase shadow-sm active:scale-[0.99] transition-all text-xs disabled:opacity-50"
                   >
                     {profileLoading ? "CHANGING PASSWORD..." : "Update Password"}
                   </button>
@@ -6007,7 +6224,7 @@ export default function App() {
           {/* --- Review Next Issue Stepper Modal --- */}
           {reviewModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-              <div className="bg-white border-4 border-black shadow-[10px_10px_0px_rgba(0,0,0,1)] max-w-xl w-full p-6 space-y-5">
+              <div className="bg-white border border-slate-200/90 rounded-2xl shadow-2xl max-w-xl w-full p-6 space-y-5">
                 {(() => {
                   const reviewList = allTransactions.filter(t => t.requires_review);
                   const currentItem = reviewList[currentReviewIdx];
@@ -6016,11 +6233,11 @@ export default function App() {
                     return (
                       <div className="text-center py-6 space-y-4">
                         <span className="text-4xl">🎉</span>
-                        <h3 className="text-lg font-black uppercase text-black">All Issues Resolved!</h3>
+                        <h3 className="text-lg font-bold uppercase text-black">All Issues Resolved!</h3>
                         <p className="text-xs font-bold text-slate-600">Every transaction has been reviewed and verified for Tally export.</p>
                         <button
                           onClick={() => setReviewModalOpen(false)}
-                          className="px-6 py-2 bg-[#ffd615] border-2 border-black font-black text-xs uppercase shadow-[2px_2px_0px_rgba(0,0,0,1)]"
+                          className="px-6 py-2 bg-indigo-600 text-white hover:bg-indigo-500 border border-slate-200 rounded-xl font-bold text-xs uppercase shadow-sm"
                         >
                           BACK TO STATEMENT
                         </button>
@@ -6032,22 +6249,22 @@ export default function App() {
 
                   return (
                     <>
-                      <div className="flex justify-between items-center bg-[#ff5757] text-white p-3 border-2 border-black shadow-[2px_2px_0px_rgba(0,0,0,1)]">
+                      <div className="flex justify-between items-center bg-rose-600 text-white hover:bg-rose-500 text-white p-3 border border-slate-200 rounded-xl shadow-sm">
                         <div>
-                          <span className="text-[10px] font-black uppercase tracking-wider block">DIAGNOSTIC ISSUE RESOLUTION STEPPER</span>
-                          <h3 className="text-sm font-black uppercase">Issue {currentReviewIdx + 1} of {reviewList.length}</h3>
+                          <span className="text-[10px] font-bold uppercase tracking-wider block">DIAGNOSTIC ISSUE RESOLUTION STEPPER</span>
+                          <h3 className="text-sm font-bold uppercase">Issue {currentReviewIdx + 1} of {reviewList.length}</h3>
                         </div>
                         <button
                           onClick={() => setReviewModalOpen(false)}
-                          className="text-white font-black text-sm px-2 py-0.5 border border-white hover:bg-white hover:text-black"
+                          className="text-white font-bold text-sm px-2 py-0.5 border border-white hover:bg-white hover:text-black"
                         >
                           ✕ ESC
                         </button>
                       </div>
 
                       {/* Issue Explanation */}
-                      <div className="bg-amber-50 border-2 border-black p-3 text-xs font-bold text-amber-950 space-y-1">
-                        <span className="font-black uppercase block text-[10px] text-amber-900">Flagged Reasons:</span>
+                      <div className="bg-amber-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-amber-950 space-y-1">
+                        <span className="font-bold uppercase block text-[10px] text-amber-900">Flagged Reasons:</span>
                         <ul className="list-disc list-inside space-y-0.5 text-[11px]">
                           {currentItem.review_reasons && currentItem.review_reasons.length > 0 ? (
                             currentItem.review_reasons.map((r, rIdx) => (
@@ -6060,37 +6277,37 @@ export default function App() {
                       </div>
 
                       {/* Transaction Data Card */}
-                      <div className="bg-slate-50 border-2 border-black p-4 space-y-3 text-xs">
+                      <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3 text-xs">
                         <div className="grid grid-cols-2 gap-2 font-mono">
                           <div>
-                            <span className="text-[9px] font-black text-slate-500 uppercase block">Txn Date</span>
+                            <span className="text-[9px] font-bold text-slate-500 uppercase block">Txn Date</span>
                             <span className="font-bold text-black">{currentItem.txn_date}</span>
                           </div>
                           <div>
-                            <span className="text-[9px] font-black text-slate-500 uppercase block">Amount</span>
-                            <span className={`font-black ${currentItem.debit ? 'text-[#ff4b3f]' : 'text-emerald-600'}`}>
+                            <span className="text-[9px] font-bold text-slate-500 uppercase block">Amount</span>
+                            <span className={`font-bold ${currentItem.debit ? 'text-rose-600' : 'text-emerald-600'}`}>
                               {currentItem.debit ? `Debit: ₹${Number(currentItem.debit).toFixed(2)}` : `Credit: ₹${Number(currentItem.credit).toFixed(2)}`}
                             </span>
                           </div>
                         </div>
 
                         <div>
-                          <label className="block text-[10px] font-black text-black uppercase mb-1">Edit Narration</label>
+                          <label className="block text-[10px] font-bold text-black uppercase mb-1">Edit Narration</label>
                           <input
                             type="text"
                             value={editedNarrations[originalIdx] !== undefined ? editedNarrations[originalIdx] : currentItem.narration}
                             onChange={(e) => handleNarrationEdit(originalIdx, e.target.value)}
-                            className="w-full px-2.5 py-1.5 border-2 border-black text-xs font-mono font-bold bg-white focus:outline-none focus:bg-yellow-50"
+                            className="w-full px-2.5 py-1.5 border border-slate-200 rounded-xl text-xs font-mono font-bold bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
                           />
                         </div>
 
                         <div>
-                          <label className="block text-[10px] font-black text-black uppercase mb-1">Assign Counter Ledger</label>
+                          <label className="block text-[10px] font-bold text-black uppercase mb-1">Assign Counter Ledger</label>
                           <input
                             type="text"
                             value={editedLedgers[originalIdx] !== undefined ? editedLedgers[originalIdx] : (currentItem.assigned_ledger || counterLedgerName)}
                             onChange={(e) => handleLedgerEdit(originalIdx, e.target.value)}
-                            className="w-full px-2.5 py-1.5 border-2 border-black text-xs font-bold bg-white focus:outline-none focus:bg-yellow-50"
+                            className="w-full px-2.5 py-1.5 border border-slate-200 rounded-xl text-xs font-bold bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
                           />
                         </div>
                       </div>
@@ -6101,14 +6318,14 @@ export default function App() {
                           <button
                             disabled={currentReviewIdx === 0}
                             onClick={() => setCurrentReviewIdx(prev => Math.max(0, prev - 1))}
-                            className="px-3 py-1.5 border-2 border-black font-black text-xs bg-white hover:bg-slate-100 disabled:opacity-40 uppercase"
+                            className="px-3 py-1.5 border border-slate-200 rounded-xl font-bold text-xs bg-white hover:bg-slate-100 disabled:opacity-40 uppercase"
                           >
                             ← PREV
                           </button>
                           <button
                             disabled={currentReviewIdx >= reviewList.length - 1}
                             onClick={() => setCurrentReviewIdx(prev => Math.min(reviewList.length - 1, prev + 1))}
-                            className="px-3 py-1.5 border-2 border-black font-black text-xs bg-white hover:bg-slate-100 disabled:opacity-40 uppercase"
+                            className="px-3 py-1.5 border border-slate-200 rounded-xl font-bold text-xs bg-white hover:bg-slate-100 disabled:opacity-40 uppercase"
                           >
                             NEXT →
                           </button>
@@ -6121,7 +6338,7 @@ export default function App() {
                               setCurrentReviewIdx(Math.max(0, reviewList.length - 2));
                             }
                           }}
-                          className="px-4 py-2 border-2 border-black font-black text-xs bg-[#3affaa] hover:bg-emerald-400 shadow-[2px_2px_0px_rgba(0,0,0,1)] uppercase"
+                          className="px-4 py-2 border border-slate-200 rounded-xl font-bold text-xs bg-emerald-600 text-white hover:bg-emerald-500 hover:bg-emerald-400 shadow-sm uppercase"
                         >
                           ACCEPT & RESOLVE ✓
                         </button>
@@ -6136,26 +6353,26 @@ export default function App() {
           {/* --- Custom CSV Column Mapping Modal --- */}
           {mappingModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 overflow-y-auto">
-              <div className="bg-white border-4 border-black shadow-[10px_10px_0px_rgba(0,0,0,1)] max-w-2xl w-full p-6 space-y-5 my-8">
+              <div className="bg-white border border-slate-200/90 rounded-2xl shadow-2xl max-w-2xl w-full p-6 space-y-5 my-8">
                 {/* Modal Header */}
-                <div className="flex justify-between items-center bg-[#ffd615] p-3 border-2 border-black shadow-[2px_2px_0px_rgba(0,0,0,1)]">
+                <div className="flex justify-between items-center bg-indigo-600 text-white hover:bg-indigo-500 p-3 border border-slate-200 rounded-xl shadow-sm">
                   <div className="flex items-center space-x-2">
-                    <span className="text-base font-black">⚙</span>
-                    <h3 className="text-xs font-black uppercase text-black">
+                    <span className="text-base font-bold">⚙</span>
+                    <h3 className="text-xs font-bold uppercase text-black">
                       {editingMappingId ? 'Edit CSV Column Mapping Template' : 'New Custom CSV Column Mapping Template'}
                     </h3>
                   </div>
                   <button
                     onClick={() => setMappingModalOpen(false)}
-                    className="text-black font-black text-sm px-2 py-0.5 border border-black hover:bg-black hover:text-white"
+                    className="text-slate-400 hover:text-slate-700 rounded-lg p-1 hover:bg-slate-100 transition-colors text-sm font-bold"
                   >
                     ✕
                   </button>
                 </div>
 
                 {/* Auto-Detect Helper */}
-                <div className="p-3 bg-slate-100 border-2 border-black space-y-2">
-                  <div className="text-xs font-black uppercase text-black">
+                <div className="p-3 bg-slate-100 border border-slate-200 rounded-xl space-y-2">
+                  <div className="text-xs font-bold uppercase text-black">
                     Auto-Detect Headers From Sample CSV (Optional)
                   </div>
                   <div className="text-[11px] font-bold text-slate-600">
@@ -6170,10 +6387,10 @@ export default function App() {
                       }
                     }}
                     disabled={inspectingCsv}
-                    className="w-full text-xs font-bold border border-black bg-white p-1"
+                    className="w-full text-xs font-bold border border-slate-200 rounded-lg bg-white p-2 file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200"
                   />
                   {detectedHeaders.length > 0 && (
-                    <div className="text-[11px] font-black text-green-700">
+                    <div className="text-[11px] font-bold text-green-700">
                       ✓ Detected {detectedHeaders.length} columns: {detectedHeaders.slice(0, 8).join(', ')}{detectedHeaders.length > 8 ? '...' : ''}
                     </div>
                   )}
@@ -6183,7 +6400,7 @@ export default function App() {
                 <form onSubmit={handleSaveMapping} className="space-y-4 text-xs">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block font-black text-black uppercase mb-1">
+                      <label className="block font-bold text-black uppercase mb-1">
                         Template Name *
                       </label>
                       <input
@@ -6192,11 +6409,11 @@ export default function App() {
                         placeholder="e.g. HDFC Bank Statement CSV"
                         value={mapFormName}
                         onChange={(e) => setMapFormName(e.target.value)}
-                        className="w-full px-3 py-2 border-2 border-black font-bold focus:outline-none focus:bg-yellow-50"
+                        className="w-full px-3 py-2 border border-slate-200 rounded-xl font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
                       />
                     </div>
                     <div>
-                      <label className="block font-black text-black uppercase mb-1">
+                      <label className="block font-bold text-black uppercase mb-1">
                         Description / Notes
                       </label>
                       <input
@@ -6204,13 +6421,13 @@ export default function App() {
                         placeholder="e.g. Columns for SAP/Zoho/Tally"
                         value={mapFormDesc}
                         onChange={(e) => setMapFormDesc(e.target.value)}
-                        className="w-full px-3 py-2 border-2 border-black font-bold focus:outline-none focus:bg-yellow-50"
+                        className="w-full px-3 py-2 border border-slate-200 rounded-xl font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
                       />
                     </div>
                   </div>
 
-                  <div className="border-t-2 border-black pt-3">
-                    <div className="font-black uppercase text-black mb-2 text-xs">Date & Voucher Details</div>
+                  <div className="border-t border-slate-100 pt-3">
+                    <div className="font-bold uppercase text-black mb-2 text-xs">Date & Voucher Details</div>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div>
                         <label className="block font-bold text-slate-700 uppercase mb-1 text-[11px]">
@@ -6223,7 +6440,7 @@ export default function App() {
                           onChange={(e) => setMapFormDateCol(e.target.value)}
                           list="detected-headers-list"
                           placeholder="Date"
-                          className="w-full px-2.5 py-1.5 border-2 border-black font-bold"
+                          className="w-full px-2.5 py-1.5 border border-slate-200 rounded-xl font-bold"
                         />
                       </div>
                       <div>
@@ -6233,7 +6450,7 @@ export default function App() {
                         <select
                           value={mapFormDateFmt}
                           onChange={(e) => setMapFormDateFmt(e.target.value)}
-                          className="w-full px-2 py-1.5 border-2 border-black font-bold bg-white"
+                          className="w-full px-2 py-1.5 border border-slate-200 rounded-xl font-bold bg-white"
                         >
                           <option value="%d-%m-%Y">DD-MM-YYYY (e.g. 15-04-2026)</option>
                           <option value="%Y-%m-%d">YYYY-MM-DD (e.g. 2026-04-15)</option>
@@ -6252,7 +6469,7 @@ export default function App() {
                           onChange={(e) => setMapFormVnumCol(e.target.value)}
                           list="detected-headers-list"
                           placeholder="Voucher No (optional)"
-                          className="w-full px-2.5 py-1.5 border-2 border-black font-bold"
+                          className="w-full px-2.5 py-1.5 border border-slate-200 rounded-xl font-bold"
                         />
                       </div>
                     </div>
@@ -6268,7 +6485,7 @@ export default function App() {
                           onChange={(e) => setMapFormVtypeCol(e.target.value)}
                           list="detected-headers-list"
                           placeholder="e.g. Voucher Type"
-                          className="w-full px-2.5 py-1.5 border-2 border-black font-bold"
+                          className="w-full px-2.5 py-1.5 border border-slate-200 rounded-xl font-bold"
                         />
                       </div>
                       <div>
@@ -6278,7 +6495,7 @@ export default function App() {
                         <select
                           value={mapFormDefVtype}
                           onChange={(e) => setMapFormDefVtype(e.target.value)}
-                          className="w-full px-2 py-1.5 border-2 border-black font-bold bg-white"
+                          className="w-full px-2 py-1.5 border border-slate-200 rounded-xl font-bold bg-white"
                         >
                           <option value="Payment">Payment</option>
                           <option value="Receipt">Receipt</option>
@@ -6291,11 +6508,11 @@ export default function App() {
                     </div>
                   </div>
 
-                  <div className="border-t-2 border-black pt-3">
-                    <div className="font-black uppercase text-black mb-2 text-xs">Double-Entry Ledgers</div>
+                  <div className="border-t border-slate-100 pt-3">
+                    <div className="font-bold uppercase text-black mb-2 text-xs">Double-Entry Ledgers</div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="p-2.5 bg-red-50 border border-black space-y-2">
-                        <label className="block font-black text-red-900 uppercase text-[11px]">
+                      <div className="p-3 bg-red-50/60 border border-red-200 rounded-xl space-y-2">
+                        <label className="block font-bold text-red-900 uppercase text-[11px]">
                           Debit Ledger Column
                         </label>
                         <input
@@ -6304,7 +6521,7 @@ export default function App() {
                           onChange={(e) => setMapFormDrCol(e.target.value)}
                           list="detected-headers-list"
                           placeholder="e.g. Debit Ledger / Expense"
-                          className="w-full px-2.5 py-1.5 border-2 border-black font-bold bg-white"
+                          className="w-full px-2.5 py-1.5 border border-slate-200 rounded-xl font-bold bg-white"
                         />
                         <label className="block font-bold text-slate-600 uppercase text-[10px]">
                           Fallback Debit Ledger Name (if empty)
@@ -6314,12 +6531,12 @@ export default function App() {
                           value={mapFormDefDr}
                           onChange={(e) => setMapFormDefDr(e.target.value)}
                           placeholder="e.g. General Expenses"
-                          className="w-full px-2 py-1 border border-black font-bold bg-white"
+                          className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg font-bold bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
                         />
                       </div>
 
-                      <div className="p-2.5 bg-green-50 border border-black space-y-2">
-                        <label className="block font-black text-green-900 uppercase text-[11px]">
+                      <div className="p-3 bg-emerald-50/60 border border-emerald-200 rounded-xl space-y-2">
+                        <label className="block font-bold text-green-900 uppercase text-[11px]">
                           Credit Ledger Column
                         </label>
                         <input
@@ -6328,7 +6545,7 @@ export default function App() {
                           onChange={(e) => setMapFormCrCol(e.target.value)}
                           list="detected-headers-list"
                           placeholder="e.g. Credit Ledger / Bank"
-                          className="w-full px-2.5 py-1.5 border-2 border-black font-bold bg-white"
+                          className="w-full px-2.5 py-1.5 border border-slate-200 rounded-xl font-bold bg-white"
                         />
                         <label className="block font-bold text-slate-600 uppercase text-[10px]">
                           Fallback Credit Ledger Name (if empty)
@@ -6338,14 +6555,14 @@ export default function App() {
                           value={mapFormDefCr}
                           onChange={(e) => setMapFormDefCr(e.target.value)}
                           placeholder="e.g. HDFC Bank Account"
-                          className="w-full px-2 py-1 border border-black font-bold bg-white"
+                          className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg font-bold bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
                         />
                       </div>
                     </div>
                   </div>
 
-                  <div className="border-t-2 border-black pt-3">
-                    <div className="font-black uppercase text-black mb-2 text-xs">Amount & Narration Mapping</div>
+                  <div className="border-t border-slate-100 pt-3">
+                    <div className="font-bold uppercase text-black mb-2 text-xs">Amount & Narration Mapping</div>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div>
                         <label className="block font-bold text-slate-700 uppercase mb-1 text-[11px]">
@@ -6357,7 +6574,7 @@ export default function App() {
                           onChange={(e) => setMapFormAmtCol(e.target.value)}
                           list="detected-headers-list"
                           placeholder="Amount"
-                          className="w-full px-2.5 py-1.5 border-2 border-black font-bold"
+                          className="w-full px-2.5 py-1.5 border border-slate-200 rounded-xl font-bold"
                         />
                       </div>
                       <div>
@@ -6370,7 +6587,7 @@ export default function App() {
                           onChange={(e) => setMapFormDrAmtCol(e.target.value)}
                           list="detected-headers-list"
                           placeholder="Debit / Withdrawal"
-                          className="w-full px-2.5 py-1.5 border-2 border-black font-bold"
+                          className="w-full px-2.5 py-1.5 border border-slate-200 rounded-xl font-bold"
                         />
                       </div>
                       <div>
@@ -6383,7 +6600,7 @@ export default function App() {
                           onChange={(e) => setMapFormCrAmtCol(e.target.value)}
                           list="detected-headers-list"
                           placeholder="Credit / Deposit"
-                          className="w-full px-2.5 py-1.5 border-2 border-black font-bold"
+                          className="w-full px-2.5 py-1.5 border border-slate-200 rounded-xl font-bold"
                         />
                       </div>
                     </div>
@@ -6399,7 +6616,7 @@ export default function App() {
                           onChange={(e) => setMapFormNarrCol(e.target.value)}
                           list="detected-headers-list"
                           placeholder="Narration / Description"
-                          className="w-full px-2.5 py-1.5 border-2 border-black font-bold"
+                          className="w-full px-2.5 py-1.5 border border-slate-200 rounded-xl font-bold"
                         />
                       </div>
                       <div>
@@ -6412,7 +6629,7 @@ export default function App() {
                           onChange={(e) => setMapFormRefCol(e.target.value)}
                           list="detected-headers-list"
                           placeholder="Ref / Cheque No / UTR"
-                          className="w-full px-2.5 py-1.5 border-2 border-black font-bold"
+                          className="w-full px-2.5 py-1.5 border border-slate-200 rounded-xl font-bold"
                         />
                       </div>
                     </div>
@@ -6424,17 +6641,17 @@ export default function App() {
                     ))}
                   </datalist>
 
-                  <div className="flex items-center justify-end space-x-3 pt-3 border-t-2 border-black">
+                  <div className="flex items-center justify-end space-x-3 pt-3 border-t border-slate-100">
                     <button
                       type="button"
                       onClick={() => setMappingModalOpen(false)}
-                      className="px-4 py-2 border-2 border-black font-black uppercase text-xs hover:bg-slate-100"
+                      className="px-4 py-2 border border-slate-200 rounded-xl font-bold uppercase text-xs hover:bg-slate-100"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      className="px-6 py-2 bg-[#ffd615] text-black border-2 border-black font-black uppercase text-xs shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:bg-yellow-400"
+                      className="px-6 py-2 bg-indigo-600 text-white hover:bg-indigo-500 text-black border border-slate-200 rounded-xl font-bold uppercase text-xs shadow-sm hover:bg-yellow-400"
                     >
                       {editingMappingId ? 'Update Mapping Template' : 'Save Mapping Template'}
                     </button>
@@ -6447,71 +6664,71 @@ export default function App() {
           {/* --- Client Create/Edit Modal --- */}
           {clientModalOpen && (
             <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-              <div className="bg-white border-4 border-black shadow-[10px_10px_0px_rgba(0,0,0,1)] max-w-lg w-full p-6 space-y-4">
-                <div className="flex justify-between items-center bg-[#ffd615] p-3 border-2 border-black shadow-[2px_2px_0px_rgba(0,0,0,1)]">
-                  <h3 className="text-sm font-black uppercase text-black">
+              <div className="bg-white border border-slate-200/90 rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-4">
+                <div className="flex justify-between items-center bg-indigo-600 text-white hover:bg-indigo-500 p-3 border border-slate-200 rounded-xl shadow-sm">
+                  <h3 className="text-sm font-bold uppercase text-black">
                     {editingClient ? '✏️ Edit Client Company' : '🏢 Add Client Company'}
                   </h3>
                   <button
                     type="button"
                     onClick={() => setClientModalOpen(false)}
-                    className="text-black font-black text-sm px-2 py-0.5 border border-black hover:bg-black hover:text-white"
+                    className="text-slate-400 hover:text-slate-700 rounded-lg p-1 hover:bg-slate-100 transition-colors text-sm font-bold"
                   >
                     ✕
                   </button>
                 </div>
 
                 {clientError && (
-                  <div className="bg-[#ff5757] text-white p-2.5 text-xs font-bold border-2 border-black shadow-[2px_2px_0px_rgba(0,0,0,1)]">
+                  <div className="bg-rose-600 text-white hover:bg-rose-500 text-white p-2.5 text-xs font-bold border border-slate-200 rounded-xl shadow-sm">
                     {clientError}
                   </div>
                 )}
 
                 <form onSubmit={handleSaveClient} className="space-y-3.5">
                   <div>
-                    <label className="block text-xs font-black uppercase mb-1">Company / Client Name *</label>
+                    <label className="block text-xs font-bold uppercase mb-1">Company / Client Name *</label>
                     <input
                       type="text"
                       placeholder="e.g. Sharma Trading Co."
                       value={clientFormName}
                       onChange={(e) => setClientFormName(e.target.value)}
-                      className="w-full px-3 py-2 border-2 border-black text-xs font-bold focus:outline-none focus:bg-yellow-50"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
                       required
                     />
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-black uppercase mb-1">PAN Number</label>
+                      <label className="block text-xs font-bold uppercase mb-1">PAN Number</label>
                       <input
                         type="text"
                         placeholder="e.g. ABCDE1234F"
                         maxLength={10}
                         value={clientFormPan}
                         onChange={(e) => setClientFormPan(e.target.value.toUpperCase())}
-                        className="w-full px-3 py-2 border-2 border-black text-xs font-bold font-mono uppercase focus:outline-none focus:bg-yellow-50"
+                        className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold font-mono uppercase focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-black uppercase mb-1">GSTIN</label>
+                      <label className="block text-xs font-bold uppercase mb-1">GSTIN</label>
                       <input
                         type="text"
                         placeholder="e.g. 07ABCDE1234F1Z5"
                         maxLength={15}
                         value={clientFormGstin}
                         onChange={(e) => setClientFormGstin(e.target.value.toUpperCase())}
-                        className="w-full px-3 py-2 border-2 border-black text-xs font-bold font-mono uppercase focus:outline-none focus:bg-yellow-50"
+                        className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold font-mono uppercase focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-black uppercase mb-1">Financial Year</label>
+                      <label className="block text-xs font-bold uppercase mb-1">Financial Year</label>
                       <select
                         value={clientFormFy}
                         onChange={(e) => setClientFormFy(e.target.value)}
-                        className="w-full px-3 py-2 border-2 border-black text-xs font-bold focus:outline-none bg-white cursor-pointer"
+                        className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none bg-white cursor-pointer"
                       >
                         <option value="2024-25">FY 2024-25</option>
                         <option value="2025-26">FY 2025-26</option>
@@ -6520,11 +6737,11 @@ export default function App() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-black uppercase mb-1">Business Type</label>
+                      <label className="block text-xs font-bold uppercase mb-1">Business Type</label>
                       <select
                         value={clientFormType}
                         onChange={(e) => setClientFormType(e.target.value)}
-                        className="w-full px-3 py-2 border-2 border-black text-xs font-bold focus:outline-none bg-white cursor-pointer"
+                        className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none bg-white cursor-pointer"
                       >
                         <option value="Proprietorship">Proprietorship</option>
                         <option value="Partnership">Partnership</option>
@@ -6538,50 +6755,50 @@ export default function App() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-black uppercase mb-1">Email</label>
+                      <label className="block text-xs font-bold uppercase mb-1">Email</label>
                       <input
                         type="email"
                         placeholder="client@example.com"
                         value={clientFormEmail}
                         onChange={(e) => setClientFormEmail(e.target.value)}
-                        className="w-full px-3 py-2 border-2 border-black text-xs font-bold focus:outline-none"
+                        className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-black uppercase mb-1">Phone</label>
+                      <label className="block text-xs font-bold uppercase mb-1">Phone</label>
                       <input
                         type="text"
                         placeholder="+91 9876543210"
                         value={clientFormPhone}
                         onChange={(e) => setClientFormPhone(e.target.value)}
-                        className="w-full px-3 py-2 border-2 border-black text-xs font-bold focus:outline-none"
+                        className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-black uppercase mb-1">Notes / Address</label>
+                    <label className="block text-xs font-bold uppercase mb-1">Notes / Address</label>
                     <textarea
                       rows={2}
                       placeholder="Additional remarks, account notes, branch details..."
                       value={clientFormNotes}
                       onChange={(e) => setClientFormNotes(e.target.value)}
-                      className="w-full px-3 py-2 border-2 border-black text-xs font-bold focus:outline-none"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none"
                     />
                   </div>
 
-                  <div className="flex justify-end space-x-2 pt-3 border-t-2 border-black">
+                  <div className="flex justify-end space-x-2 pt-3 border-t border-slate-100">
                     <button
                       type="button"
                       onClick={() => setClientModalOpen(false)}
-                      className="px-4 py-2 border-2 border-black text-xs font-black uppercase hover:bg-slate-100"
+                      className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold uppercase hover:bg-slate-100"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={clientSaving}
-                      className="px-5 py-2 bg-[#ffd615] hover:bg-yellow-400 border-2 border-black text-xs font-black uppercase shadow-[3px_3px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px]"
+                      className="px-5 py-2 bg-indigo-600 text-white hover:bg-indigo-500 hover:bg-yellow-400 border border-slate-200 rounded-xl text-xs font-bold uppercase shadow-sm active:translate-x-[1px] active:translate-y-[1px]"
                     >
                       {clientSaving ? 'Saving...' : (editingClient ? 'Update Client' : 'Save Client')}
                     </button>
@@ -6594,39 +6811,39 @@ export default function App() {
           {/* --- Keyboard Shortcuts Helper Modal --- */}
           {shortcutsModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-              <div className="bg-white border-4 border-black shadow-[10px_10px_0px_rgba(0,0,0,1)] max-w-md w-full p-6 space-y-4">
-                <div className="flex justify-between items-center bg-[#ffd615] p-3 border-2 border-black shadow-[2px_2px_0px_rgba(0,0,0,1)]">
-                  <h3 className="text-sm font-black uppercase text-black">⌨️ Keyboard Shortcuts</h3>
+              <div className="bg-white border border-slate-200/90 rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4">
+                <div className="flex justify-between items-center bg-indigo-600 text-white hover:bg-indigo-500 p-3 border border-slate-200 rounded-xl shadow-sm">
+                  <h3 className="text-sm font-bold uppercase text-black">⌨️ Keyboard Shortcuts</h3>
                   <button
                     onClick={() => setShortcutsModalOpen(false)}
-                    className="text-black font-black text-sm px-2 py-0.5 border border-black hover:bg-black hover:text-white"
+                    className="text-slate-400 hover:text-slate-700 rounded-lg p-1 hover:bg-slate-100 transition-colors text-sm font-bold"
                   >
                     ✕
                   </button>
                 </div>
 
-                <div className="divide-y divide-black border-2 border-black text-xs font-bold">
+                <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl text-xs font-bold">
                   <div className="flex justify-between p-2.5 bg-slate-50">
                     <span>Search Transactions / History</span>
-                    <kbd className="px-2 py-0.5 bg-white border border-black font-mono font-black text-[11px] shadow-[1px_1px_0px_rgba(0,0,0,1)]">Ctrl + F</kbd>
+                    <kbd className="px-2 py-1 bg-slate-100 border border-slate-200 rounded-md font-mono font-bold text-[11px] text-slate-700 shadow-xs">Ctrl + F</kbd>
                   </div>
                   <div className="flex justify-between p-2.5 bg-white">
                     <span>Undo Narration Edit</span>
-                    <kbd className="px-2 py-0.5 bg-white border border-black font-mono font-black text-[11px] shadow-[1px_1px_0px_rgba(0,0,0,1)]">Ctrl + Z</kbd>
+                    <kbd className="px-2 py-1 bg-slate-100 border border-slate-200 rounded-md font-mono font-bold text-[11px] text-slate-700 shadow-xs">Ctrl + Z</kbd>
                   </div>
                   <div className="flex justify-between p-2.5 bg-slate-50">
                     <span>Close Open Dialog / Modal</span>
-                    <kbd className="px-2 py-0.5 bg-white border border-black font-mono font-black text-[11px] shadow-[1px_1px_0px_rgba(0,0,0,1)]">Esc</kbd>
+                    <kbd className="px-2 py-1 bg-slate-100 border border-slate-200 rounded-md font-mono font-bold text-[11px] text-slate-700 shadow-xs">Esc</kbd>
                   </div>
                   <div className="flex justify-between p-2.5 bg-white">
                     <span>Navigate Between Fields</span>
-                    <kbd className="px-2 py-0.5 bg-white border border-black font-mono font-black text-[11px] shadow-[1px_1px_0px_rgba(0,0,0,1)]">Tab / Shift + Tab</kbd>
+                    <kbd className="px-2 py-1 bg-slate-100 border border-slate-200 rounded-md font-mono font-bold text-[11px] text-slate-700 shadow-xs">Tab / Shift + Tab</kbd>
                   </div>
                 </div>
 
                 <button
                   onClick={() => setShortcutsModalOpen(false)}
-                  className="w-full py-2 bg-black text-white border-2 border-black font-black text-xs uppercase shadow-[2px_2px_0px_rgba(0,0,0,1)]"
+                  className="w-full py-2 bg-black text-white border border-slate-200 rounded-xl font-bold text-xs uppercase shadow-sm"
                 >
                   GOT IT
                 </button>
@@ -6639,7 +6856,7 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t-4 border-black py-6 text-center text-xs font-bold text-black mt-auto space-y-4">
+      <footer className="bg-white border-t border-slate-200/80 py-6 text-center text-xs font-bold text-black mt-auto space-y-4">
         {/* Contact CTA */}
         <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-3 pb-2 border-b border-slate-100 max-w-lg mx-auto">
           <span>To know more, book demo or pricing contact us:</span>
@@ -6649,7 +6866,7 @@ export default function App() {
               href="https://wa.me/919204915729?text=Hello!%20I'd%20like%20to%20know%20more,%20book%20a%20demo,%20or%20discuss%20pricing%20for%20Sheet%20Buddy."
               target="_blank"
               rel="noopener noreferrer"
-              className="p-1 border-2 border-black bg-[#25D366] hover:bg-green-500 text-white rounded-none shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-all flex items-center justify-center w-7 h-7"
+              className="p-1 border border-slate-200 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm transition-all flex items-center justify-center w-7 h-7"
               title="Contact on WhatsApp"
             >
               <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
@@ -6659,7 +6876,7 @@ export default function App() {
             {/* Email Link */}
             <a
               href="mailto:sheetbuddyorg@gmail.com?subject=Sheet%20Buddy%20Demo%20and%20Pricing%20Inquiry"
-              className="p-1 border-2 border-black bg-[#3b82f6] hover:bg-blue-500 text-white rounded-none shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-all flex items-center justify-center w-7 h-7"
+              className="p-1 border border-slate-200 rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-all flex items-center justify-center w-7 h-7"
               title="Send an Email"
             >
               <svg className="w-4 h-4 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="2.5">
@@ -6670,8 +6887,8 @@ export default function App() {
         </div>
 
         <div className="flex items-center justify-center space-x-2 pt-2">
-          <img src="/symbol_mark.svg" alt="Sheet Buddy" className="w-5 h-5 border border-black bg-black inline-block" />
-          <span className="font-black uppercase tracking-tight">Sheet Buddy</span>
+          <img src="/symbol_mark.svg" alt="Sheet Buddy" className="w-5 h-5 rounded-md inline-block shadow-xs" />
+          <span className="font-bold uppercase tracking-tight">Sheet Buddy</span>
           <span className="text-slate-400 font-normal">|</span>
           <span className="text-slate-600 font-bold">A Tally Supporting Tool • Since 2026</span>
         </div>
@@ -6682,7 +6899,7 @@ export default function App() {
             href="https://www.instagram.com/verx_mysterio?igsi=MzliODFvcWt0emhn"
             target="_blank"
             rel="noopener noreferrer"
-            className="underline hover:no-underline text-black font-black"
+            className="underline hover:no-underline text-black font-bold"
           >
             verx_mysterio
           </a>
