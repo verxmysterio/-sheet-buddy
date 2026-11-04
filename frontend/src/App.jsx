@@ -3428,15 +3428,15 @@ export default function App() {
 
         {checkoutSession ? (
           <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xl shadow-slate-200/40 p-8 max-w-lg mx-auto space-y-6">
-            <div className="bg-slate-900 text-white p-5 rounded-xl flex items-center space-x-3.5 shadow-sm">
-              <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-indigo-400 shadow-sm flex-shrink-0">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <div className="bg-white text-slate-900 p-5 rounded-xl border border-slate-200/90 flex items-center space-x-3.5 shadow-2xs">
+              <div className="w-10 h-10 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 flex-shrink-0">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                 </svg>
               </div>
               <div>
-                <h3 className="text-base font-bold tracking-tight text-white">Secure Checkout</h3>
-                <p className="text-xs text-slate-400">Sheet Buddy Payment Verification Gateway</p>
+                <h3 className="text-base font-bold tracking-tight text-slate-900">Secure Checkout</h3>
+                <p className="text-xs text-slate-500">Sheet Buddy Payment Verification Gateway</p>
               </div>
             </div>
 
@@ -3517,17 +3517,17 @@ export default function App() {
             
             {/* Top Brand Banner */}
             {!parsedSummary && (
-              <div className="bg-slate-900 text-white p-6 rounded-2xl border border-slate-800 shadow-md max-w-2xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="bg-white text-slate-800 p-5 rounded-xl border border-slate-200/90 shadow-2xs max-w-2xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="flex items-center space-x-3.5">
-                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center p-1.5 flex-shrink-0">
+                  <div className="w-10 h-10 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center p-1.5 flex-shrink-0">
                     <img src="/symbol_mark.svg" alt="Sheet Buddy" className="w-full h-full object-contain" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest block">BANK STATEMENT → TALLY VOUCHERS</span>
-                    <p className="text-xs font-medium text-slate-300 mt-0.5">Fast, Automated & Mathematically Reconciled XML Export</p>
+                    <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider block">BANK STATEMENT → TALLY VOUCHERS</span>
+                    <p className="text-xs font-medium text-slate-500 mt-0.5">Fast, Automated & Mathematically Reconciled XML Export</p>
                   </div>
                 </div>
-                <span className="px-2.5 py-1 bg-slate-800 text-slate-300 text-[10px] font-semibold rounded-full border border-slate-700">SINCE 2026</span>
+                <span className="px-2.5 py-1 bg-slate-100 text-slate-600 text-[10px] font-semibold rounded-full border border-slate-200">SINCE 2026</span>
               </div>
             )}
             
@@ -3721,45 +3721,45 @@ export default function App() {
             {parsedSummary && (
               <div className="space-y-6 max-w-7xl mx-auto">
                 
-                {/* 1. Multi-Signal Auto-Detected Bank Banner */}
-                <div className="bg-slate-900 text-white p-6 rounded-2xl border border-slate-800 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                {/* 1. Multi-Signal Auto-Detected Bank Banner (Linear Minimalist) */}
+                <div className="bg-white text-slate-800 p-5 rounded-xl border border-slate-200/90 shadow-2xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                   <div className="flex items-center space-x-3.5">
-                    <div className="w-11 h-11 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center p-1.5 flex-shrink-0">
+                    <div className="w-11 h-11 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center p-1.5 flex-shrink-0">
                       <img src="/symbol_mark.svg" alt="Bank Logo" className="w-full h-full object-contain" />
                     </div>
                     <div>
                       <div className="flex items-center space-x-2">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-400">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600">
                           INTELLIGENT DETECTION ENGINE
                         </span>
-                        <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase">
+                        <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase">
                           {parsedSummary.detection_confidence ? `${Math.round(parsedSummary.detection_confidence)}% Confidence` : 'High Confidence'}
                         </span>
                       </div>
-                      <h3 className="text-xl font-bold text-white tracking-tight mt-0.5">
+                      <h3 className="text-lg font-bold text-slate-900 tracking-tight mt-0.5">
                         {parsedSummary.bank_name || parsedSummary.detected_bank || 'Standard Bank Statement'}
                       </h3>
                       <div className="flex flex-wrap gap-1.5 mt-2">
-                        <span className="bg-slate-800 text-slate-300 text-[10px] font-mono px-2 py-0.5 rounded border border-slate-700">
+                        <span className="bg-slate-100 text-slate-700 text-[10px] font-mono px-2 py-0.5 rounded border border-slate-200">
                           Type: {parsedSummary.document_type || 'NATIVE_PDF'}
                         </span>
                         {parsedSummary.account_number && (
-                          <span className="bg-slate-800 text-slate-300 text-[10px] font-mono px-2 py-0.5 rounded border border-slate-700">
+                          <span className="bg-slate-100 text-slate-700 text-[10px] font-mono px-2 py-0.5 rounded border border-slate-200">
                             A/C: {parsedSummary.account_number}
                           </span>
                         )}
                         {parsedSummary.statement_period && (
-                          <span className="bg-slate-800 text-slate-300 text-[10px] font-mono px-2 py-0.5 rounded border border-slate-700">
+                          <span className="bg-slate-100 text-slate-700 text-[10px] font-mono px-2 py-0.5 rounded border border-slate-200">
                             Period: {parsedSummary.statement_period}
                           </span>
                         )}
                         {parsedSummary.multi_file_count > 1 && (
-                          <span className="bg-indigo-950 text-indigo-300 text-[10px] font-mono font-semibold px-2 py-0.5 rounded border border-indigo-800 uppercase">
+                          <span className="bg-indigo-50 text-indigo-700 text-[10px] font-mono font-semibold px-2 py-0.5 rounded border border-indigo-200 uppercase">
                             {parsedSummary.multi_file_count} Statements Consolidated
                           </span>
                         )}
                         {parsedSummary.detection_signals && parsedSummary.detection_signals.slice(0, 3).map((sig, sIdx) => (
-                          <span key={sIdx} className="bg-slate-800 text-slate-300 text-[9px] font-mono px-1.5 py-0.5 rounded border border-slate-700">
+                          <span key={sIdx} className="bg-slate-100 text-slate-700 text-[9px] font-mono px-1.5 py-0.5 rounded border border-slate-200">
                             {sig}
                           </span>
                         ))}
@@ -3770,7 +3770,7 @@ export default function App() {
                   <div className="flex items-center space-x-2 self-stretch md:self-auto justify-end">
                     <button
                       onClick={() => setShortcutsModalOpen(true)}
-                      className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs rounded-lg border border-slate-700 transition-all"
+                      className="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs rounded-lg border border-slate-200 shadow-2xs transition-colors"
                       title="View Keyboard Shortcuts"
                     >
                       ⌨️ Shortcuts
@@ -3782,7 +3782,7 @@ export default function App() {
                         setSelectedFiles([]);
                         setAllTransactions([]);
                       }}
-                      className="px-3 py-1.5 bg-rose-600/80 hover:bg-rose-600 text-white font-semibold text-xs rounded-lg transition-all"
+                      className="px-3 py-1.5 bg-white hover:bg-rose-50 text-rose-600 font-medium text-xs rounded-lg border border-rose-200 shadow-2xs transition-colors"
                     >
                       Re-Upload
                     </button>
@@ -3858,42 +3858,42 @@ export default function App() {
                 {/* 2. Review Queue Filter Tabs & Action Toolbar */}
                 <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden">
                   
-                  {/* Top Bar with Queue Filter Tabs */}
-                  <div className="p-3.5 bg-slate-50 border-b border-slate-200 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3">
-                    <div className="flex flex-wrap items-center gap-1.5">
+                  {/* Top Bar with Queue Filter Tabs (Linear Segmented Control) */}
+                  <div className="p-3 bg-slate-50/70 border-b border-slate-200 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3">
+                    <div className="bg-slate-100/90 p-1 rounded-lg border border-slate-200/80 inline-flex flex-wrap gap-1">
                       <button
                         onClick={() => setFilterMode('ALL')}
-                        className={`px-3 py-1.5 rounded-lg font-semibold text-xs transition-all ${filterMode === 'ALL' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'}`}
+                        className={`px-3 py-1 rounded-md text-xs transition-colors ${filterMode === 'ALL' ? 'bg-white text-slate-900 font-semibold shadow-2xs border border-slate-200/90' : 'text-slate-600 hover:text-slate-900 font-medium'}`}
                       >
                         All ({allTransactions.length})
                       </button>
                       <button
                         onClick={() => setFilterMode('READY')}
-                        className={`px-3 py-1.5 rounded-lg font-semibold text-xs transition-all ${filterMode === 'READY' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'}`}
+                        className={`px-3 py-1 rounded-md text-xs transition-colors ${filterMode === 'READY' ? 'bg-white text-slate-900 font-semibold shadow-2xs border border-slate-200/90' : 'text-slate-600 hover:text-slate-900 font-medium'}`}
                       >
                         Ready ({allTransactions.filter(t => !t.requires_review).length})
                       </button>
                       <button
                         onClick={() => setFilterMode('REVIEW')}
-                        className={`px-3 py-1.5 rounded-lg font-semibold text-xs transition-all ${filterMode === 'REVIEW' ? 'bg-rose-600 text-white shadow-sm' : allTransactions.filter(t => t.requires_review).length > 0 ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'}`}
+                        className={`px-3 py-1 rounded-md text-xs transition-colors ${filterMode === 'REVIEW' ? 'bg-rose-600 text-white font-semibold shadow-2xs' : allTransactions.filter(t => t.requires_review).length > 0 ? 'bg-rose-50 text-rose-700 font-semibold border border-rose-200' : 'text-slate-600 hover:text-slate-900 font-medium'}`}
                       >
                         Needs Review ({allTransactions.filter(t => t.requires_review).length})
                       </button>
                       <button
                         onClick={() => setFilterMode('DUPLICATES')}
-                        className={`px-3 py-1.5 rounded-lg font-semibold text-xs transition-all ${filterMode === 'DUPLICATES' ? 'bg-amber-500 text-slate-950 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'}`}
+                        className={`px-3 py-1 rounded-md text-xs transition-colors ${filterMode === 'DUPLICATES' ? 'bg-amber-500 text-slate-950 font-semibold shadow-2xs' : 'text-slate-600 hover:text-slate-900 font-medium'}`}
                       >
                         Duplicates ({allTransactions.filter(t => t.is_duplicate).length})
                       </button>
                       <button
                         onClick={() => setFilterMode('DEBIT')}
-                        className={`px-3 py-1.5 rounded-lg font-semibold text-xs transition-all ${filterMode === 'DEBIT' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'}`}
+                        className={`px-3 py-1 rounded-md text-xs transition-colors ${filterMode === 'DEBIT' ? 'bg-white text-slate-900 font-semibold shadow-2xs border border-slate-200/90' : 'text-slate-600 hover:text-slate-900 font-medium'}`}
                       >
                         Debits ({allTransactions.filter(t => (t.debit || 0) > 0).length})
                       </button>
                       <button
                         onClick={() => setFilterMode('CREDIT')}
-                        className={`px-3 py-1.5 rounded-lg font-semibold text-xs transition-all ${filterMode === 'CREDIT' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'}`}
+                        className={`px-3 py-1 rounded-md text-xs transition-colors ${filterMode === 'CREDIT' ? 'bg-white text-slate-900 font-semibold shadow-2xs border border-slate-200/90' : 'text-slate-600 hover:text-slate-900 font-medium'}`}
                       >
                         Credits ({allTransactions.filter(t => (t.credit || 0) > 0).length})
                       </button>
@@ -4237,20 +4237,20 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Right: Conversion Billing & Trigger Actions */}
-                  <div className="bg-slate-900 text-white rounded-2xl border border-slate-800 shadow-md p-6 flex flex-col justify-between">
+                  {/* Right: Conversion Billing & Trigger Actions (Linear Minimalist) */}
+                  <div className="bg-white text-slate-800 rounded-xl border border-slate-200/90 shadow-2xs p-5 flex flex-col justify-between">
                     <div className="space-y-3.5">
-                      <h4 className="text-base font-bold text-white tracking-tight">Run Conversion</h4>
-                      <div className="bg-slate-800/80 rounded-xl p-3.5 border border-slate-700/80 text-xs font-medium space-y-1.5 text-slate-300">
-                        <p className="flex justify-between"><span>Deduction:</span> <span className="font-bold text-white font-mono">{parsedSummary.pages_count} credits</span></p>
-                        <p className="flex justify-between"><span>Your Balance:</span> <span className="font-bold text-emerald-400 font-mono">{user.page_credits} credits</span></p>
+                      <h4 className="text-sm font-bold text-slate-900 tracking-tight">Run Conversion</h4>
+                      <div className="bg-slate-50 rounded-lg p-3.5 border border-slate-200 text-xs font-medium space-y-1.5 text-slate-600">
+                        <p className="flex justify-between"><span>Deduction:</span> <span className="font-semibold text-slate-900 font-mono">{parsedSummary.pages_count} credits</span></p>
+                        <p className="flex justify-between"><span>Your Balance:</span> <span className="font-semibold text-emerald-700 font-mono">{user.page_credits} credits</span></p>
                         {user.page_credits < parsedSummary.pages_count && (
-                          <p className="text-rose-400 font-bold uppercase mt-1 text-[11px]">Insufficient credits to execute!</p>
+                          <p className="text-rose-600 font-bold uppercase mt-1 text-[11px]">Insufficient credits to execute!</p>
                         )}
                       </div>
                       
                       {executeError && (
-                        <div className="bg-rose-900/40 text-rose-300 p-2.5 rounded-xl border border-rose-800 font-medium text-xs">
+                        <div className="bg-rose-50 text-rose-700 p-2.5 rounded-lg border border-rose-200 font-medium text-xs">
                           {String(executeError)}
                         </div>
                       )}
@@ -4282,17 +4282,17 @@ export default function App() {
         {/* --- TAB: CSV TO TALLY MULTI-VOUCHER CONVERTER --- */}
         {activeTab === 'csv' && (
           <div className="space-y-6 max-w-7xl mx-auto">
-            {/* Top Brand Banner */}
-            <div className="bg-slate-900 text-white p-6 rounded-2xl border border-slate-800 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            {/* Top Brand Banner (Linear Minimalist) */}
+            <div className="bg-white text-slate-800 p-5 rounded-xl border border-slate-200/90 shadow-2xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div className="flex items-center space-x-3.5">
-                <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center p-1.5 flex-shrink-0">
+                <div className="w-10 h-10 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center p-1.5 flex-shrink-0">
                   <img src="/symbol_mark.svg" alt="CSV to Tally" className="w-full h-full object-contain" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white tracking-tight">
+                  <h3 className="text-base font-bold text-slate-900 tracking-tight">
                     CSV To Tally Prime Multi-Voucher Converter
                   </h3>
-                  <p className="text-xs text-slate-300 font-medium mt-0.5">
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">
                     Import Payment, Receipt, Contra, Journal, Sales & Purchase entries from any CSV. Map columns, edit inline, and generate Tally XML.
                   </p>
                 </div>
@@ -4300,21 +4300,21 @@ export default function App() {
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   onClick={handleDownloadBlankCsv}
-                  className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs rounded-lg border border-slate-700 transition-all flex items-center space-x-1.5 shadow-sm"
+                  className="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs rounded-lg border border-slate-200 shadow-2xs transition-colors flex items-center space-x-1.5"
                   title="Download clean blank CSV template"
                 >
-                  <span>⬇ Blank CSV</span>
+                  <span>Blank CSV</span>
                 </button>
                 <button
                   onClick={handleDownloadSampleCsv}
-                  className="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-lg transition-all flex items-center space-x-1.5 shadow-sm"
+                  className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs rounded-lg shadow-2xs transition-colors flex items-center space-x-1.5"
                   title="Download CSV pre-filled with Payment, Receipt, Contra & Journal examples"
                 >
-                  <span>★ Sample CSV</span>
+                  <span>Sample CSV</span>
                 </button>
                 <button
                   onClick={handleOpenCreateMapping}
-                  className="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-lg transition-all flex items-center space-x-1.5 shadow-sm"
+                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-lg shadow-2xs transition-colors flex items-center space-x-1.5"
                 >
                   <span>+ New Mapping</span>
                 </button>
@@ -4834,17 +4834,17 @@ export default function App() {
         {activeTab === 'rules' && (
           <div className="space-y-6 max-w-6xl mx-auto">
             
-            {/* Header Banner */}
-            <div className="bg-slate-900 text-white p-6 rounded-2xl border border-slate-800 shadow-md flex items-center justify-between">
+            {/* Header Banner (Linear Minimalist) */}
+            <div className="bg-white text-slate-800 p-5 rounded-xl border border-slate-200/90 shadow-2xs flex items-center justify-between">
               <div className="flex items-center space-x-3.5">
-                <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center p-1.5 flex-shrink-0">
+                <div className="w-10 h-10 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center p-1.5 flex-shrink-0">
                   <img src="/symbol_mark.svg" alt="Rules" className="w-full h-full object-contain" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white tracking-tight">
+                  <h3 className="text-base font-bold text-slate-900 tracking-tight">
                     Smart Ledger Suggestion & Categorization Rules
                   </h3>
-                  <p className="text-xs text-slate-300 font-medium mt-0.5">
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">
                     Define keyword rules to automatically categorize narrations and assign specific Tally counter-ledgers.
                   </p>
                 </div>
@@ -5011,29 +5011,29 @@ export default function App() {
             {selectedDossierClient ? (
               /* --- 1. INDIVIDUAL CLIENT DOSSIER VIEW --- */
               <div className="space-y-6">
-                {/* Back Navigation & Client Header */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900 text-white p-6 rounded-2xl border border-slate-800 shadow-md">
+                {/* Back Navigation & Client Header (Linear Minimalist) */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white text-slate-800 p-5 rounded-xl border border-slate-200/90 shadow-2xs">
                   <div>
                     <button
                       type="button"
                       onClick={() => setSelectedDossierClient(null)}
-                      className="inline-flex items-center text-xs font-semibold text-indigo-400 hover:text-indigo-300 hover:underline mb-2 transition-colors"
+                      className="inline-flex items-center text-xs font-semibold text-indigo-600 hover:text-indigo-700 hover:underline mb-2 transition-colors"
                     >
                       ← Back to All Clients
                     </button>
                     <div className="flex flex-wrap items-center gap-2.5">
-                      <h2 className="text-xl font-bold tracking-tight text-white">
+                      <h2 className="text-xl font-bold tracking-tight text-slate-900">
                         {selectedDossierClient.name}
                       </h2>
-                      <span className="bg-slate-800 text-indigo-300 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-slate-700">
+                      <span className="bg-slate-100 text-slate-700 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-slate-200">
                         FY {selectedDossierClient.financial_year || '2024-25'}
                       </span>
-                      <span className="bg-emerald-500/20 text-emerald-400 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-emerald-500/30">
+                      <span className="bg-emerald-50 text-emerald-700 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-emerald-200">
                         {selectedDossierClient.business_type || 'Proprietorship'}
                       </span>
                     </div>
                     {selectedDossierClient.notes && (
-                      <p className="text-xs text-slate-400 mt-1 max-w-xl truncate font-medium">
+                      <p className="text-xs text-slate-500 mt-1 max-w-xl truncate font-medium">
                         {selectedDossierClient.notes}
                       </p>
                     )}
