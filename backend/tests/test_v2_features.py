@@ -159,3 +159,39 @@ def test_tally_xml_contra_and_party_mapping():
     assert val2["voucher_count"] == 2
     assert "<BANKPARTYNAME>" not in xml_out
     assert "<PARTYLEDGERNAME>Office Rent Expenses</PARTYLEDGERNAME>" in xml_out
+
+def test_auto_bank_resolution():
+    from app.parsers import get_parser
+    parser_auto = get_parser("auto")
+    assert parser_auto is not None
+    assert parser_auto.__class__.__name__ == "SBIParser"
+    
+    parser_autodetect = get_parser("autodetect")
+    assert parser_autodetect.__class__.__name__ == "SBIParser"
+    
+    parser_empty = get_parser("")
+    assert parser_empty.__class__.__name__ == "SBIParser"
+
+def test_sbi_parser_date_support():
+    from app.parsers.sbi import SBIParser
+    parser = SBIParser()
+    tx_mock = {
+        'txn_date': '1 Apr 2026',
+        'val_date': '1 Apr 2026',
+        'desc_lines': ['BY TRANSFER-', 'UPI/CR/9118007621', '63/SUJIT DUBE'],
+        'ref_lines': ['TRANSFER FROM 4897734162099'],
+        'branch_code': '12810',
+        'amount_val': '2,500.00',
+        'balance_val': '4,78,726.62',
+        'is_debit': False,
+        'is_credit': True,
+        'page': 1
+    }
+    tx = parser._finalize_transaction(tx_mock)
+    assert tx.txn_date == date(2026, 4, 1)
+    assert tx.val_date == date(2026, 4, 1)
+    assert tx.credit == 2500.0
+    assert tx.debit is None
+    assert tx.balance == 478726.62
+    assert "9118007621" in tx.narration
+

@@ -30,6 +30,10 @@ def get_parser(bank_name: str, db_session: Optional[Any] = None) -> BankParser:
     """
     bank_clean = bank_name.strip().upper() if bank_name else ""
     
+    # 0. Default / Auto / Empty
+    if not bank_clean or bank_clean in ["AUTO", "AUTODETECT", "AUTO-DETECT", "AUTOMATIC"]:
+        return SBIParser()
+        
     # 1. Direct Native Checks
     if any(k in bank_clean for k in ["SBI", "STATE BANK"]):
         return SBIParser()

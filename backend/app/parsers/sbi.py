@@ -48,8 +48,15 @@ class SBIParser(BankParser):
             if period_match:
                 statement_period = period_match.group(1).strip()
                 
+        op_match = re.search(r'Opening\s+Balance(?:\s+as\s+on\s+[^:\n]+)?\s*:?\s*([0-9,]+\.?[0-9]*)', first_page_text, re.IGNORECASE)
+        if op_match:
+            try:
+                opening_balance = float(op_match.group(1).replace(',', '').strip())
+            except Exception:
+                opening_balance = 0.0
+
         # 2. Extract and group all physical layout elements from PDF
-        date_pat = re.compile(r'^\d{2}[/-]\d{2}[/-]\d{4}$')
+        date_pat = re.compile(r'^(\d{1,2}[/-]\d{1,2}[/-]\d{4}|\d{1,2}\s+[A-Za-z]{3}\s+\d{4})$')
         transactions: List[StandardTransaction] = []
         current_tx = None
         
@@ -157,11 +164,11 @@ class SBIParser(BankParser):
             transactions.append(self._finalize_transaction(current_tx))
             
         if transactions:
-            opening_balance = transactions[0].balance - ((transactions[0].credit or 0.0) - (transactions[0].debit or 0.0))
+            if opening_balance == 0.0:
+                opening_balance = transactions[0].balance - ((transactions[0].credit or 0.0) - (transactions[0].debit or 0.0))
             closing_balance = transactions[-1].balance
         else:
-            opening_balance = 0.0
-            closing_balance = 0.0
+            closing_balance = opening_balance
             
         is_reconciled, discrepancy, transactions = reconcile_statement_and_transactions(
             opening_balance=opening_balance,
@@ -191,16 +198,20 @@ class SBIParser(BankParser):
         return metadata, transactions
         
     def _finalize_transaction(self, tx: dict) -> StandardTransaction:
-        desc_narr = ''.join(tx['desc_lines'])
-        ref_narr = '\n'.join(tx['ref_lines'])
+        desc_narr = ' '.join(t.strip() for t in tx['desc_lines'] if t.strip())
+        ref_narr = ' '.join(t.strip() for t in tx['ref_lines'] if t.strip())
         
-        if ref_narr:
-            narration = desc_narr + ' & ' + ref_narr
-        else:
+        if ref_narr and desc_narr:
+            narration = desc_narr + ' ' + ref_narr
+        elif desc_narr:
             narration = desc_narr
+        elif ref_narr:
+            narration = ref_narr
+        else:
+            narration = "SBI Bank Transaction"
             
-        txn_date_str = tx['txn_date']
-        for fmt in ["%d-%m-%Y", "%d/%m/%Y"]:
+        txn_date_str = tx['txn_date'].strip()
+        for fmt in ["%d %b %Y", "%d-%b-%Y", "%d-%m-%Y", "%d/%m/%Y", "%Y-%m-%d", "%d %B %Y", "%d/%b/%Y"]:
             try:
                 txn_date_obj = datetime.strptime(txn_date_str, fmt).date()
                 break
@@ -209,15 +220,15 @@ class SBIParser(BankParser):
         else:
             txn_date_obj = date.today()
             
-        val_date_str = tx['val_date']
-        for fmt in ["%d-%m-%Y", "%d/%m/%Y"]:
+        val_date_str = tx['val_date'].strip()
+        for fmt in ["%d %b %Y", "%d-%b-%Y", "%d-%m-%Y", "%d/%m/%Y", "%Y-%m-%d", "%d %B %Y", "%d/%b/%Y"]:
             try:
                 val_date_obj = datetime.strptime(val_date_str, fmt).date()
                 break
             except Exception:
                 continue
         else:
-            val_date_obj = date.today()
+            val_date_obj = txn_date_obj
             
         # Clean amount string safely
         amount_clean = tx['amount_val'].replace(',', '').strip() if tx['amount_val'] else '0'
