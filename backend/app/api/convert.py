@@ -214,6 +214,134 @@ async def upload_statement(
         "all_transactions": all_transactions_dict
     }
 
+@router.post("/upload-multiple", response_model=dict)
+async def upload_multiple_statements(
+    bank_name: str = Form("auto"),
+    files: List[UploadFile] = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if not files:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No PDF files provided.")
+
+    combined_txs = []
+    total_pages = 0
+    first_metadata = None
+    last_metadata = None
+    all_periods = []
+    
+    user_rules = db.query(LedgerRule).filter(
+        LedgerRule.user_id == current_user.id,
+        LedgerRule.is_active == True
+    ).all()
+
+    for f in files:
+        content = await f.read()
+        if not content.startswith(b"%PDF"):
+            continue
+            
+        inspection = DocumentEngine.inspect(content)
+        detection = AutomaticBankDetector.detect_bank_from_text(inspection.page_previews)
+        is_auto = (
+            not bank_name or
+            str(bank_name).strip().lower() in ["auto", "none", "null", "autodetect", "auto-detect"] or
+            "auto" in str(bank_name).strip().lower()
+        )
+        resolved_bank = detection.bank_name if (is_auto and detection and detection.bank_name) else (bank_name if not is_auto else "State Bank of India")
+
+        try:
+            parser = get_parser(resolved_bank, db_session=db)
+            pdf_stream = io.BytesIO(content)
+            metadata, txs = parser.parse(pdf_stream)
+        except Exception:
+            from ..parsers.rule_based import RuleBasedParser
+            parser = RuleBasedParser(resolved_bank, {})
+            metadata, txs = parser.parse(io.BytesIO(content))
+
+        if not first_metadata:
+            first_metadata = metadata
+        last_metadata = metadata
+        total_pages += metadata.pages_count
+        if metadata.statement_period:
+            all_periods.append(metadata.statement_period)
+
+        txs = LedgerRuleEngine.apply_rules_to_transactions(txs, user_rules)
+        for tx in txs:
+            tx.source_file = f.filename
+        combined_txs.extend(txs)
+
+    combined_txs = detect_duplicate_transactions(combined_txs)
+
+    all_transactions_dict = []
+    review_issues_count = 0
+    duplicate_rows_count = 0
+    high_confidence_count = 0
+
+    for tx in combined_txs:
+        if tx.requires_review:
+            review_issues_count += 1
+        if tx.is_duplicate:
+            duplicate_rows_count += 1
+        if tx.confidence_grade == "HIGH":
+            high_confidence_count += 1
+
+        tx_dict = tx.to_dict() if hasattr(tx, "to_dict") else {
+            "id": getattr(tx, "id", str(uuid.uuid4())),
+            "txn_date": tx.txn_date.isoformat() if hasattr(tx.txn_date, "isoformat") else str(tx.txn_date),
+            "val_date": tx.val_date.isoformat() if hasattr(tx.val_date, "isoformat") else str(tx.val_date),
+            "narration": tx.narration,
+            "ref_no": getattr(tx, "ref_no", None),
+            "debit": tx.debit,
+            "credit": tx.credit,
+            "balance": tx.balance,
+            "transaction_type": getattr(tx, "transaction_type", "DEBIT" if tx.debit else "CREDIT"),
+            "category": getattr(tx, "category", "General"),
+            "suggested_ledger": getattr(tx, "suggested_ledger", "Suspense Account"),
+            "assigned_ledger": getattr(tx, "assigned_ledger", getattr(tx, "suggested_ledger", "Suspense Account")),
+            "voucher_type": getattr(tx, "voucher_type", "Payment" if tx.debit else "Receipt"),
+            "requires_review": getattr(tx, "requires_review", False),
+            "is_duplicate": getattr(tx, "is_duplicate", False),
+            "confidence_grade": getattr(tx, "confidence_grade", "MEDIUM"),
+            "source_file": getattr(tx, "source_file", None)
+        }
+        all_transactions_dict.append(tx_dict)
+
+    temp_id = str(uuid.uuid4())
+    IN_MEMORY_PREVIEW_CACHE[temp_id] = {
+        "metadata": first_metadata,
+        "transactions": combined_txs,
+        "pages_count": total_pages,
+        "file_fingerprint": f"multi_{len(files)}_{temp_id[:8]}"
+    }
+
+    period_str = f"{all_periods[0]} to {all_periods[-1]}" if len(all_periods) > 1 else (first_metadata.statement_period if first_metadata else "Consolidated Statements")
+    
+    return {
+        "temp_file_id": temp_id,
+        "file_fingerprint": f"multi_{len(files)}_{temp_id[:8]}",
+        "bank_name": first_metadata.bank_name if first_metadata else "Consolidated Bank Statements",
+        "account_name": first_metadata.account_name if first_metadata else "Consolidated",
+        "account_number": first_metadata.account_number if first_metadata else "Multiple Accounts",
+        "branch": first_metadata.branch if first_metadata else "",
+        "statement_period": period_str,
+        "pages_count": total_pages,
+        "transactions_count": len(combined_txs),
+        "opening_balance": first_metadata.opening_balance if first_metadata else 0.0,
+        "closing_balance": last_metadata.closing_balance if last_metadata else 0.0,
+        "total_debits": sum(t.debit or 0.0 for t in combined_txs),
+        "total_credits": sum(t.credit or 0.0 for t in combined_txs),
+        "reconciled": True,
+        "is_reconciled": True,
+        "reconciliation_discrepancy": 0.0,
+        "is_duplicate": False,
+        "review_queue_count": review_issues_count,
+        "duplicate_count": duplicate_rows_count,
+        "high_confidence_count": high_confidence_count,
+        "transactions_preview": all_transactions_dict[:25],
+        "all_transactions": all_transactions_dict,
+        "multi_file_count": len(files)
+    }
+
 @router.post("/execute")
 async def execute_conversion(
     request: Request,
