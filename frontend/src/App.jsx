@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 // Override fetch to support VITE_API_BASE_URL prefix in production
 const originalFetch = window.fetch;
@@ -514,6 +514,23 @@ export default function App() {
   };
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [importDropdownOpen, setImportDropdownOpen] = useState(false);
+  const [configDropdownOpen, setConfigDropdownOpen] = useState(false);
+  const importMenuRef = useRef(null);
+  const configMenuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (importMenuRef.current && !importMenuRef.current.contains(event.target)) {
+        setImportDropdownOpen(false);
+      }
+      if (configMenuRef.current && !configMenuRef.current.contains(event.target)) {
+        setConfigDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // --- Data Log States ---
   const [conversionsHistory, setConversionsHistory] = useState([]);
@@ -3023,70 +3040,314 @@ export default function App() {
 
           {/* Center Navigation: Single row desktop with horizontal scrollbar if needed */}
           <div className={`${mobileMenuOpen ? 'flex' : 'hidden'} lg:flex flex-col lg:flex-row flex-1 items-stretch lg:items-center justify-between min-w-0 overflow-hidden`}>
-            <nav className="flex flex-col lg:flex-row lg:flex-nowrap items-stretch lg:items-center p-2.5 gap-1.5 flex-1 min-w-0 overflow-x-auto border-b lg:border-b-0 border-slate-200 scrollbar-thin">
-              <button
-                onClick={() => { setActiveTab('convert'); setExecuteError(''); setMobileMenuOpen(false); }}
-                className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap text-center flex-shrink-0 ${activeTab === 'convert' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
+            <nav className="flex flex-col lg:flex-row lg:flex-nowrap items-stretch lg:items-center p-2.5 gap-1.5 flex-1 min-w-0 border-b lg:border-b-0 border-slate-200">
+              
+              {/* 1. IMPORT TRANSACTION (Dropdown: PDF TO TALLY & CSV TO TALLY) */}
+              <div 
+                ref={importMenuRef}
+                className="relative flex-shrink-0"
+                onMouseEnter={() => setImportDropdownOpen(true)}
+                onMouseLeave={() => setImportDropdownOpen(false)}
               >
-                IMPORT TRANSACTION
-              </button>
-              <button
-                onClick={() => { setActiveTab('csv'); setExecuteError(''); setMobileMenuOpen(false); }}
-                className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap text-center flex-shrink-0 ${activeTab === 'csv' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
+                <button
+                  type="button"
+                  onClick={() => setImportDropdownOpen(prev => !prev)}
+                  className={`w-full lg:w-auto px-3.5 py-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-between lg:justify-start gap-2 whitespace-nowrap ${
+                    (activeTab === 'convert' || activeTab === 'csv')
+                      ? 'bg-slate-900 text-white shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  <span className="flex items-center gap-2">
+                    <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V3" />
+                    </svg>
+                    <span>IMPORT TRANSACTION</span>
+                  </span>
+                  <svg 
+                    className={`w-3.5 h-3.5 transition-transform duration-200 ${importDropdownOpen ? 'rotate-180' : ''}`} 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor" 
+                    strokeWidth={2.2}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {importDropdownOpen && (
+                  <div className="lg:absolute left-0 top-full mt-1.5 w-full lg:w-64 bg-white border border-slate-200/90 rounded-xl shadow-xl shadow-slate-900/10 p-1.5 z-50 animate-in fade-in slide-in-from-top-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveTab('convert');
+                        setExecuteError('');
+                        setImportDropdownOpen(false);
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`w-full text-left p-2 rounded-lg transition-all flex items-center gap-3 ${
+                        activeTab === 'convert' ? 'bg-slate-900 text-white shadow-sm' : 'hover:bg-slate-50 text-slate-800'
+                      }`}
+                    >
+                      <div className={`w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 ${
+                        activeTab === 'convert' ? 'bg-slate-800 text-white' : 'bg-rose-50 text-rose-600 border border-rose-100'
+                      }`}>
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 13h6m-6 4h4" />
+                        </svg>
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold leading-tight">PDF TO TALLY</div>
+                        <div className={`text-[10px] leading-tight mt-0.5 ${activeTab === 'convert' ? 'text-slate-300' : 'text-slate-400'}`}>
+                          Bank Statement PDF Converter
+                        </div>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveTab('csv');
+                        setExecuteError('');
+                        setImportDropdownOpen(false);
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`w-full text-left p-2 rounded-lg transition-all flex items-center gap-3 mt-1 ${
+                        activeTab === 'csv' ? 'bg-slate-900 text-white shadow-sm' : 'hover:bg-slate-50 text-slate-800'
+                      }`}
+                    >
+                      <div className={`w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 ${
+                        activeTab === 'csv' ? 'bg-slate-800 text-white' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                      }`}>
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 4h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold leading-tight">CSV TO TALLY</div>
+                        <div className={`text-[10px] leading-tight mt-0.5 ${activeTab === 'csv' ? 'text-slate-300' : 'text-slate-400'}`}>
+                          Multi-Voucher CSV Importer
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* 2. CONFIGURATION (Dropdown: CLIENT DOSSIER, LEDGER RULES, CLOUD XML VAULT) */}
+              <div 
+                ref={configMenuRef}
+                className="relative flex-shrink-0"
+                onMouseEnter={() => setConfigDropdownOpen(true)}
+                onMouseLeave={() => setConfigDropdownOpen(false)}
               >
-                CSV TO TALLY
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setConfigDropdownOpen(prev => !prev)}
+                  className={`w-full lg:w-auto px-3.5 py-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-between lg:justify-start gap-2 whitespace-nowrap ${
+                    (activeTab === 'clients' || activeTab === 'rules' || activeTab === 'history')
+                      ? 'bg-slate-900 text-white shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  <span className="flex items-center gap-2">
+                    <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span>CONFIGURATION</span>
+                  </span>
+                  <svg 
+                    className={`w-3.5 h-3.5 transition-transform duration-200 ${configDropdownOpen ? 'rotate-180' : ''}`} 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor" 
+                    strokeWidth={2.2}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {configDropdownOpen && (
+                  <div className="lg:absolute left-0 top-full mt-1.5 w-full lg:w-68 bg-white border border-slate-200/90 rounded-xl shadow-xl shadow-slate-900/10 p-1.5 z-50 animate-in fade-in slide-in-from-top-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveTab('clients');
+                        setSelectedDossierClient(null);
+                        setExecuteError('');
+                        setConfigDropdownOpen(false);
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`w-full text-left p-2 rounded-lg transition-all flex items-center gap-3 ${
+                        activeTab === 'clients' ? 'bg-slate-900 text-white shadow-sm' : 'hover:bg-slate-50 text-slate-800'
+                      }`}
+                    >
+                      <div className={`w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 ${
+                        activeTab === 'clients' ? 'bg-slate-800 text-white' : 'bg-indigo-50 text-indigo-600 border border-indigo-100'
+                      }`}>
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold leading-tight">CLIENT DOSSIER</div>
+                        <div className={`text-[10px] leading-tight mt-0.5 ${activeTab === 'clients' ? 'text-slate-300' : 'text-slate-400'}`}>
+                          Practice Workspace & Audit Matrix
+                        </div>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveTab('rules');
+                        setExecuteError('');
+                        setConfigDropdownOpen(false);
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`w-full text-left p-2 rounded-lg transition-all flex items-center gap-3 mt-1 ${
+                        activeTab === 'rules' ? 'bg-slate-900 text-white shadow-sm' : 'hover:bg-slate-50 text-slate-800'
+                      }`}
+                    >
+                      <div className={`w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 ${
+                        activeTab === 'rules' ? 'bg-slate-800 text-white' : 'bg-amber-50 text-amber-600 border border-amber-100'
+                      }`}>
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                        </svg>
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold leading-tight">LEDGER RULES</div>
+                        <div className={`text-[10px] leading-tight mt-0.5 ${activeTab === 'rules' ? 'text-slate-300' : 'text-slate-400'}`}>
+                          Automated Counter Ledger Heuristics
+                        </div>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveTab('history');
+                        setExecuteError('');
+                        setConfigDropdownOpen(false);
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`w-full text-left p-2 rounded-lg transition-all flex items-center gap-3 mt-1 ${
+                        activeTab === 'history' ? 'bg-slate-900 text-white shadow-sm' : 'hover:bg-slate-50 text-slate-800'
+                      }`}
+                    >
+                      <div className={`w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 ${
+                        activeTab === 'history' ? 'bg-slate-800 text-white' : 'bg-sky-50 text-sky-600 border border-sky-100'
+                      }`}>
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 00-9.78 2.096A4.001 4.001 0 003 15z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold leading-tight">CLOUD XML VAULT</div>
+                        <div className={`text-[10px] leading-tight mt-0.5 ${activeTab === 'history' ? 'text-slate-300' : 'text-slate-400'}`}>
+                          Permanent Cloud Storage & History
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* 3. CREDITS */}
               <button
-                onClick={() => { setActiveTab('clients'); setSelectedDossierClient(null); setExecuteError(''); setMobileMenuOpen(false); }}
-                className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap text-center flex-shrink-0 ${activeTab === 'clients' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
+                type="button"
+                onClick={() => {
+                  setActiveTab('wallet');
+                  setExecuteError('');
+                  setMobileMenuOpen(false);
+                  setImportDropdownOpen(false);
+                  setConfigDropdownOpen(false);
+                }}
+                className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-between lg:justify-start gap-2 whitespace-nowrap flex-shrink-0 ${
+                  activeTab === 'wallet' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                }`}
               >
-                🏢 CLIENT DOSSIER
+                <span className="flex items-center gap-2">
+                  <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                  </svg>
+                  <span>CREDITS</span>
+                </span>
               </button>
+
+              {/* 4. SUPPORT */}
               <button
-                onClick={() => { setActiveTab('rules'); setExecuteError(''); setMobileMenuOpen(false); }}
-                className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap text-center flex-shrink-0 ${activeTab === 'rules' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
+                type="button"
+                onClick={() => {
+                  setActiveTab('support');
+                  setExecuteError('');
+                  setMobileMenuOpen(false);
+                  setImportDropdownOpen(false);
+                  setConfigDropdownOpen(false);
+                }}
+                className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-between lg:justify-start gap-2 whitespace-nowrap flex-shrink-0 ${
+                  activeTab === 'support' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                }`}
               >
-                LEDGER RULES
+                <span className="flex items-center gap-2">
+                  <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                  <span>SUPPORT</span>
+                </span>
               </button>
+
+              {/* 5. PROFILE */}
               <button
-                onClick={() => { setActiveTab('history'); setExecuteError(''); setMobileMenuOpen(false); }}
-                className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap text-center flex-shrink-0 ${activeTab === 'history' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
-              >
-                ☁️ CLOUD XML VAULT
-              </button>
-              <button
-                onClick={() => { setActiveTab('wallet'); setExecuteError(''); setMobileMenuOpen(false); }}
-                className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap text-center flex-shrink-0 ${activeTab === 'wallet' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
-              >
-                BUY CREDITS
-              </button>
-              <button
-                onClick={() => { setActiveTab('support'); setExecuteError(''); setMobileMenuOpen(false); }}
-                className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap text-center flex-shrink-0 ${activeTab === 'support' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
-              >
-                CONTACT SUPPORT
-              </button>
-              <button
-                onClick={() => { 
-                  setActiveTab('settings'); 
-                  setExecuteError(''); 
+                type="button"
+                onClick={() => {
+                  setActiveTab('settings');
+                  setExecuteError('');
                   setMobileMenuOpen(false);
                   setCurrentPassword('');
                   setProfileNewPassword('');
                   setProfileConfirmNewPassword('');
                   setProfileSuccessMsg('');
                   setProfileErrorMsg('');
+                  setImportDropdownOpen(false);
+                  setConfigDropdownOpen(false);
                 }}
-                className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap text-center flex-shrink-0 ${activeTab === 'settings' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'}`}
+                className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-between lg:justify-start gap-2 whitespace-nowrap flex-shrink-0 ${
+                  activeTab === 'settings' ? 'bg-slate-900 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                }`}
               >
-                PROFILE SECURITY
+                <span className="flex items-center gap-2">
+                  <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  <span>PROFILE</span>
+                </span>
               </button>
+
+              {/* ADMIN CONSOLE (Preserved for Administrators) */}
               {user.is_admin && (
                 <button
-                  onClick={() => { setActiveTab('admin'); setExecuteError(''); setMobileMenuOpen(false); }}
-                  className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap text-center flex-shrink-0 ${activeTab === 'admin' ? 'bg-indigo-600 text-white shadow-sm' : 'text-indigo-600 hover:bg-indigo-50'}`}
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('admin');
+                    setExecuteError('');
+                    setMobileMenuOpen(false);
+                    setImportDropdownOpen(false);
+                    setConfigDropdownOpen(false);
+                  }}
+                  className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-between lg:justify-start gap-2 whitespace-nowrap flex-shrink-0 ${
+                    activeTab === 'admin' ? 'bg-indigo-600 text-white shadow-sm' : 'text-indigo-600 hover:bg-indigo-50 border border-indigo-200'
+                  }`}
                 >
-                  ADMIN CONSOLE
+                  <span className="flex items-center gap-2">
+                    <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                    <span>ADMIN CONSOLE</span>
+                  </span>
                 </button>
               )}
             </nav>
@@ -3112,7 +3373,10 @@ export default function App() {
         <div className="bg-slate-900 text-slate-200 border-t border-slate-800 px-6 py-2.5 flex flex-wrap items-center justify-between text-xs gap-3">
           <div className="flex flex-wrap items-center gap-2.5">
             <span className="text-[11px] font-semibold text-slate-400 flex items-center gap-1.5 tracking-wide uppercase">
-              🏢 Workspace:
+              <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+              <span>Workspace:</span>
             </span>
             <select
               value={activeClientId}
@@ -3137,9 +3401,12 @@ export default function App() {
                     setActiveTab('clients');
                   }
                 }}
-                className="text-[11px] bg-indigo-600 hover:bg-indigo-500 text-white px-2.5 py-1 rounded-md font-semibold transition-all shadow-sm"
+                className="text-[11px] bg-indigo-600 hover:bg-indigo-500 text-white px-2.5 py-1 rounded-md font-semibold transition-all shadow-sm flex items-center gap-1.5"
               >
-                Open Dossier 📂
+                <span>Open Dossier</span>
+                <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                </svg>
               </button>
             )}
           </div>
@@ -3148,16 +3415,22 @@ export default function App() {
             <button
               type="button"
               onClick={() => handleOpenClientModal()}
-              className="text-[11px] bg-slate-800 hover:bg-slate-700 text-white px-3 py-1 rounded-md font-semibold border border-slate-700 transition-all"
+              className="text-[11px] bg-slate-800 hover:bg-slate-700 text-white px-3 py-1 rounded-md font-semibold border border-slate-700 transition-all flex items-center gap-1.5"
             >
-              + Add Client Company
+              <svg className="w-3.5 h-3.5 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              <span>Add Client Company</span>
             </button>
             <button
               type="button"
               onClick={() => { setActiveTab('clients'); setSelectedDossierClient(null); }}
-              className="text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1 rounded-md font-semibold border border-slate-700 transition-all"
+              className="text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1 rounded-md font-semibold border border-slate-700 transition-all flex items-center gap-1.5"
             >
-              All Clients ({clientsList.length})
+              <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              <span>All Clients ({clientsList.length})</span>
             </button>
           </div>
         </div>
@@ -3169,7 +3442,11 @@ export default function App() {
         {checkoutSession ? (
           <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xl shadow-slate-200/40 p-8 max-w-lg mx-auto space-y-6">
             <div className="bg-slate-900 text-white p-5 rounded-xl flex items-center space-x-3.5 shadow-sm">
-              <span className="text-2xl">💳</span>
+              <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-indigo-400 shadow-sm flex-shrink-0">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                </svg>
+              </div>
               <div>
                 <h3 className="text-base font-bold tracking-tight text-white">Secure Checkout</h3>
                 <p className="text-xs text-slate-400">Sheet Buddy Payment Verification Gateway</p>
@@ -3232,7 +3509,7 @@ export default function App() {
                 disabled={paymentLoading}
                 className="w-full flex justify-center items-center gap-2 py-3 px-4 rounded-xl font-semibold text-white bg-emerald-600 hover:bg-emerald-500 shadow-sm transition-all text-xs disabled:opacity-50"
               >
-                <span>💬</span>
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
                 <span>{paymentLoading ? 'Registering Ticket...' : 'Send Screenshot on WhatsApp'}</span>
               </button>
 
@@ -3305,7 +3582,7 @@ export default function App() {
                         Upload Statement PDF(s)
                       </label>
                       <span className="text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/80 rounded-full px-2.5 py-0.5">
-                        Multi-Upload Supported 📚
+                        Multi-Upload Supported
                       </span>
                     </div>
 
@@ -3359,7 +3636,7 @@ export default function App() {
                       <div className="flex items-center justify-between pb-2 border-b border-slate-200">
                         <div className="flex items-center space-x-2">
                           <span className="bg-indigo-100 text-indigo-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                            📚 {selectedFiles.length} FILES SELECTED
+                            {selectedFiles.length} FILES SELECTED
                           </span>
                           <span className="text-[11px] font-mono font-medium text-slate-500">
                             Total: {(selectedFiles.reduce((acc, f) => acc + f.size, 0) / (1024 * 1024)).toFixed(2)} MB
@@ -3491,7 +3768,7 @@ export default function App() {
                         )}
                         {parsedSummary.multi_file_count > 1 && (
                           <span className="bg-indigo-950 text-indigo-300 text-[10px] font-mono font-semibold px-2 py-0.5 rounded border border-indigo-800 uppercase">
-                            📚 {parsedSummary.multi_file_count} Statements Consolidated
+                            {parsedSummary.multi_file_count} Statements Consolidated
                           </span>
                         )}
                         {parsedSummary.detection_signals && parsedSummary.detection_signals.slice(0, 3).map((sig, sIdx) => (
@@ -3787,7 +4064,7 @@ export default function App() {
                                 <div>{tx.txn_date}</div>
                                 {tx.source_file && (
                                   <span className="inline-block mt-0.5 text-[8px] bg-slate-100 text-slate-600 rounded px-1.5 py-0.5 font-mono truncate max-w-[120px]" title={tx.source_file}>
-                                    📄 {tx.source_file}
+                                    {tx.source_file}
                                   </span>
                                 )}
                               </td>
@@ -4831,7 +5108,7 @@ export default function App() {
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-100 pb-3">
                     <div>
                       <h3 className="text-base font-bold text-slate-900 tracking-tight flex items-center space-x-2">
-                        <span>📅 Financial Year Reconciliation Tracker (April to March)</span>
+                        <span className="flex items-center gap-2"><svg className="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg><span>Financial Year Reconciliation Tracker (April to March)</span></span>
                       </h3>
                       <p className="text-xs text-slate-500 font-medium mt-0.5">
                         Audit completion checklist for FY {selectedDossierClient.financial_year || '2024-25'}. Green signifies completed statement imports; yellow indicates missing months.
@@ -4889,7 +5166,7 @@ export default function App() {
                                     onClick={() => handleDownloadCachedXml(m.latest_conversion_id, selectedDossierClient.name, m.month)}
                                     className="text-[10px] text-indigo-600 font-semibold hover:underline"
                                   >
-                                    Get XML 📥
+                                    Get XML
                                   </button>
                                 )}
                               </div>
@@ -4965,7 +5242,7 @@ export default function App() {
                                   onClick={() => handleDownloadCachedXml(conv.id, conv.bank_name, conv.statement_period)}
                                   className="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
                                 >
-                                  📥 Download XML
+                                  Download XML
                                 </button>
                                 <button
                                   type="button"
@@ -4973,7 +5250,7 @@ export default function App() {
                                   className="px-2 py-1 text-slate-400 hover:text-rose-600 rounded-lg text-xs font-semibold transition-colors"
                                   title="Delete from vault"
                                 >
-                                  🗑️
+                                  <svg className="w-3.5 h-3.5 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                 </button>
                               </td>
                             </tr>
@@ -4991,7 +5268,7 @@ export default function App() {
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-5">
                   <div className="flex items-center space-x-3.5">
                     <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center p-1.5 text-xl flex-shrink-0">
-                      🏢
+                      <svg className="w-5 h-5 text-indigo-600 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
                     </div>
                     <div>
                       <h3 className="text-base font-bold text-slate-900 tracking-tight">Multi-Client Practice Workspace</h3>
@@ -5021,7 +5298,7 @@ export default function App() {
                 {/* Clients Grid */}
                 {clientsList.length === 0 ? (
                   <div className="py-14 text-center space-y-3">
-                    <div className="text-4xl">🏢</div>
+                    <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 mx-auto shadow-sm"><svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg></div>
                     <p className="text-base font-bold text-slate-900">No Clients Added Yet</p>
                     <p className="text-xs text-slate-500 max-w-md mx-auto font-medium">
                       Add your client companies to organize statements, track April to March financial year completion, and keep their Tally XML files saved in the cloud.
@@ -5108,7 +5385,7 @@ export default function App() {
                                 }}
                                 className="w-full py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-sm transition-all"
                               >
-                                📂 Open Dossier & XML Vault
+                                Open Dossier & XML Vault
                               </button>
 
                               <div className="flex gap-2">
@@ -5137,7 +5414,7 @@ export default function App() {
                                   className="px-2.5 py-1.5 bg-slate-100 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-lg text-xs transition-colors"
                                   title="Delete Client"
                                 >
-                                  🗑️
+                                  <svg className="w-3.5 h-3.5 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                 </button>
                               </div>
                             </div>
@@ -5224,7 +5501,7 @@ export default function App() {
                         <td className="px-4 py-3">
                           {conv.client_name ? (
                             <span className="bg-indigo-50 text-indigo-700 border border-indigo-200/80 px-2 py-0.5 rounded-full text-[10px] font-semibold">
-                              🏢 {conv.client_name}
+                              {conv.client_name}
                             </span>
                           ) : (
                             <span className="text-slate-400 text-[11px]">General / Unassigned</span>
@@ -5257,7 +5534,7 @@ export default function App() {
                             onClick={() => handleDownloadCachedXml(conv.id, conv.bank_name, conv.statement_period)}
                             className="inline-flex items-center px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow-sm transition-all"
                           >
-                            📥 GET XML
+                            GET XML
                           </button>
                           <button
                             type="button"
@@ -5265,7 +5542,7 @@ export default function App() {
                             className="px-2 py-1 text-slate-400 hover:text-rose-600 rounded-lg text-xs font-semibold transition-colors"
                             title="Delete from cloud vault"
                           >
-                            🗑️
+                            <svg className="w-3.5 h-3.5 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                           </button>
                         </td>
                       </tr>
@@ -6232,7 +6509,7 @@ export default function App() {
                   if (!currentItem) {
                     return (
                       <div className="text-center py-6 space-y-4">
-                        <span className="text-4xl">🎉</span>
+                        <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-sm"><svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg></div>
                         <h3 className="text-lg font-bold uppercase text-black">All Issues Resolved!</h3>
                         <p className="text-xs font-bold text-slate-600">Every transaction has been reviewed and verified for Tally export.</p>
                         <button
@@ -6667,7 +6944,7 @@ export default function App() {
               <div className="bg-white border border-slate-200/90 rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-4">
                 <div className="flex justify-between items-center bg-indigo-600 text-white hover:bg-indigo-500 p-3 border border-slate-200 rounded-xl shadow-sm">
                   <h3 className="text-sm font-bold uppercase text-black">
-                    {editingClient ? '✏️ Edit Client Company' : '🏢 Add Client Company'}
+                    {editingClient ? 'Edit Client Company' : 'Add Client Company'}
                   </h3>
                   <button
                     type="button"
