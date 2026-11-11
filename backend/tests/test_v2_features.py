@@ -1,3 +1,4 @@
+import os
 import pytest
 from datetime import date
 from app.parsers.base import (
@@ -5,8 +6,10 @@ from app.parsers.base import (
     StatementMetadata, 
     reconcile_statement_and_transactions, 
     extract_references_from_narration,
-    categorize_and_suggest_ledger
+    categorize_and_suggest_ledger,
+    ensure_chronological_order
 )
+from app.parsers.bob import BOBParser
 from app.services.bank_detector import AutomaticBankDetector
 from app.services.document_engine import DocumentEngine
 from app.services.ledger_engine import LedgerRuleEngine
@@ -194,4 +197,59 @@ def test_sbi_parser_date_support():
     assert tx.debit is None
     assert tx.balance == 478726.62
     assert "9118007621" in tx.narration
+
+
+def test_ensure_chronological_order_synthetic():
+    # Construct reverse chronological transactions
+    # Latest: 2026-04-03, balance = 13000
+    # Middle: 2026-04-02, debit = 2000, balance = 11000
+    # Oldest: 2026-04-01, credit = 5000, balance = 13000 (opening 8000)
+    tx_latest = StandardTransaction(txn_date=date(2026, 4, 3), narration="Tx 3", credit=2000.0, balance=13000.0)
+    tx_middle = StandardTransaction(txn_date=date(2026, 4, 2), narration="Tx 2", debit=2000.0, balance=11000.0)
+    tx_oldest = StandardTransaction(txn_date=date(2026, 4, 1), narration="Tx 1", credit=5000.0, balance=13000.0)
+    
+    descending_list = [tx_latest, tx_middle, tx_oldest]
+    ordered, was_reversed = ensure_chronological_order(descending_list)
+    
+    assert was_reversed is True
+    assert ordered[0].txn_date == date(2026, 4, 1)
+    assert ordered[-1].txn_date == date(2026, 4, 3)
+
+    # Calling on already chronological list does not reverse
+    ordered_again, was_reversed_again = ensure_chronological_order(ordered)
+    assert was_reversed_again is False
+    assert ordered_again[0].txn_date == date(2026, 4, 1)
+
+
+BOB_PDF_PATH = r"c:\Users\aakas\OneDrive\Desktop\BALANCE SHEET BUDDY\bob-khamtarai.pdf"
+
+@pytest.mark.skipif(not os.path.exists(BOB_PDF_PATH), reason="Local BOB sample PDF not present")
+def test_bob_khamtarai_statement():
+    parser = BOBParser()
+    metadata, transactions = parser.parse(BOB_PDF_PATH)
+    
+    assert metadata.bank_name == "Bank of Baroda"
+    assert metadata.account_name == "S S EDUCATIONAL AND WELFARE TRUST"
+    assert "803" in metadata.account_number
+    assert metadata.ifsc_code == "BARB0VJKHBH"
+    assert len(transactions) == 914
+    
+    # Chronological checks
+    assert transactions[0].txn_date <= transactions[-1].txn_date
+    assert metadata.opening_balance == 637537.61
+    assert metadata.closing_balance == 128329.48
+    
+    # Reconciliation checks
+    is_rec, diff, enriched = reconcile_statement_and_transactions(
+        metadata.opening_balance,
+        transactions,
+        metadata.closing_balance
+    )
+    assert is_rec is True
+    assert round(diff, 2) == 0.0
+    
+    # Zero review items, 100% High confidence
+    review_count = sum(1 for t in enriched if t.requires_review)
+    assert review_count == 0
+    assert all(t.confidence_grade == "HIGH" for t in enriched)
 

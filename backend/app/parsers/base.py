@@ -217,6 +217,58 @@ def categorize_and_suggest_ledger(narration: str, txn_type: str, amount: float) 
         return ("General Expense", "Sundry Creditors / Vendor Account", "Payment")
 
 # --- Transaction-Level Running Balance Reconciliation ---
+def ensure_chronological_order(transactions: List[StandardTransaction]) -> tuple[List[StandardTransaction], bool]:
+    """
+    Detects if transactions are in reverse-chronological order (newest to oldest)
+    and reverses them to ensure chronological (oldest to newest) order for accounting and reconciliation.
+    
+    Uses multiple deterministic signals:
+    1. Running balance mathematical discrepancy in forward vs reverse order.
+    2. Date progression trend (descending vs ascending).
+    """
+    if len(transactions) < 2:
+        return transactions, False
+        
+    tot_cr = sum(t.credit or 0.0 for t in transactions)
+    tot_dr = sum(t.debit or 0.0 for t in transactions)
+    
+    # 1. Forward assumption (as currently ordered)
+    fwd_first = transactions[0]
+    fwd_last = transactions[-1]
+    fwd_op = fwd_first.balance - ((fwd_first.credit or 0.0) - (fwd_first.debit or 0.0))
+    fwd_cl = fwd_last.balance
+    fwd_discrepancy = round(abs((fwd_op + tot_cr - tot_dr) - fwd_cl), 2)
+    
+    # 2. Reverse assumption (if list is newest-to-oldest)
+    rev_first = transactions[-1]
+    rev_last = transactions[0]
+    rev_op = rev_first.balance - ((rev_first.credit or 0.0) - (rev_first.debit or 0.0))
+    rev_cl = rev_last.balance
+    rev_discrepancy = round(abs((rev_op + tot_cr - tot_dr) - rev_cl), 2)
+    
+    # 3. Date trend
+    descending_dates = 0
+    ascending_dates = 0
+    for i in range(1, len(transactions)):
+        if transactions[i].txn_date < transactions[i-1].txn_date:
+            descending_dates += 1
+        elif transactions[i].txn_date > transactions[i-1].txn_date:
+            ascending_dates += 1
+            
+    should_reverse = False
+    if rev_discrepancy < 0.05 and fwd_discrepancy >= 0.05:
+        should_reverse = True
+    elif descending_dates > ascending_dates and rev_discrepancy <= fwd_discrepancy:
+        should_reverse = True
+    elif rev_discrepancy < fwd_discrepancy and descending_dates >= ascending_dates:
+        should_reverse = True
+        
+    if should_reverse:
+        return list(reversed(transactions)), True
+        
+    return transactions, False
+
+
 def reconcile_statement_and_transactions(
     opening_balance: float, 
     transactions: List[StandardTransaction], 
@@ -233,6 +285,19 @@ def reconcile_statement_and_transactions(
     expected_closing = opening_balance + total_credits - total_debits
     statement_discrepancy = round(abs(expected_closing - closing_balance), 2)
     is_statement_reconciled = (statement_discrepancy < 0.05)
+    
+    # Automatic recovery if transactions were passed in reverse chronological order
+    if not is_statement_reconciled and len(transactions) >= 2:
+        rev_op = round(transactions[-1].balance - ((transactions[-1].credit or 0.0) - (transactions[-1].debit or 0.0)), 2)
+        rev_cl = round(transactions[0].balance, 2)
+        rev_expected = round(rev_op + total_credits - total_debits, 2)
+        rev_disc = round(abs(rev_expected - rev_cl), 2)
+        if rev_disc < statement_discrepancy:
+            transactions = list(reversed(transactions))
+            opening_balance = rev_op
+            closing_balance = rev_cl
+            statement_discrepancy = rev_disc
+            is_statement_reconciled = (rev_disc < 0.05)
     
     current_running_balance = opening_balance
     enriched_transactions: List[StandardTransaction] = []

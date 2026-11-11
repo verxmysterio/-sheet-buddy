@@ -2,7 +2,7 @@ import re
 from datetime import datetime as dt_class, date
 from pypdf import PdfReader
 from typing import List, Tuple, Any, Dict
-from .base import BankParser, StandardTransaction, StatementMetadata, reconcile_statement_and_transactions
+from .base import BankParser, StandardTransaction, StatementMetadata, reconcile_statement_and_transactions, ensure_chronological_order
 
 class RuleBasedParser(BankParser):
     def __init__(self, bank_name: str, config_data: Dict[str, Any]):
@@ -66,10 +66,13 @@ class RuleBasedParser(BankParser):
                         except Exception:
                             continue
                             
+        # Ensure transactions are in chronological order (oldest to newest)
+        raw_tx_list, _ = ensure_chronological_order(raw_tx_list)
+
         if raw_tx_list:
             first_tx = raw_tx_list[0]
-            opening_bal = first_tx.balance - ((first_tx.credit or 0.0) - (first_tx.debit or 0.0))
-            closing_bal = raw_tx_list[-1].balance
+            opening_bal = round(first_tx.balance - ((first_tx.credit or 0.0) - (first_tx.debit or 0.0)), 2)
+            closing_bal = round(raw_tx_list[-1].balance, 2)
         else:
             opening_bal = 0.0
             closing_bal = 0.0

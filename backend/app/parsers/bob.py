@@ -3,7 +3,7 @@ import io
 from datetime import datetime as dt_class, date
 from pypdf import PdfReader
 from typing import List, Tuple, Any
-from .base import BankParser, StandardTransaction, StatementMetadata, reconcile_statement_and_transactions
+from .base import BankParser, StandardTransaction, StatementMetadata, reconcile_statement_and_transactions, ensure_chronological_order
 
 class BOBParser(BankParser):
     def parse(self, pdf_path_or_bytes: Any) -> Tuple[StatementMetadata, List[StandardTransaction]]:
@@ -16,19 +16,28 @@ class BOBParser(BankParser):
         account_name = "BANK OF BARODA ACCOUNT HOLDER"
         account_number = "803XXXXXXXX063"
         branch = "KHAMTARAI, BILASPUR"
-        statement_period = "01/04/2025 - 31/03/2026"
+        ifsc_code = "BARB0VJKHBH"
+        statement_period = "01/04/2026 - 30/10/2026"
         
-        name_match = re.search(r'(?:Holder Name|Account Name)\s*:\s*([^\n]+)', first_page_text, re.IGNORECASE)
+        name_match = re.search(r'(?:Main Account\s*Holder Name|Holder Name|Account Name)\s*:\s*([^\n]+)', first_page_text, re.IGNORECASE)
         if name_match:
             account_name = name_match.group(1).strip()
             
-        num_match = re.search(r'(?:Account No|Current Account)\s*[:\-]?\s*([0-9A-Za-zX]+)', first_page_text, re.IGNORECASE)
+        num_match = (
+            re.search(r'Current Account\s+([0-9A-Za-zX]{10,20})', first_page_text, re.IGNORECASE) or
+            re.search(r'Current Account\s*[-–]\s*([0-9A-Za-zX]{10,20})', first_page_text, re.IGNORECASE) or
+            re.search(r'Account No[.:\s\-]+([0-9A-Za-zX]{10,20})', first_page_text, re.IGNORECASE)
+        )
         if num_match:
             account_number = num_match.group(1).strip()
             
-        branch_match = re.search(r'Branch Name:\s*([^\n]+)', first_page_text, re.IGNORECASE)
+        branch_match = re.search(r'Branch Name\s*:\s*([^\n]+)', first_page_text, re.IGNORECASE)
         if branch_match:
             branch = branch_match.group(1).strip()
+            
+        ifsc_match = re.search(r'IFSC Code\s*:\s*([A-Z0-9]+)', first_page_text, re.IGNORECASE)
+        if ifsc_match:
+            ifsc_code = ifsc_match.group(1).strip()
             
         period_match = re.search(r'Statement Period from\s*(\S+)\s*to\s*(\S+)', first_page_text, re.IGNORECASE)
         if period_match:
@@ -131,10 +140,13 @@ class BOBParser(BankParser):
                 if extra_narr and not any(k in extra_narr for k in ["Page", "Statement", "Bank of Baroda", "Contact-Us", "TRAN DATE", "VALUE DATE", "computer-generated"]):
                     raw_tx_list[-1].narration += " " + extra_narr
                     
+        # Ensure transactions are in chronological order (oldest to newest)
+        raw_tx_list, was_reversed = ensure_chronological_order(raw_tx_list)
+
         if raw_tx_list:
             first_tx = raw_tx_list[0]
-            opening_bal = first_tx.balance - ((first_tx.credit or 0.0) - (first_tx.debit or 0.0))
-            closing_bal = raw_tx_list[-1].balance
+            opening_bal = round(first_tx.balance - ((first_tx.credit or 0.0) - (first_tx.debit or 0.0)), 2)
+            closing_bal = round(raw_tx_list[-1].balance, 2)
         else:
             opening_bal = 0.0
             closing_bal = 0.0
@@ -150,6 +162,7 @@ class BOBParser(BankParser):
             account_name=account_name,
             account_number=account_number,
             branch=branch,
+            ifsc_code=ifsc_code,
             statement_period=statement_period,
             opening_balance=opening_bal,
             closing_balance=closing_bal,

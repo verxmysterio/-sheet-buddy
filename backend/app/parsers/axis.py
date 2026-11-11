@@ -2,7 +2,7 @@ import re
 from datetime import datetime as dt_class, date
 from pypdf import PdfReader
 from typing import List, Tuple, Any
-from .base import BankParser, StandardTransaction, StatementMetadata, reconcile_statement_and_transactions
+from .base import BankParser, StandardTransaction, StatementMetadata, reconcile_statement_and_transactions, ensure_chronological_order
 
 class AxisParser(BankParser):
     def parse(self, pdf_path_or_bytes: Any) -> Tuple[StatementMetadata, List[StandardTransaction]]:
@@ -126,10 +126,13 @@ class AxisParser(BankParser):
                     if extra_narr and not any(k in extra_narr for k in ["Page", "Statement", "Branch", "Axis Bank"]):
                         raw_tx_list[-1].narration += " " + extra_narr
                         
+        # Ensure transactions are in chronological order (oldest to newest)
+        raw_tx_list, _ = ensure_chronological_order(raw_tx_list)
+
         if raw_tx_list:
             first_tx = raw_tx_list[0]
-            opening_bal = first_tx.balance - ((first_tx.credit or 0.0) - (first_tx.debit or 0.0))
-            closing_bal = raw_tx_list[-1].balance
+            opening_bal = round(first_tx.balance - ((first_tx.credit or 0.0) - (first_tx.debit or 0.0)), 2)
+            closing_bal = round(raw_tx_list[-1].balance, 2)
         else:
             opening_bal = 0.0
             closing_bal = 0.0
